@@ -1,0 +1,590 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		DAB9BE232F5DBF5800802680 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DAB9BE0D2F5DBF5600802680 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DAB9BE142F5DBF5600802680;
+			remoteInfo = "Czechoslovak AI";
+		};
+		DAB9BE2D2F5DBF5800802680 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DAB9BE0D2F5DBF5600802680 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DAB9BE142F5DBF5600802680;
+			remoteInfo = "Czechoslovak AI";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		DA78D8792F629E1C00A17870 /* Czechoslovak AI.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Czechoslovak AI.xcodeproj"; sourceTree = "<group>"; };
+		DAB9BE152F5DBF5600802680 /* Czechoslovak AI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Czechoslovak AI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAB9BE222F5DBF5800802680 /* Czechoslovak AITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Czechoslovak AITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAB9BE2C2F5DBF5800802680 /* Czechoslovak AIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Czechoslovak AIUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		DAB9BE172F5DBF5600802680 /* Czechoslovak AI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Czechoslovak AI";
+			sourceTree = "<group>";
+		};
+		DAB9BE252F5DBF5800802680 /* Czechoslovak AITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Czechoslovak AITests";
+			sourceTree = "<group>";
+		};
+		DAB9BE2F2F5DBF5800802680 /* Czechoslovak AIUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Czechoslovak AIUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DAB9BE122F5DBF5600802680 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB9BE1F2F5DBF5800802680 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB9BE292F5DBF5800802680 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DA78D8852F629E1C00A17870 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DAB9BE0C2F5DBF5600802680 = {
+			isa = PBXGroup;
+			children = (
+				DA78D8792F629E1C00A17870 /* Czechoslovak AI.xcodeproj */,
+				DAB9BE172F5DBF5600802680 /* Czechoslovak AI */,
+				DAB9BE252F5DBF5800802680 /* Czechoslovak AITests */,
+				DAB9BE2F2F5DBF5800802680 /* Czechoslovak AIUITests */,
+				DAB9BE162F5DBF5600802680 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DAB9BE162F5DBF5600802680 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DAB9BE152F5DBF5600802680 /* Czechoslovak AI.app */,
+				DAB9BE222F5DBF5800802680 /* Czechoslovak AITests.xctest */,
+				DAB9BE2C2F5DBF5800802680 /* Czechoslovak AIUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DAB9BE142F5DBF5600802680 /* Czechoslovak AI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAB9BE362F5DBF5800802680 /* Build configuration list for PBXNativeTarget "Czechoslovak AI" */;
+			buildPhases = (
+				DAB9BE112F5DBF5600802680 /* Sources */,
+				DAB9BE122F5DBF5600802680 /* Frameworks */,
+				DAB9BE132F5DBF5600802680 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				DAB9BE172F5DBF5600802680 /* Czechoslovak AI */,
+			);
+			name = "Czechoslovak AI";
+			packageProductDependencies = (
+			);
+			productName = "Czechoslovak AI";
+			productReference = DAB9BE152F5DBF5600802680 /* Czechoslovak AI.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DAB9BE212F5DBF5800802680 /* Czechoslovak AITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAB9BE392F5DBF5800802680 /* Build configuration list for PBXNativeTarget "Czechoslovak AITests" */;
+			buildPhases = (
+				DAB9BE1E2F5DBF5800802680 /* Sources */,
+				DAB9BE1F2F5DBF5800802680 /* Frameworks */,
+				DAB9BE202F5DBF5800802680 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DAB9BE242F5DBF5800802680 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DAB9BE252F5DBF5800802680 /* Czechoslovak AITests */,
+			);
+			name = "Czechoslovak AITests";
+			packageProductDependencies = (
+			);
+			productName = "Czechoslovak AITests";
+			productReference = DAB9BE222F5DBF5800802680 /* Czechoslovak AITests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		DAB9BE2B2F5DBF5800802680 /* Czechoslovak AIUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAB9BE3C2F5DBF5800802680 /* Build configuration list for PBXNativeTarget "Czechoslovak AIUITests" */;
+			buildPhases = (
+				DAB9BE282F5DBF5800802680 /* Sources */,
+				DAB9BE292F5DBF5800802680 /* Frameworks */,
+				DAB9BE2A2F5DBF5800802680 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DAB9BE2E2F5DBF5800802680 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DAB9BE2F2F5DBF5800802680 /* Czechoslovak AIUITests */,
+			);
+			name = "Czechoslovak AIUITests";
+			packageProductDependencies = (
+			);
+			productName = "Czechoslovak AIUITests";
+			productReference = DAB9BE2C2F5DBF5800802680 /* Czechoslovak AIUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DAB9BE0D2F5DBF5600802680 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					DAB9BE142F5DBF5600802680 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					DAB9BE212F5DBF5800802680 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = DAB9BE142F5DBF5600802680;
+					};
+					DAB9BE2B2F5DBF5800802680 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = DAB9BE142F5DBF5600802680;
+					};
+				};
+			};
+			buildConfigurationList = DAB9BE102F5DBF5600802680 /* Build configuration list for PBXProject "Czechoslovak AI" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DAB9BE0C2F5DBF5600802680;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DAB9BE162F5DBF5600802680 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = DA78D8852F629E1C00A17870 /* Products */;
+					ProjectRef = DA78D8792F629E1C00A17870 /* Czechoslovak AI.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				DAB9BE142F5DBF5600802680 /* Czechoslovak AI */,
+				DAB9BE212F5DBF5800802680 /* Czechoslovak AITests */,
+				DAB9BE2B2F5DBF5800802680 /* Czechoslovak AIUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DAB9BE132F5DBF5600802680 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB9BE202F5DBF5800802680 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB9BE2A2F5DBF5800802680 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DAB9BE112F5DBF5600802680 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB9BE1E2F5DBF5800802680 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DAB9BE282F5DBF5800802680 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DAB9BE242F5DBF5800802680 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DAB9BE142F5DBF5600802680 /* Czechoslovak AI */;
+			targetProxy = DAB9BE232F5DBF5800802680 /* PBXContainerItemProxy */;
+		};
+		DAB9BE2E2F5DBF5800802680 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DAB9BE142F5DBF5600802680 /* Czechoslovak AI */;
+			targetProxy = DAB9BE2D2F5DBF5800802680 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		DAB9BE342F5DBF5800802680 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		DAB9BE352F5DBF5800802680 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DAB9BE372F5DBF5800802680 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DAB9BE382F5DBF5800802680 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DAB9BE3A2F5DBF5800802680 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Czechoslovak AI.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Czechoslovak AI";
+			};
+			name = Debug;
+		};
+		DAB9BE3B2F5DBF5800802680 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Czechoslovak AI.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Czechoslovak AI";
+			};
+			name = Release;
+		};
+		DAB9BE3D2F5DBF5800802680 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Czechoslovak AI";
+			};
+			name = Debug;
+		};
+		DAB9BE3E2F5DBF5800802680 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Czechoslovak AI";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DAB9BE102F5DBF5600802680 /* Build configuration list for PBXProject "Czechoslovak AI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DAB9BE342F5DBF5800802680 /* Debug */,
+				DAB9BE352F5DBF5800802680 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DAB9BE362F5DBF5800802680 /* Build configuration list for PBXNativeTarget "Czechoslovak AI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DAB9BE372F5DBF5800802680 /* Debug */,
+				DAB9BE382F5DBF5800802680 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DAB9BE392F5DBF5800802680 /* Build configuration list for PBXNativeTarget "Czechoslovak AITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DAB9BE3A2F5DBF5800802680 /* Debug */,
+				DAB9BE3B2F5DBF5800802680 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DAB9BE3C2F5DBF5800802680 /* Build configuration list for PBXNativeTarget "Czechoslovak AIUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DAB9BE3D2F5DBF5800802680 /* Debug */,
+				DAB9BE3E2F5DBF5800802680 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DAB9BE0D2F5DBF5600802680 /* Project object */;
+}
