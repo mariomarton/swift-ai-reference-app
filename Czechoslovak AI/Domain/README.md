@@ -44,3 +44,19 @@ Note: This environment may not have Xcode command line tools configured; if `xco
 
 - Add a simple file-backed `ChatRepository` in `Infrastructure/` for early persistence during UI development.
 - Add integration tests once you have a concrete `LLMEngine` implementation (local or remote).
+
+# File-backed repository (Infrastructure)
+
+A sample implementation `FileBackedChatRepository` was added under `Infrastructure/Repositories`.
+
+Key points:
+- Uses `Codable` + `JSONEncoder`/`JSONDecoder` and `FileManager` to persist messages to a JSON file.
+- Is implemented as a Swift `actor` to provide concurrency safety and an in-memory cache for fast reads.
+- Uses atomic writes (temporary file + replace/move) to avoid corrupting the storage file.
+- Injects `FileManager` and accepts a `storageURL` to make testing easier (tests use a temporary directory).
+
+Tests
+- Integration tests for `FileBackedChatRepository` live under `Czechoslovak AITests/Infrastructure/FileBackedChatRepositoryTests.swift`. They exercise persistence, clearing, instance-level persistence, and concurrent writes.
+
+Swap out for production storage
+- Keep the `ChatRepository` protocol as the boundary — you can replace `FileBackedChatRepository` with a production implementation (Core Data / SQLite / Realm) without changing use-cases or higher layers.
