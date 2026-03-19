@@ -1,0 +1,43 @@
+# Swift build artifacts
+*.swiftmodule
+*.swiftdoc
+*.swiftsourceinfo
+*.abi.json
+
+# Xcode user data
+xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# Xcode build folders
+build/
+DerivedData/
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+# Xcode debugger / runtime stuff
+*.lldb
+*.dSYM
+*.dSYM.zip
+*.dSYM.tar.gz
+*.xcdebugger/
+
+# Xcode logs
+*.xcactivitylog
+*.xcscmblueprint
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# macOS junk
+.DS_Store
+
+# Archives
+*.xcarchive
+
+# Index / cache
+*.index

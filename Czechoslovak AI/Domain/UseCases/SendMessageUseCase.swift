@@ -3,22 +3,22 @@ import Foundation
 public protocol SendMessageUseCase {
     /// Sends a user message, persists it, asks the LLM engine to generate a response, persists the assistant response, and returns the assistant message.
     /// - Parameters:
-    ///   - message: the user `ChatMessage` to send (role should be `.user`)
+    ///   - message: the user `Message` to send (role should be `.user`)
     ///   - model: optional selected model to use
-    /// - Returns: assistant `ChatMessage`
-    func send(message: ChatMessage, model: LLMModel?) async throws -> ChatMessage
+    /// - Returns: assistant `Message`
+    func send(message: Message, model: LLMModel?) async throws -> Message
 }
 
 public final class DefaultSendMessageUseCase: SendMessageUseCase {
-    private let repository: ChatRepository
+    private let repository: MessageRepository
     private let engine: LLMEngine
 
-    public init(repository: ChatRepository, engine: LLMEngine) {
+    public init(repository: MessageRepository, engine: LLMEngine) {
         self.repository = repository
         self.engine = engine
     }
 
-    public func send(message: ChatMessage, model: LLMModel?) async throws -> ChatMessage {
+    public func send(message: Message, model: LLMModel?) async throws -> Message {
         // Persist user message first
         try await repository.save(message: message)
 

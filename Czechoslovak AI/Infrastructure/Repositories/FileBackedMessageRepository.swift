@@ -1,14 +1,14 @@
 import Foundation
 
-/// A simple file-backed implementation of `ChatRepository`.
+/// A simple file-backed implementation of `MessageRepository`.
 ///
-/// - Stores messages as an array of `ChatMessage` encoded with `JSONEncoder` at the provided `storageURL`.
+/// - Stores messages as an array of `Message` encoded with `JSONEncoder` at the provided `storageURL`.
 /// - Uses an in-memory cache backed by an atomic disk write on updates.
 /// - Uses Swift `actor` to ensure safe concurrent access.
 ///
 /// This implementation is intended for local/offline use and development. Swap with a database-backed
 /// implementation by replacing this concrete type without changing the domain/use-case layer.
-public actor FileBackedChatRepository: ChatRepository {
+public actor FileBackedMessageRepository: MessageRepository {
     public enum StorageError: Error {
         case failedToCreateDirectory
         case failedToWriteData(Error)
@@ -18,7 +18,7 @@ public actor FileBackedChatRepository: ChatRepository {
 
     private let storageURL: URL
     private let fileManager: FileManager
-    private var cache: [ChatMessage]
+    private var cache: [Message]
 
     /// Initialize with a specific storage URL, or default to Application Support/CzechoslovakAI/messages.json
     /// - Parameters:
@@ -30,7 +30,7 @@ public actor FileBackedChatRepository: ChatRepository {
         if let storageURL = storageURL {
             self.storageURL = storageURL
             // ensure directory exists
-            try FileBackedChatRepository.ensureDirectoryExists(for: storageURL, fileManager: fileManager)
+            try FileBackedMessageRepository.ensureDirectoryExists(for: storageURL, fileManager: fileManager)
         } else {
             let appSupport = try fileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             let dir = appSupport.appendingPathComponent("CzechoslovakAI", isDirectory: true)
@@ -40,7 +40,7 @@ public actor FileBackedChatRepository: ChatRepository {
 
         // load existing messages from disk, or start with an empty cache
         do {
-            self.cache = try FileBackedChatRepository.loadMessages(from: self.storageURL, fileManager: fileManager)
+            self.cache = try FileBackedMessageRepository.loadMessages(from: self.storageURL, fileManager: fileManager)
         } catch {
             // If loading fails, prefer starting with an empty cache and propogate the error only on demand
             self.cache = []
@@ -48,11 +48,11 @@ public actor FileBackedChatRepository: ChatRepository {
         }
     }
 
-    public func loadRecentMessages() async throws -> [ChatMessage] {
+    public func loadRecentMessages() async throws -> [Message] {
         return cache
     }
 
-    public func save(message: ChatMessage) async throws {
+    public func save(message: Message) async throws {
         cache.append(message)
         do {
             try writeCacheToDisk()
@@ -102,12 +102,12 @@ public actor FileBackedChatRepository: ChatRepository {
         }
     }
 
-    private static func loadMessages(from url: URL, fileManager: FileManager) throws -> [ChatMessage] {
+    private static func loadMessages(from url: URL, fileManager: FileManager) throws -> [Message] {
         guard fileManager.fileExists(atPath: url.path) else { return [] }
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
-            let messages = try decoder.decode([ChatMessage].self, from: data)
+            let messages = try decoder.decode([Message].self, from: data)
             return messages
         } catch let err as DecodingError {
             throw StorageError.decodeError(err)

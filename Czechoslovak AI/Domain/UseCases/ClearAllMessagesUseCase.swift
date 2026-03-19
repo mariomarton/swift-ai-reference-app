@@ -5,9 +5,9 @@ public protocol ClearAllMessagesUseCase {
 }
 
 public final class DefaultClearAllMessagesUseCase: ClearAllMessagesUseCase {
-    private let repository: ChatRepository
+    private let repository: MessageRepository
 
-    public init(repository: ChatRepository) {
+    public init(repository: MessageRepository) {
         self.repository = repository
     }
 

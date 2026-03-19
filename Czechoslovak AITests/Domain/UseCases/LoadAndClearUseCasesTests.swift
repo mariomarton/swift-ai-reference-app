@@ -1,16 +1,16 @@
 import XCTest
 @testable import Czechoslovak_AI
 
-final class RepoMockForLoad: ChatRepository {
-    var stored: [ChatMessage] = []
+final class RepoMockForLoad: MessageRepository {
+    var stored: [Message] = []
     var shouldThrowOnLoad = false
 
-    func loadRecentMessages() async throws -> [ChatMessage] {
+    func loadRecentMessages() async throws -> [Message] {
         if shouldThrowOnLoad { throw NSError(domain: "repo", code: 2) }
         return stored
     }
 
-    func save(message: ChatMessage) async throws {
+    func save(message: Message) async throws {
         stored.append(message)
     }
 
@@ -19,12 +19,13 @@ final class RepoMockForLoad: ChatRepository {
     }
 }
 
+@MainActor
 final class LoadAndClearUseCasesTests: XCTestCase {
     func testLoadRecentMessagesWithoutLimitReturnsAllSorted() async throws {
         let repo = RepoMockForLoad()
         let now = Date()
-        let older = ChatMessage(role: .user, text: "old", date: now.addingTimeInterval(-60))
-        let recent = ChatMessage(role: .assistant, text: "new", date: now)
+        let older = Message(role: .user, text: "old", date: now.addingTimeInterval(-60))
+        let recent = Message(role: .assistant, text: "new", date: now)
         repo.stored = [recent, older]
 
         let useCase = DefaultLoadRecentMessagesUseCase(repository: repo)
@@ -38,9 +39,9 @@ final class LoadAndClearUseCasesTests: XCTestCase {
     func testLoadWithLimitReturnsMostRecentN() async throws {
         let repo = RepoMockForLoad()
         let now = Date()
-        let m1 = ChatMessage(role: .user, text: "1", date: now.addingTimeInterval(-300))
-        let m2 = ChatMessage(role: .user, text: "2", date: now.addingTimeInterval(-200))
-        let m3 = ChatMessage(role: .assistant, text: "3", date: now.addingTimeInterval(-100))
+        let m1 = Message(role: .user, text: "1", date: now.addingTimeInterval(-300))
+        let m2 = Message(role: .user, text: "2", date: now.addingTimeInterval(-200))
+        let m3 = Message(role: .assistant, text: "3", date: now.addingTimeInterval(-100))
         repo.stored = [m1, m2, m3]
 
         let useCase = DefaultLoadRecentMessagesUseCase(repository: repo)
@@ -53,7 +54,7 @@ final class LoadAndClearUseCasesTests: XCTestCase {
 
     func testClearAllRemovesAll() async throws {
         let repo = RepoMockForLoad()
-        repo.stored = [ChatMessage(role: .user, text: "x")]
+        repo.stored = [Message(role: .user, text: "x")]
         let clear = DefaultClearAllMessagesUseCase(repository: repo)
 
         try await clear.clearAll()
@@ -80,3 +81,4 @@ final class LoadAndClearUseCasesTests: XCTestCase {
         }
     }
 }
+

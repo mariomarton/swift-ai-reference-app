@@ -3,12 +3,12 @@ import Foundation
 public struct Conversation: Identifiable, Codable, Equatable {
     public let id: UUID
     public var title: String?
-    public var messages: [ChatMessage]
+    public var messages: [Message]
     public var selectedModel: LLMModel?
     public let createdAt: Date
     public var updatedAt: Date
 
-    public init(id: UUID = .init(), title: String? = nil, messages: [ChatMessage] = [], selectedModel: LLMModel? = nil, createdAt: Date = .init(), updatedAt: Date = .init()) {
+    public init(id: UUID = .init(), title: String? = nil, messages: [Message] = [], selectedModel: LLMModel? = nil, createdAt: Date = .init(), updatedAt: Date = .init()) {
         self.id = id
         self.title = title
         self.messages = messages
@@ -17,12 +17,13 @@ public struct Conversation: Identifiable, Codable, Equatable {
         self.updatedAt = updatedAt
     }
 
-    public mutating func append(_ message: ChatMessage) {
+    public mutating func append(_ message: Message) {
         messages.append(message)
         updatedAt = Date()
     }
 
-    public var lastMessage: ChatMessage? {
+    public var lastMessage: Message? {
         messages.last
     }
 }
+
