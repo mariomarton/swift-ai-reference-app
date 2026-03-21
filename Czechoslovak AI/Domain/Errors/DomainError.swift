@@ -9,13 +9,13 @@ public enum DomainError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .repositoryError(let err):
-            return "Repository error: \(err.localizedDescription)"
+            return "\(L10n.Errors.repositoryError): \(err.localizedDescription)"
         case .engineError(let err):
-            return "LLM engine error: \(err.localizedDescription)"
+            return "\(L10n.Errors.engineError): \(err.localizedDescription)"
         case .invalidModel:
-            return "Invalid or unsupported model"
+            return L10n.Errors.invalidModel
         case .unknown:
-            return "An unknown domain error occurred"
+            return L10n.Errors.unknown
         }
     }
 }

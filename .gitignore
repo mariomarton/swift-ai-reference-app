@@ -41,3 +41,8 @@ playground.xcworkspace
 
 # Index / cache
 *.index
+YanoljaNEXT-Rosetta-4B-2511-bf16-q3_k_s.gguf
+llama-3.2-1b-instruct-q8_0.gguf
+Plan: Mirror Test Layout.prompt.md
+
+*.gguf

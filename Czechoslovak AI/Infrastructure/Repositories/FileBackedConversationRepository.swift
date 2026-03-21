@@ -14,31 +14,32 @@ public actor FileBackedConversationRepository: ConversationRepository {
         case failedToWriteData(Error)
         case failedToReadData(Error)
         case decodeError(Error)
+        case conversationNotFound
     }
 
     private let storageURL: URL
-    private let fileManager: FileManager
+    nonisolated(unsafe) private let fileManager: FileManager
     private var cache: [Conversation]
 
     /// Initialize with a specific storage URL, or default to Application Support/CzechoslovakAI/conversations.json
     /// - Parameters:
     ///   - storageURL: if nil, will use Application Support/CzechoslovakAI/conversations.json
     ///   - fileManager: injected for easier tests
-    public init(storageURL: URL? = nil, fileManager: FileManager = .default) throws {
-        self.fileManager = fileManager
+    public init(storageURL: URL? = nil, fileManager injectedFileManager: FileManager = .default) throws {
+        self.fileManager = injectedFileManager
 
         if let storageURL = storageURL {
             self.storageURL = storageURL
-            try FileBackedConversationRepository.ensureDirectoryExists(for: storageURL, fileManager: fileManager)
+            try FileBackedConversationRepository.ensureDirectoryExists(for: storageURL, fileManager: injectedFileManager)
         } else {
-            let appSupport = try fileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            let appSupport = try injectedFileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             let dir = appSupport.appendingPathComponent("CzechoslovakAI", isDirectory: true)
-            try fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
+            try injectedFileManager.createDirectory(at: dir, withIntermediateDirectories: true)
             self.storageURL = dir.appendingPathComponent("conversations.json")
         }
 
         do {
-            self.cache = try FileBackedConversationRepository.loadConversations(from: self.storageURL, fileManager: fileManager)
+            self.cache = try FileBackedConversationRepository.loadConversations(from: self.storageURL, fileManager: injectedFileManager)
         } catch {
             // If loading fails, prefer starting with an empty cache and propagate the error only on demand
             self.cache = []
@@ -47,7 +48,7 @@ public actor FileBackedConversationRepository: ConversationRepository {
     }
 
     public func createConversation(title: String?) async throws -> Conversation {
-        let conversation = Conversation(title: title)
+        let conversation = await Conversation(title: title)
         cache.append(conversation)
         do {
             try writeCacheToDisk()
@@ -60,6 +61,36 @@ public actor FileBackedConversationRepository: ConversationRepository {
     public func listConversations() async throws -> [Conversation] {
         // Return conversations sorted by most recently updated first, for better UX in recents lists
         return cache.sorted { $0.updatedAt > $1.updatedAt }
+    }
+
+    public func loadConversation(id: UUID) async throws -> Conversation? {
+        return cache.first { $0.id == id }
+    }
+
+    public func updateConversation(_ conversation: Conversation) async throws {
+        // Find and replace the conversation in cache
+        if let index = cache.firstIndex(where: { $0.id == conversation.id }) {
+            cache[index] = conversation
+            do {
+                try writeCacheToDisk()
+            } catch {
+                throw StorageError.failedToWriteData(error)
+            }
+        } else {
+            throw StorageError.conversationNotFound
+        }
+    }
+
+    public func deleteConversation(id: UUID) async throws {
+        guard cache.contains(where: { $0.id == id }) else {
+            throw StorageError.conversationNotFound
+        }
+        cache.removeAll { $0.id == id }
+        do {
+            try writeCacheToDisk()
+        } catch {
+            throw StorageError.failedToWriteData(error)
+        }
     }
 
     // MARK: - Disk IO

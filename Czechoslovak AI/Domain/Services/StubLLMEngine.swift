@@ -4,15 +4,17 @@ import Foundation
 public final class StubLLMEngine: LLMEngine {
     public init() {}
 
-    public func generateResponse(for messages: [Message], model: LLMModel?) async throws -> Message {
-        // Find the last user message if available
+    public func generateResponse(for messages: [Message], model: LLMModel?) -> AsyncThrowingStream<String, Error> {
         let userMessage = messages.last { $0.role == .user }
-        let baseResponse: String
-        if let text = userMessage?.text {
-            baseResponse = "(Stub) Odpověď na: \(text)"
+        let text: String
+        if let userText = userMessage?.text {
+            text = "(Stub) Odpoveď na: \(userText)"
         } else {
-            baseResponse = "(Stub) Toto je ukázková odpověď od asistenta."
+            text = "(Stub) Toto je ukážková odpoveď od asistenta."
         }
-        return Message(role: .assistant, text: baseResponse)
+        return AsyncThrowingStream { continuation in
+            continuation.yield(text)
+            continuation.finish()
+        }
     }
 }

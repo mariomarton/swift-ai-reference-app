@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DA86354F2F79A9E700CB10A3 /* LlamaBinary in Frameworks */ = {isa = PBXBuildFile; productRef = DA86354E2F79A9E700CB10A3 /* LlamaBinary */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		DAB9BE232F5DBF5800802680 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -28,6 +32,7 @@
 		DAB9BE152F5DBF5600802680 /* Czechoslovak AI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Czechoslovak AI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAB9BE222F5DBF5800802680 /* Czechoslovak AITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Czechoslovak AITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAB9BE2C2F5DBF5800802680 /* Czechoslovak AIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Czechoslovak AIUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAC77A682FA5443600731B73 /* run6_czechoslovak_ai_q8_0.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = run6_czechoslovak_ai_q8_0.gguf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -53,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA86354F2F79A9E700CB10A3 /* LlamaBinary in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -81,6 +87,7 @@
 		DAB9BE0C2F5DBF5600802680 = {
 			isa = PBXGroup;
 			children = (
+				DAC77A682FA5443600731B73 /* run6_czechoslovak_ai_q8_0.gguf */,
 				DA78D8792F629E1C00A17870 /* Czechoslovak AI.xcodeproj */,
 				DAB9BE172F5DBF5600802680 /* Czechoslovak AI */,
 				DAB9BE252F5DBF5800802680 /* Czechoslovak AITests */,
@@ -108,6 +115,7 @@
 			buildPhases = (
 				DAB9BE112F5DBF5600802680 /* Sources */,
 				DAB9BE122F5DBF5600802680 /* Frameworks */,
+				DAA10001317B000000000001 /* Bundle GGUF Model If Present */,
 				DAB9BE132F5DBF5600802680 /* Resources */,
 			);
 			buildRules = (
@@ -119,6 +127,7 @@
 			);
 			name = "Czechoslovak AI";
 			packageProductDependencies = (
+				DA86354E2F79A9E700CB10A3 /* LlamaBinary */,
 			);
 			productName = "Czechoslovak AI";
 			productReference = DAB9BE152F5DBF5600802680 /* Czechoslovak AI.app */;
@@ -198,10 +207,15 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				cs,
 				Base,
+				sk,
 			);
 			mainGroup = DAB9BE0C2F5DBF5600802680;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				DA86354D2F79A9E700CB10A3 /* XCLocalSwiftPackageReference "Vendor/LlamaBinary" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DAB9BE162F5DBF5600802680 /* Products */;
 			projectDirPath = "";
@@ -243,6 +257,30 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		DAA10001317B000000000001 /* Bundle GGUF Model If Present */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/model.gguf",
+				"$(PROJECT_DIR)/llama-3.2-1b-instruct-q8_0.gguf",
+			);
+			name = "Bundle GGUF Model If Present";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/model.gguf",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "MODEL_SRC=\"\"\nMODEL_DIR=\"${PROJECT_DIR}\"\n\nif [ -n \"${LLAMA_MODEL_PATH}\" ] && [ -f \"${LLAMA_MODEL_PATH}\" ]; then\n  MODEL_SRC=\"${LLAMA_MODEL_PATH}\"\nfi\n\nif [ -z \"${MODEL_SRC}\" ] && [ -f \"${MODEL_DIR}/model.gguf\" ]; then\n  MODEL_SRC=\"${MODEL_DIR}/model.gguf\"\nfi\n\nif [ -z \"${MODEL_SRC}\" ] && [ -f \"${MODEL_DIR}/llama-3.2-1b-instruct-q8_0.gguf\" ]; then\n  MODEL_SRC=\"${MODEL_DIR}/llama-3.2-1b-instruct-q8_0.gguf\"\nfi\n\nif [ -z \"${MODEL_SRC}\" ]; then\n  MODEL_SRC=\"$(/bin/ls \"${MODEL_DIR}\"/*.gguf 2>/dev/null | /usr/bin/head -n 1)\"\nfi\n\nif [ -n \"${MODEL_SRC}\" ] && [ -f \"${MODEL_SRC}\" ]; then\n  DEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/model.gguf\"\n  /bin/cp -f \"${MODEL_SRC}\" \"${DEST}\"\n  echo \"Bundled model: ${MODEL_SRC} -> ${DEST}\"\nelse\n  echo \"No local GGUF found in ${MODEL_DIR}; skipping model bundle copy.\"\nfi";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		DAB9BE112F5DBF5600802680 /* Sources */ = {
@@ -410,6 +448,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -442,6 +481,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -471,6 +511,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
@@ -492,6 +533,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
@@ -512,6 +554,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappUITests";
@@ -531,6 +574,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappUITests";
@@ -585,6 +629,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		DA86354D2F79A9E700CB10A3 /* XCLocalSwiftPackageReference "Vendor/LlamaBinary" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/LlamaBinary;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DA86354E2F79A9E700CB10A3 /* LlamaBinary */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LlamaBinary;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = DAB9BE0D2F5DBF5600802680 /* Project object */;
 }

@@ -8,6 +8,17 @@ public protocol ConversationRepository {
 
     /// Return all conversations, ideally sorted by recent activity (newest first).
     func listConversations() async throws -> [Conversation]
+    
+    /// Load a specific conversation by ID.
+    /// - Parameter id: the conversation ID to load
+    /// - Returns: the conversation if it exists
+    func loadConversation(id: UUID) async throws -> Conversation?
+    
+    /// Update an existing conversation (e.g., title, selectedModel, or timestamps).
+    /// - Parameter conversation: the conversation with updated fields to persist
+    func updateConversation(_ conversation: Conversation) async throws
 
-    /// Optionally implement other operations in infrastructure: update, delete, append message, etc.
+    /// Permanently delete a conversation by ID.
+    /// - Parameter id: the ID of the conversation to delete
+    func deleteConversation(id: UUID) async throws
 }

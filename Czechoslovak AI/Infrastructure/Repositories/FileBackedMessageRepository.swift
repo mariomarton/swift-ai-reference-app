@@ -1,9 +1,9 @@
 import Foundation
 
-/// A simple file-backed implementation of `MessageRepository`.
+/// A file-backed implementation of `MessageRepository` with per-conversation message storage.
 ///
-/// - Stores messages as an array of `Message` encoded with `JSONEncoder` at the provided `storageURL`.
-/// - Uses an in-memory cache backed by an atomic disk write on updates.
+/// - Stores messages in per-conversation subdirectories as JSON arrays.
+/// - Uses an in-memory cache per conversation.
 /// - Uses Swift `actor` to ensure safe concurrent access.
 ///
 /// This implementation is intended for local/offline use and development. Swap with a database-backed
@@ -16,46 +16,71 @@ public actor FileBackedMessageRepository: MessageRepository {
         case decodeError(Error)
     }
 
-    private let storageURL: URL
-    private let fileManager: FileManager
-    private var cache: [Message]
+    private let storageURL: URL  // Base directory for all messages
+    nonisolated(unsafe) private let fileManager: FileManager
+    private var cache: [UUID: [Message]] = [:]  // Cache per conversation
 
-    /// Initialize with a specific storage URL, or default to Application Support/CzechoslovakAI/messages.json
+    /// Initialize with a specific storage URL, or default to Application Support/CzechoslovakAI/messages
     /// - Parameters:
-    ///   - storageURL: if nil, will use Application Support/CzechoslovakAI/messages.json
+    ///   - storageURL: base directory for message storage; if nil, uses Application Support/CzechoslovakAI/messages
     ///   - fileManager: injected for easier tests
-    public init(storageURL: URL? = nil, fileManager: FileManager = .default) throws {
-        self.fileManager = fileManager
+    public init(storageURL: URL? = nil, fileManager injectedFileManager: FileManager = .default) throws {
+        self.fileManager = injectedFileManager
 
         if let storageURL = storageURL {
             self.storageURL = storageURL
-            // ensure directory exists
-            try FileBackedMessageRepository.ensureDirectoryExists(for: storageURL, fileManager: fileManager)
         } else {
-            let appSupport = try fileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            let appSupport = try injectedFileManager.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             let dir = appSupport.appendingPathComponent("CzechoslovakAI", isDirectory: true)
-            try fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
-            self.storageURL = dir.appendingPathComponent("messages.json")
+            try injectedFileManager.createDirectory(at: dir, withIntermediateDirectories: true)
+            self.storageURL = dir.appendingPathComponent("messages", isDirectory: true)
         }
 
-        // load existing messages from disk, or start with an empty cache
+        // Ensure base messages directory exists
+        try injectedFileManager.createDirectory(at: self.storageURL, withIntermediateDirectories: true)
+    }
+
+    public func loadMessages(for conversationID: UUID) async throws -> [Message] {
+        // Return from cache if available
+        if let cached = cache[conversationID] {
+            return cached
+        }
+
+        // Load from disk
+        let messages = try loadMessagesFromDisk(for: conversationID)
+        cache[conversationID] = messages
+        return messages
+    }
+
+    public func save(message: Message, to conversationID: UUID) async throws {
+        // Ensure cache exists for this conversation
+        if cache[conversationID] == nil {
+            cache[conversationID] = []
+        }
+        cache[conversationID]?.append(message)
+
         do {
-            self.cache = try FileBackedMessageRepository.loadMessages(from: self.storageURL, fileManager: fileManager)
+            try writeConversationCacheToDisk(for: conversationID)
         } catch {
-            // If loading fails, prefer starting with an empty cache and propogate the error only on demand
-            self.cache = []
-            // Note: we don't throw here so the repo can still be used, but callers will get persistence errors when saving
+            throw StorageError.failedToWriteData(error)
         }
     }
 
-    public func loadRecentMessages() async throws -> [Message] {
-        return cache
+    public func clearMessages(for conversationID: UUID) async throws {
+        cache[conversationID] = []
+        do {
+            try writeConversationCacheToDisk(for: conversationID)
+        } catch {
+            throw StorageError.failedToWriteData(error)
+        }
     }
 
-    public func save(message: Message) async throws {
-        cache.append(message)
+    public func deleteMessages(for conversationID: UUID) async throws {
+        cache.removeValue(forKey: conversationID)
+        let dirURL = conversationDirectory(for: conversationID)
+        guard fileManager.fileExists(atPath: dirURL.path) else { return }
         do {
-            try writeCacheToDisk()
+            try fileManager.removeItem(at: dirURL)
         } catch {
             throw StorageError.failedToWriteData(error)
         }
@@ -64,46 +89,31 @@ public actor FileBackedMessageRepository: MessageRepository {
     public func clearAll() async throws {
         cache.removeAll()
         do {
-            try writeCacheToDisk()
+            // Remove entire messages directory
+            try fileManager.removeItem(at: storageURL)
+            // Recreate it empty
+            try fileManager.createDirectory(at: storageURL, withIntermediateDirectories: true)
         } catch {
             throw StorageError.failedToWriteData(error)
         }
     }
 
-    // MARK: - Disk IO
+    // MARK: - Private Disk IO
 
-    private func writeCacheToDisk() throws {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = []
-        // Keep default date encoding strategy so encode/decode stay consistent
-        let data = try encoder.encode(cache)
-
-        // Write atomically via a temporary file in the same directory
-        let tempURL = storageURL.appendingPathExtension("tmp")
-        do {
-            try data.write(to: tempURL, options: .atomic)
-
-            if fileManager.fileExists(atPath: storageURL.path) {
-                // Try to replace; if it fails fall back to removing and moving
-                do {
-                    _ = try fileManager.replaceItemAt(storageURL, withItemAt: tempURL)
-                } catch {
-                    // fallback
-                    try? fileManager.removeItem(at: storageURL)
-                    try fileManager.moveItem(at: tempURL, to: storageURL)
-                }
-            } else {
-                try fileManager.moveItem(at: tempURL, to: storageURL)
-            }
-        } catch {
-            // Clean up temp file if exists
-            try? fileManager.removeItem(at: tempURL)
-            throw error
-        }
+    private func conversationMessagesURL(for conversationID: UUID) -> URL {
+        storageURL.appendingPathComponent(conversationID.uuidString, isDirectory: true)
+            .appendingPathComponent("messages.json")
     }
 
-    private static func loadMessages(from url: URL, fileManager: FileManager) throws -> [Message] {
-        guard fileManager.fileExists(atPath: url.path) else { return [] }
+    private func conversationDirectory(for conversationID: UUID) -> URL {
+        storageURL.appendingPathComponent(conversationID.uuidString, isDirectory: true)
+    }
+
+    private func loadMessagesFromDisk(for conversationID: UUID) throws -> [Message] {
+        let url = conversationMessagesURL(for: conversationID)
+        guard fileManager.fileExists(atPath: url.path) else {
+            return []
+        }
         do {
             let data = try Data(contentsOf: url)
             let decoder = JSONDecoder()
@@ -116,14 +126,34 @@ public actor FileBackedMessageRepository: MessageRepository {
         }
     }
 
-    private static func ensureDirectoryExists(for fileURL: URL, fileManager: FileManager) throws {
-        let dir = fileURL.deletingLastPathComponent()
-        if !fileManager.fileExists(atPath: dir.path) {
-            do {
-                try fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
-            } catch {
-                throw StorageError.failedToCreateDirectory
+    private func writeConversationCacheToDisk(for conversationID: UUID) throws {
+        let dirURL = conversationDirectory(for: conversationID)
+        try fileManager.createDirectory(at: dirURL, withIntermediateDirectories: true)
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = []
+        let messages = cache[conversationID] ?? []
+        let data = try encoder.encode(messages)
+
+        let fileURL = conversationMessagesURL(for: conversationID)
+        let tempURL = fileURL.appendingPathExtension("tmp")
+
+        do {
+            try data.write(to: tempURL, options: .atomic)
+
+            if fileManager.fileExists(atPath: fileURL.path) {
+                do {
+                    _ = try fileManager.replaceItemAt(fileURL, withItemAt: tempURL)
+                } catch {
+                    try? fileManager.removeItem(at: fileURL)
+                    try fileManager.moveItem(at: tempURL, to: fileURL)
+                }
+            } else {
+                try fileManager.moveItem(at: tempURL, to: fileURL)
             }
+        } catch {
+            try? fileManager.removeItem(at: tempURL)
+            throw error
         }
     }
 }
