@@ -7,9 +7,9 @@ enum AppDependenciesError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .modelNotConfigured:
-            return L10n.AppDependencies.modelNotConfigured
+            return "No GGUF model was found. Provide a bundled .gguf model or set LLAMA_MODEL_PATH in your Run scheme environment."
         case .llamaInitializationFailed(let underlying):
-            return L10n.AppDependencies.llamaInitializationFailed(underlying.localizedDescription)
+            return "Failed to initialize local LLM: \(underlying.localizedDescription)"
         }
     }
 }
@@ -17,8 +17,6 @@ enum AppDependenciesError: LocalizedError {
 final class AppDependencies {
     let conversationRepository: ConversationRepository
     let messageRepository: MessageRepository
-    let promptSettingsRepository: PromptSettingsRepository
-    let searchConversationsUseCase: SearchConversationsUseCase
     let llmEngine: LLMEngine
 
     let createConversationUseCase: CreateConversationUseCase
@@ -26,18 +24,14 @@ final class AppDependencies {
     let deleteConversationUseCase: DeleteConversationUseCase
     let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
     let sendMessageUseCase: SendMessageUseCase
-    let messageGenerationCoordinator: MessageGenerationCoordinator
 
     init(
         conversationRepository: ConversationRepository,
         messageRepository: MessageRepository,
-        promptSettingsRepository: PromptSettingsRepository,
         llmEngine: LLMEngine
     ) {
         self.conversationRepository = conversationRepository
         self.messageRepository = messageRepository
-        self.promptSettingsRepository = promptSettingsRepository
-        self.searchConversationsUseCase = DefaultSearchConversationsUseCase()
         self.llmEngine = llmEngine
 
         self.createConversationUseCase = DefaultCreateConversationUseCase(repository: conversationRepository)
@@ -54,18 +48,13 @@ final class AppDependencies {
             repository: messageRepository,
             conversationRepository: conversationRepository,
             engine: llmEngine,
-            promptSettingsRepository: promptSettingsRepository,
             generateTitleUseCase: generateTitleUseCase
-        )
-        self.messageGenerationCoordinator = MessageGenerationCoordinator(
-            sendMessageUseCase: self.sendMessageUseCase
         )
     }
 
     convenience init() throws {
         let conversationRepository = try FileBackedConversationRepository()
         let messageRepository = try FileBackedMessageRepository()
-        let promptSettingsRepository = UserDefaultsPromptSettingsRepository()
         let llmEngine: LLMEngine
 
         #if targetEnvironment(simulator)
@@ -98,7 +87,6 @@ final class AppDependencies {
         self.init(
             conversationRepository: conversationRepository,
             messageRepository: messageRepository,
-            promptSettingsRepository: promptSettingsRepository,
             llmEngine: llmEngine
         )
     }
@@ -135,10 +123,8 @@ final class AppDependencies {
     func makeConversationsListViewModel() -> ConversationsListViewModel {
         ConversationsListViewModel(
             loadConversationsUseCase: loadConversationsUseCase,
-            searchConversationsUseCase: searchConversationsUseCase,
             createConversationUseCase: createConversationUseCase,
-            deleteConversationUseCase: deleteConversationUseCase,
-            generationCoordinator: messageGenerationCoordinator
+            deleteConversationUseCase: deleteConversationUseCase
         )
     }
 
@@ -147,12 +133,7 @@ final class AppDependencies {
         ChatViewModel(
             conversationID: conversationID,
             loadRecentMessagesUseCase: loadRecentMessagesUseCase,
-            generationCoordinator: messageGenerationCoordinator
+            sendMessageUseCase: sendMessageUseCase
         )
-    }
-
-    @MainActor
-    func makeSettingsViewModel() -> SettingsViewModel {
-        SettingsViewModel(repository: promptSettingsRepository)
     }
 }

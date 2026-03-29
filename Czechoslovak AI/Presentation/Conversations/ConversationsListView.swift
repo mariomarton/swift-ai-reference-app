@@ -5,33 +5,20 @@ struct ConversationsListView: View {
 
     var body: some View {
         List {
-            if viewModel.displayedConversations.isEmpty, !viewModel.isLoading {
-                if viewModel.hasActiveSearch {
-                    ContentUnavailableView(
-                        L10n.ConversationsList.searchEmptyTitle,
-                        systemImage: "magnifyingglass",
-                        description: Text(L10n.ConversationsList.searchEmptyDescription)
-                    )
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                } else {
-                    ContentUnavailableView(
-                        L10n.ConversationsList.emptyStateTitle,
-                        systemImage: "bubble.left.and.text.bubble.right",
-                        description: Text(L10n.ConversationsList.emptyStateDescription)
-                    )
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                }
+            if viewModel.conversations.isEmpty, !viewModel.isLoading {
+                ContentUnavailableView(
+                    L10n.ConversationsList.emptyStateTitle,
+                    systemImage: "bubble.left.and.text.bubble.right",
+                    description: Text(L10n.ConversationsList.emptyStateDescription)
+                )
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             } else {
-                ForEach(viewModel.displayedConversations) { conversation in
+                ForEach(viewModel.conversations) { conversation in
                     Button {
                         viewModel.selectConversation(id: conversation.id)
                     } label: {
-                        ConversationRowView(
-                            conversation: conversation,
-                            isGenerating: viewModel.isGenerating(conversationID: conversation.id)
-                        )
+                        ConversationRowView(conversation: conversation)
                     }
                     .buttonStyle(.plain)
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -54,7 +41,6 @@ struct ConversationsListView: View {
         .background(Color(.systemBackground))
         .accessibilityIdentifier("conversationsList")
         .navigationTitle(L10n.ConversationsList.navigationTitle)
-        .searchable(text: $viewModel.searchText, prompt: Text(L10n.ConversationsList.searchPrompt))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -107,7 +93,6 @@ struct ConversationsListView: View {
 
 private struct ConversationRowView: View {
     let conversation: Conversation
-    let isGenerating: Bool
 
     var body: some View {
         HStack(spacing: 14) {
@@ -132,20 +117,9 @@ private struct ConversationRowView: View {
 
             Spacer()
 
-            if isGenerating {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .controlSize(.small)
-
-                    Text(L10n.ConversationsList.generatingStatus)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-            }
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
         .padding(14)
         .background(

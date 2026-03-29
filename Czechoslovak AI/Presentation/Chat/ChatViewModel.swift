@@ -3,15 +3,6 @@ import Foundation
 
 @MainActor
 final class ChatViewModel: ObservableObject {
-    struct GenerationConflictPrompt: Equatable {
-        let activeConversationID: UUID
-    }
-
-    private struct PendingSendRequest {
-        let message: Message
-        let model: LLMModel?
-    }
-
     let conversationID: UUID
 
     @Published private(set) var messages: [Message] = []
@@ -21,30 +12,18 @@ final class ChatViewModel: ObservableObject {
     @Published private(set) var isSending = false
     @Published private(set) var streamingText: String?
     @Published var alert: PresentationAlert?
-    @Published private(set) var generationConflictPrompt: GenerationConflictPrompt?
 
     private let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
-    private let generationCoordinator: any MessageGenerationCoordinating
-    private var cancellables = Set<AnyCancellable>()
-    private var lastHandledTerminalEventID: UUID?
-    private var pendingSendRequest: PendingSendRequest?
+    private let sendMessageUseCase: SendMessageUseCase
 
     init(
         conversationID: UUID,
         loadRecentMessagesUseCase: LoadRecentMessagesUseCase,
-        generationCoordinator: any MessageGenerationCoordinating
+        sendMessageUseCase: SendMessageUseCase
     ) {
         self.conversationID = conversationID
         self.loadRecentMessagesUseCase = loadRecentMessagesUseCase
-        self.generationCoordinator = generationCoordinator
-
-        generationCoordinator.statesPublisher
-            .sink { [weak self] states in
-                self?.applyGenerationState(states[conversationID])
-            }
-            .store(in: &cancellables)
-
-        applyGenerationState(generationCoordinator.state(for: conversationID))
+        self.sendMessageUseCase = sendMessageUseCase
     }
 
     func loadMessages(limit: Int? = nil) async {
@@ -68,114 +47,34 @@ final class ChatViewModel: ObservableObject {
         let trimmed = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isSending else { return }
 
+        isSending = true
         alert = nil
+        defer {
+            isSending = false
+            streamingText = nil
+        }
 
         let userMessage = Message(role: .user, text: trimmed)
-        let startResult = generationCoordinator.startGeneration(
-            message: userMessage,
-            to: conversationID,
-            model: selectedModel
-        )
+        let stream = sendMessageUseCase.send(message: userMessage, to: conversationID, model: selectedModel)
+        draftText = ""
+        streamingText = ""
 
-        switch startResult {
-        case .started:
-            generationConflictPrompt = nil
-            pendingSendRequest = nil
-            messages.append(userMessage)
-            draftText = ""
-            applyGenerationState(generationCoordinator.state(for: conversationID))
-        case .blocked(let activeConversationID):
-            pendingSendRequest = PendingSendRequest(message: userMessage, model: selectedModel)
-            generationConflictPrompt = GenerationConflictPrompt(activeConversationID: activeConversationID)
-        }
-    }
-
-    func dismissGenerationConflictPrompt() {
-        generationConflictPrompt = nil
-        pendingSendRequest = nil
-    }
-
-    func stopGeneration() {
-        generationConflictPrompt = nil
-        pendingSendRequest = nil
-        generationCoordinator.interruptGeneration(
-            for: conversationID,
-            errorDescription: L10n.Chat.userStoppedGenerationMessage
-        )
-    }
-
-    func stopCurrentAndSendHere() {
-        guard let pendingSendRequest else {
-            generationConflictPrompt = nil
-            return
-        }
-
-        let startResult = generationCoordinator.stopActiveGenerationAndStart(
-            message: pendingSendRequest.message,
-            to: conversationID,
-            model: pendingSendRequest.model,
-            interruptionErrorDescription: L10n.Chat.interruptedByNewConversationMessage
-        )
-
-        switch startResult {
-        case .started:
-            messages.append(pendingSendRequest.message)
-            draftText = ""
-            generationConflictPrompt = nil
-            self.pendingSendRequest = nil
-            applyGenerationState(generationCoordinator.state(for: conversationID))
-        case .blocked(let activeConversationID):
-            generationConflictPrompt = GenerationConflictPrompt(activeConversationID: activeConversationID)
-        }
-    }
-
-    private func applyGenerationState(_ state: MessageGenerationCoordinator.ConversationState?) {
-        guard let state else {
-            isSending = false
-            streamingText = nil
-            return
-        }
-
-        switch state.phase {
-        case .thinking:
-            isSending = true
-            streamingText = nil
-        case .streaming:
-            isSending = true
-            streamingText = state.streamedText.isEmpty ? nil : state.streamedText
-        case .completed:
-            isSending = false
-            streamingText = nil
-            handleTerminalStateIfNeeded(state)
-        case .failed:
-            isSending = false
-            streamingText = nil
-            handleTerminalStateIfNeeded(state)
-        }
-    }
-
-    private func handleTerminalStateIfNeeded(_ state: MessageGenerationCoordinator.ConversationState) {
-        guard let terminalEventID = state.terminalEventID, terminalEventID != lastHandledTerminalEventID else {
-            return
-        }
-
-        lastHandledTerminalEventID = terminalEventID
-
-        Task {
-            if state.phase == .failed,
-               state.errorDescription != L10n.Chat.userStoppedGenerationMessage {
-                alert = PresentationAlert(
-                    title: L10n.Chat.errorSendTitle,
-                    message: state.errorDescription ?? L10n.Errors.unknown
-                )
+        do {
+            for try await token in stream {
+                streamingText = (streamingText ?? "") + token
             }
-
-            await refreshMessagesAfterGeneration()
-            generationCoordinator.clearTerminalState(for: conversationID, matching: terminalEventID)
+        } catch {
+            alert = PresentationAlert(
+                title: L10n.Chat.errorSendTitle,
+                message: error.localizedDescription
+            )
+            // Best-effort refresh — user message may have been persisted before the failure
+            do {
+                messages = try await loadRecentMessagesUseCase.loadRecentMessages(for: conversationID, limit: nil)
+            } catch { /* ignore secondary error */ }
+            return
         }
-    }
 
-    private func refreshMessagesAfterGeneration() async {
         do {
             messages = try await loadRecentMessagesUseCase.loadRecentMessages(for: conversationID, limit: nil)
         } catch {

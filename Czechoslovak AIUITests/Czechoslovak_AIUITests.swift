@@ -16,24 +16,19 @@ final class Czechoslovak_AIUITests: XCTestCase {
     override func tearDownWithError() throws {
     }
 
-    // MARK: - Smoke: send message in auto-opened conversation → open sidebar
-
-    private func sidebarButton(in app: XCUIApplication) -> XCUIElement {
-        let preferredLabels = ["Show Sidebar", "Hide Sidebar", "Open Sidebar"]
-        for label in preferredLabels {
-            let button = app.buttons[label]
-            if button.exists { return button }
-        }
-
-        return app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Sidebar")).firstMatch
-    }
+    // MARK: - Smoke: create conversation → send message → back to list
 
     @MainActor
     func testSmokeCreateAndSendMessage() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Composer should be visible immediately because app auto-creates and opens a new chat.
+        // Tap the create-conversation toolbar button
+        let createBtn = app.buttons["createConversationButton"]
+        XCTAssert(createBtn.waitForExistence(timeout: 5), "Create conversation button not found")
+        createBtn.tap()
+
+        // Composer should appear in chat view
         let composer = app.textFields["messageTextField"]
         XCTAssert(composer.waitForExistence(timeout: 5), "Message composer not found")
         composer.tap()
@@ -48,13 +43,9 @@ final class Czechoslovak_AIUITests: XCTestCase {
         let sentMessage = app.staticTexts["Hello smoke test"]
         XCTAssert(sentMessage.waitForExistence(timeout: 10), "Sent message not found after send")
 
-        // Open conversations sidebar from top-left button.
-        let openSidebarButton = sidebarButton(in: app)
-        XCTAssert(openSidebarButton.waitForExistence(timeout: 3), "Open sidebar button not found")
-        openSidebarButton.tap()
-
-        let createBtn = app.buttons["createConversationButton"]
-        XCTAssert(createBtn.waitForExistence(timeout: 3), "Conversations sidebar not shown")
+        // Navigate back to conversations list
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssert(createBtn.waitForExistence(timeout: 3), "Did not return to conversations list")
     }
 
     // MARK: - Smoke: conversation + messages persist across relaunch
@@ -64,20 +55,18 @@ final class Czechoslovak_AIUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        let openSidebarButton = sidebarButton(in: app)
-        XCTAssert(openSidebarButton.waitForExistence(timeout: 5), "Open sidebar button not found on first launch")
-        openSidebarButton.tap()
-
+        // Create a conversation
         let createBtn = app.buttons["createConversationButton"]
-        XCTAssert(createBtn.waitForExistence(timeout: 3), "Sidebar did not open on first launch")
+        XCTAssert(createBtn.waitForExistence(timeout: 5), "Create button not found on first launch")
+        createBtn.tap()
+
+        // Navigate back to list
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssert(createBtn.waitForExistence(timeout: 3), "Did not return to list before relaunch")
 
         // Terminate and relaunch
         app.terminate()
         app.launch()
-
-        let relaunchedSidebarButton = sidebarButton(in: app)
-        XCTAssert(relaunchedSidebarButton.waitForExistence(timeout: 5), "Open sidebar button not found after relaunch")
-        relaunchedSidebarButton.tap()
 
         // List should still contain at least one conversation row
         let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "conversation_"))
@@ -90,6 +79,10 @@ final class Czechoslovak_AIUITests: XCTestCase {
     func testGeneratedTitleAppearsInListAfterReturningFromChat() throws {
         let app = XCUIApplication()
         app.launch()
+
+        let createBtn = app.buttons["createConversationButton"]
+        XCTAssert(createBtn.waitForExistence(timeout: 5), "Create conversation button not found")
+        createBtn.tap()
 
         let suffix = String(UUID().uuidString.prefix(8))
         let inputText = "SmokeTitle \(suffix)"
@@ -104,12 +97,8 @@ final class Czechoslovak_AIUITests: XCTestCase {
         XCTAssert(sendBtn.waitForExistence(timeout: 3), "Send button not found")
         sendBtn.tap()
 
-        let openSidebarButton = sidebarButton(in: app)
-        XCTAssert(openSidebarButton.waitForExistence(timeout: 3), "Open sidebar button not found")
-        openSidebarButton.tap()
-
-        let createBtn = app.buttons["createConversationButton"]
-        XCTAssert(createBtn.waitForExistence(timeout: 3), "Conversations sidebar not shown")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssert(createBtn.waitForExistence(timeout: 3), "Did not return to conversations list")
 
         let generatedTitle = app.staticTexts[expectedTitle]
         XCTAssert(generatedTitle.waitForExistence(timeout: 10), "Generated title did not appear in conversations list")

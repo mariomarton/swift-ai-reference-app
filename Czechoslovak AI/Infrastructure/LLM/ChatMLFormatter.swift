@@ -19,7 +19,7 @@ import Foundation
 struct ChatMLFormatter {
 
     /// Injected when the message history contains no system turn.
-    nonisolated static let defaultSystemPrompt = PromptSettings.defaultSystemPrompt
+    nonisolated static let defaultSystemPrompt = "Si užitočný asistent. Odpovedaj jasne a stručne."
 
     /// Formats `messages` into a ready-to-tokenise prompt string.
     /// A trailing `<|im_start|>assistant\n` is appended so the model knows

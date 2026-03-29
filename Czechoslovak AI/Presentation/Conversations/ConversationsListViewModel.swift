@@ -1,64 +1,25 @@
 import Combine
 import Foundation
 
-protocol ConversationGenerationStateObserving: AnyObject {
-    var statesPublisher: AnyPublisher<[UUID: MessageGenerationCoordinator.ConversationState], Never> { get }
-}
-
 @MainActor
-final class ConversationsListViewModel: ObservableObject, SidebarConversationsManaging {
+final class ConversationsListViewModel: ObservableObject {
     @Published private(set) var conversations: [Conversation] = []
-    @Published private(set) var generatingConversationIDs: Set<UUID> = []
-    @Published var searchText: String = ""
     @Published var selectedConversationID: UUID?
     @Published private(set) var isLoading = false
     @Published var alert: PresentationAlert?
     
     private let loadConversationsUseCase: LoadConversationsUseCase
-    private let searchConversationsUseCase: SearchConversationsUseCase
     private let createConversationUseCase: CreateConversationUseCase
     private let deleteConversationUseCase: DeleteConversationUseCase
-    private var generationObservationTask: Task<Void, Never>?
     
     init(
         loadConversationsUseCase: LoadConversationsUseCase,
-        searchConversationsUseCase: SearchConversationsUseCase,
         createConversationUseCase: CreateConversationUseCase,
-        deleteConversationUseCase: DeleteConversationUseCase,
-        generationCoordinator: (any ConversationGenerationStateObserving)? = nil
+        deleteConversationUseCase: DeleteConversationUseCase
     ) {
         self.loadConversationsUseCase = loadConversationsUseCase
-        self.searchConversationsUseCase = searchConversationsUseCase
         self.createConversationUseCase = createConversationUseCase
         self.deleteConversationUseCase = deleteConversationUseCase
-
-        if let generationCoordinator {
-            generationObservationTask = Task { [weak self] in
-                for await states in generationCoordinator.statesPublisher.values {
-                    let generatingConversationIDs = Set(states.compactMap { entry in
-                        entry.value.isInProgress ? entry.key : nil
-                    })
-                    self?.generatingConversationIDs = generatingConversationIDs
-                }
-            }
-        }
-    }
-
-    func stopGenerationObservation() {
-        generationObservationTask?.cancel()
-        generationObservationTask = nil
-    }
-
-    func isGenerating(conversationID: UUID) -> Bool {
-        generatingConversationIDs.contains(conversationID)
-    }
-
-    var displayedConversations: [Conversation] {
-        searchConversationsUseCase.execute(conversations: conversations, query: searchText)
-    }
-
-    var hasActiveSearch: Bool {
-        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     func loadConversations() async {

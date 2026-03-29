@@ -167,7 +167,7 @@ public final class LlamaLLMEngine: LLMEngine {
         return AsyncThrowingStream { continuation in
             // Run inference off the calling actor so llama's CPU-bound work
             // does not block the main actor.
-            let workerTask = Task.detached(priority: .utility) {
+            Task.detached(priority: .userInitiated) {
                 do {
                     let profile = Self.resolvePromptTemplateProfile(for: model, chatTemplate: modelChatTemplate)
                     let prompt = Self.formatPrompt(messages: messages, profile: profile)
@@ -181,17 +181,11 @@ public final class LlamaLLMEngine: LLMEngine {
                         maxGeneratedTokens: maxGeneratedTokens,
                         continuation: continuation
                     )
-                } catch is CancellationError {
-                    continuation.finish()
                 } catch let err as LlamaError {
                     continuation.finish(throwing: err)
                 } catch {
                     continuation.finish(throwing: LlamaError.inferenceFailed(error))
                 }
-            }
-
-            continuation.onTermination = { @Sendable _ in
-                workerTask.cancel()
             }
         }
     }
@@ -207,12 +201,9 @@ public final class LlamaLLMEngine: LLMEngine {
         prefillBatchSize: Int32,
         maxGeneratedTokens: Int,
         continuation: AsyncThrowingStream<String, Error>.Continuation
-    ) async throws {
-        let decodeYieldInterval = 4
+    ) throws {
 
         // ── 1. Tokenise ──────────────────────────────────────────────────────
-
-        try Task.checkCancellation()
 
         guard let vocab = llama_model_get_vocab(model) else {
             throw LlamaError.inferenceFailed(
@@ -262,7 +253,6 @@ public final class LlamaLLMEngine: LLMEngine {
         defer { llama_batch_free(batch) }
 
         for range in prefillChunkRanges(totalTokens: tokens.count, batchSize: batchCapacity) {
-            try Task.checkCancellation()
             batch.n_tokens = 0
             for i in range {
                 appendToken(&batch, token: tokens[i], pos: Int32(i),
@@ -275,9 +265,6 @@ public final class LlamaLLMEngine: LLMEngine {
                             userInfo: [NSLocalizedDescriptionKey: "Prompt prefill failed"])
                 )
             }
-
-            // Let UI work interleave between large prefill chunks.
-            await Task.yield()
         }
 
         // ── 4. Build sampler chain ────────────────────────────────────────────
@@ -306,8 +293,7 @@ public final class LlamaLLMEngine: LLMEngine {
 
         // ── 5. Auto-regressive decode loop ───────────────────────────────────
 
-        for generatedTokenCount in 0 ..< maxNew {
-            try Task.checkCancellation()
+        for _ in 0 ..< maxNew {
             let newToken = llama_sampler_sample(sampler, context, -1)
             llama_sampler_accept(sampler, newToken)
 
@@ -333,11 +319,6 @@ public final class LlamaLLMEngine: LLMEngine {
                     NSError(domain: "ai.czechoslovak.llama", code: 13,
                             userInfo: [NSLocalizedDescriptionKey: "Decode failed at pos \(nPos)"])
                 )
-            }
-
-            // Yield periodically so long generations do not monopolize scheduling.
-            if (generatedTokenCount + 1).isMultiple(of: decodeYieldInterval) {
-                await Task.yield()
             }
         }
 
@@ -483,7 +464,7 @@ public final class LlamaLLMEngine: LLMEngine {
     struct StreamOutputPolicy {
         private let stopSequences: [String]
         private let controlMarkers: [String]
-        private let maxMarkerLength: Int
+        private let holdbackLength: Int
         private let ngramLength = 16
         private let ngramThreshold = 4
         private let ngramWindowLength = 600
@@ -494,10 +475,10 @@ public final class LlamaLLMEngine: LLMEngine {
         init(profile: PromptTemplateProfile) {
             self.stopSequences = profile.stopSequences
             self.controlMarkers = profile.controlMarkers
-            self.maxMarkerLength = max(
+            self.holdbackLength = max(
                 1,
                 (stopSequences + controlMarkers).map(\.count).max() ?? 1
-            )
+            ) - 1
         }
 
         mutating func process(piece: String) -> (output: String, shouldStop: Bool) {
@@ -514,8 +495,6 @@ public final class LlamaLLMEngine: LLMEngine {
                 return (sanitizedOutput, true)
             }
 
-            let holdbackLength = trailingPotentialMarkerPrefixLength(in: buffer)
-
             guard buffer.count > holdbackLength else {
                 return ("", false)
             }
@@ -528,23 +507,6 @@ public final class LlamaLLMEngine: LLMEngine {
                 return ("", true)
             }
             return (sanitizedOutput, false)
-        }
-
-        private func trailingPotentialMarkerPrefixLength(in text: String) -> Int {
-            guard !text.isEmpty else { return 0 }
-
-            let markers = stopSequences + controlMarkers
-            let maxCandidateLength = min(maxMarkerLength - 1, text.count)
-            guard maxCandidateLength > 0 else { return 0 }
-
-            for length in stride(from: maxCandidateLength, through: 1, by: -1) {
-                let suffix = String(text.suffix(length))
-                if markers.contains(where: { $0.hasPrefix(suffix) }) {
-                    return length
-                }
-            }
-
-            return 0
         }
 
         mutating func finish() -> String {
