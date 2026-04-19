@@ -58,35 +58,10 @@ public final class LlamaLLMEngine: LLMEngine {
         }
     }
 
-    struct SamplingConfig {
-        let topK: Int32
-        let topP: Float
-        let minP: Float
-        let minKeep: Int
-        let temperature: Float
-        let penaltyLastN: Int32
-        let penaltyRepeat: Float
-        let penaltyFrequency: Float
-        let penaltyPresence: Float
-
-        static let `default` = SamplingConfig(
-            topK: 40,
-            topP: 0.95,
-            minP: 0.05,
-            minKeep: 1,
-            temperature: 0.8,
-            penaltyLastN: 128,
-            penaltyRepeat: 1.15,
-            penaltyFrequency: 0.05,
-            penaltyPresence: 0.05
-        )
-    }
-
     // MARK: - Stored state
 
     private let llamaModel:   OpaquePointer
     private let llamaContext: OpaquePointer
-    private let modelChatTemplate: String?
     private let contextWindow: Int32
     private let prefillBatchSize: Int32
     private let maxGeneratedTokens: Int
@@ -137,7 +112,6 @@ public final class LlamaLLMEngine: LLMEngine {
 
         self.llamaModel   = model
         self.llamaContext = ctx
-        self.modelChatTemplate = Self.readDefaultChatTemplate(model: model)
         self.contextWindow = Int32(ctxParams.n_ctx)
         self.prefillBatchSize = Int32(ctxParams.n_batch)
         self.maxGeneratedTokens = 1024
@@ -159,7 +133,6 @@ public final class LlamaLLMEngine: LLMEngine {
         // `self` is guaranteed to outlive the stream because the caller awaits it.
         let llamaModel   = self.llamaModel
         let llamaContext = self.llamaContext
-        let modelChatTemplate = self.modelChatTemplate
         let contextWindow = self.contextWindow
         let prefillBatchSize = self.prefillBatchSize
         let maxGeneratedTokens = self.maxGeneratedTokens
@@ -169,7 +142,7 @@ public final class LlamaLLMEngine: LLMEngine {
             // does not block the main actor.
             Task.detached(priority: .userInitiated) {
                 do {
-                    let profile = Self.resolvePromptTemplateProfile(for: model, chatTemplate: modelChatTemplate)
+                    let profile = Self.resolvePromptTemplateProfile(for: model)
                     let prompt = Self.formatPrompt(messages: messages, profile: profile)
                     try await Self.runInferenceLoop(
                         prompt:       prompt,
@@ -281,11 +254,12 @@ public final class LlamaLLMEngine: LLMEngine {
         }
         defer { llama_sampler_free(sampler) }
 
-        addSamplingChain(
-            sampler,
-            config: defaultSamplingConfig(),
-            seed: UInt32.random(in: 0 ..< UInt32.max)
-        )
+        llama_sampler_chain_add(sampler, llama_sampler_init_top_k(40))
+        llama_sampler_chain_add(sampler, llama_sampler_init_top_p(0.95, 1))
+        llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.8))
+        llama_sampler_chain_add(sampler, llama_sampler_init_dist(
+            UInt32.random(in: 0 ..< UInt32.max)
+        ))
 
         var nPos      = Int32(tokens.count)
         let maxNew    = maxGeneratedTokens
@@ -330,41 +304,9 @@ public final class LlamaLLMEngine: LLMEngine {
         continuation.finish()
     }
 
-    private static func addSamplingChain(
-        _ sampler: UnsafeMutablePointer<llama_sampler>,
-        config: SamplingConfig,
-        seed: UInt32
-    ) {
-        llama_sampler_chain_add(sampler, llama_sampler_init_top_k(config.topK))
-        llama_sampler_chain_add(sampler, llama_sampler_init_top_p(config.topP, config.minKeep))
-        llama_sampler_chain_add(sampler, llama_sampler_init_min_p(config.minP, config.minKeep))
-        llama_sampler_chain_add(sampler, llama_sampler_init_temp(config.temperature))
-        llama_sampler_chain_add(
-            sampler,
-            llama_sampler_init_penalties(
-                config.penaltyLastN,
-                config.penaltyRepeat,
-                config.penaltyFrequency,
-                config.penaltyPresence
-            )
-        )
-        llama_sampler_chain_add(sampler, llama_sampler_init_dist(seed))
-    }
-
     // MARK: - Prompt/window helpers
 
-    nonisolated static func resolvePromptTemplateProfile(for model: LLMModel?) -> PromptTemplateProfile {
-        resolvePromptTemplateProfile(for: model, chatTemplate: nil)
-    }
-
-    nonisolated static func resolvePromptTemplateProfile(
-        for model: LLMModel?,
-        chatTemplate: String?
-    ) -> PromptTemplateProfile {
-        if let fromTemplate = inferPromptTemplateProfile(fromChatTemplate: chatTemplate) {
-            return fromTemplate
-        }
-
+    static func resolvePromptTemplateProfile(for model: LLMModel?) -> PromptTemplateProfile {
         let candidates = [model?.id, model?.name, model?.path]
             .compactMap { $0?.lowercased() }
 
@@ -374,33 +316,13 @@ public final class LlamaLLMEngine: LLMEngine {
         return .chatML
     }
 
-    nonisolated static func inferPromptTemplateProfile(fromChatTemplate chatTemplate: String?) -> PromptTemplateProfile? {
-        guard let template = chatTemplate?.lowercased(), !template.isEmpty else {
-            return nil
-        }
-
-        if template.contains("<|start_header_id|>") || template.contains("<|eot_id|>") {
-            return .llama3
-        }
-
-        if template.contains("<|im_start|>") || template.contains("<|im_end|>") {
-            return .chatML
-        }
-
-        return nil
-    }
-
-    nonisolated static func formatPrompt(messages: [Message], profile: PromptTemplateProfile) -> String {
+    static func formatPrompt(messages: [Message], profile: PromptTemplateProfile) -> String {
         switch profile {
         case .chatML:
             return ChatMLFormatter.format(messages)
         case .llama3:
             return Llama3Formatter.format(messages)
         }
-    }
-
-    static func defaultSamplingConfig() -> SamplingConfig {
-        .default
     }
 
     /// Computes prompt trim start so prompt + planned generation fits into context window.
@@ -454,23 +376,11 @@ public final class LlamaLLMEngine: LLMEngine {
         return (output, didStop)
     }
 
-    private static func readDefaultChatTemplate(model: OpaquePointer) -> String? {
-        guard let cTemplate = llama_model_chat_template(model, nil) else {
-            return nil
-        }
-        return String(cString: cTemplate)
-    }
-
     struct StreamOutputPolicy {
         private let stopSequences: [String]
         private let controlMarkers: [String]
         private let holdbackLength: Int
-        private let ngramLength = 16
-        private let ngramThreshold = 4
-        private let ngramWindowLength = 600
-        private let maxTrackedTailLength = 3000
         private var buffer = ""
-        private var emittedTail = ""
 
         init(profile: PromptTemplateProfile) {
             self.stopSequences = profile.stopSequences
@@ -488,11 +398,7 @@ public final class LlamaLLMEngine: LLMEngine {
             if let stopRange = earliestStopRange(in: buffer) {
                 let rawOutput = String(buffer[..<stopRange.lowerBound])
                 buffer.removeAll(keepingCapacity: true)
-                let sanitizedOutput = sanitize(rawOutput)
-                if shouldStopForRepetition(with: sanitizedOutput) {
-                    return ("", true)
-                }
-                return (sanitizedOutput, true)
+                return (sanitize(rawOutput), true)
             }
 
             guard buffer.count > holdbackLength else {
@@ -502,20 +408,12 @@ public final class LlamaLLMEngine: LLMEngine {
             let splitIndex = buffer.index(buffer.endIndex, offsetBy: -holdbackLength)
             let rawOutput = String(buffer[..<splitIndex])
             buffer = String(buffer[splitIndex...])
-            let sanitizedOutput = sanitize(rawOutput)
-            if shouldStopForRepetition(with: sanitizedOutput) {
-                return ("", true)
-            }
-            return (sanitizedOutput, false)
+            return (sanitize(rawOutput), false)
         }
 
         mutating func finish() -> String {
             defer { buffer.removeAll(keepingCapacity: true) }
-            let sanitizedOutput = sanitize(buffer)
-            if shouldStopForRepetition(with: sanitizedOutput) {
-                return ""
-            }
-            return sanitizedOutput
+            return sanitize(buffer)
         }
 
         private func earliestStopRange(in text: String) -> Range<String.Index>? {
@@ -540,65 +438,6 @@ public final class LlamaLLMEngine: LLMEngine {
             controlMarkers.reduce(raw) { partial, marker in
                 partial.replacingOccurrences(of: marker, with: "")
             }
-        }
-
-        private mutating func shouldStopForRepetition(with output: String) -> Bool {
-            let normalizedOutput = Self.normalizeForLoopDetection(output)
-            guard !normalizedOutput.isEmpty else {
-                return false
-            }
-
-            let combined = String((emittedTail + normalizedOutput).suffix(maxTrackedTailLength))
-            defer { emittedTail = combined }
-
-            return Self.hasDenseNgramRepetition(
-                in: combined,
-                ngramLength: ngramLength,
-                threshold: ngramThreshold,
-                windowLength: ngramWindowLength
-            )
-        }
-
-        private static func normalizeForLoopDetection(_ text: String) -> String {
-            let stripped = text.applyingTransform(.stripDiacritics, reverse: false) ?? text
-            return stripped
-                .lowercased()
-                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-
-        private static func hasDenseNgramRepetition(
-            in text: String,
-            ngramLength: Int,
-            threshold: Int,
-            windowLength: Int
-        ) -> Bool {
-            guard text.count >= ngramLength * threshold else {
-                return false
-            }
-
-            let window = String(text.suffix(windowLength))
-            guard window.count >= ngramLength else {
-                return false
-            }
-
-            var counts: [String: Int] = [:]
-            var remaining = window.count - ngramLength + 1
-            var startIdx = window.startIndex
-
-            while remaining > 0 {
-                let endIdx = window.index(startIdx, offsetBy: ngramLength)
-                let ngram = String(window[startIdx..<endIdx])
-                let count = (counts[ngram] ?? 0) + 1
-                if count >= threshold {
-                    return true
-                }
-                counts[ngram] = count
-                startIdx = window.index(after: startIdx)
-                remaining -= 1
-            }
-
-            return false
         }
     }
 

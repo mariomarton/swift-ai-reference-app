@@ -101,37 +101,19 @@ final class LlamaLLMEngineTests: XCTestCase {
 
     func testResolvePromptTemplateProfileDefaultsToChatML() {
         let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: nil)
-        assertProfile(profile, is: .chatML)
+        XCTAssertEqual(profile, .chatML)
     }
 
     func testResolvePromptTemplateProfileUsesLlama3ForModelName() {
         let model = LLMModel(id: "local", name: "Llama-3.2-1B-Instruct", path: nil)
         let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: model)
-        assertProfile(profile, is: .llama3)
+        XCTAssertEqual(profile, .llama3)
     }
 
     func testResolvePromptTemplateProfileUsesLlama3ForModelPath() {
         let model = LLMModel(id: "local", name: "Custom", path: "/models/meta-llama-custom.gguf")
         let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: model)
-        assertProfile(profile, is: .llama3)
-    }
-
-    func testInferPromptTemplateProfileFromLlama3ChatTemplate() {
-        let template = "<|start_header_id|>assistant<|end_header_id|>"
-        let profile = LlamaLLMEngine.inferPromptTemplateProfile(fromChatTemplate: template)
-        assertOptionalProfile(profile, is: .llama3)
-    }
-
-    func testInferPromptTemplateProfileFromChatMLTemplate() {
-        let template = "<|im_start|>assistant"
-        let profile = LlamaLLMEngine.inferPromptTemplateProfile(fromChatTemplate: template)
-        assertOptionalProfile(profile, is: .chatML)
-    }
-
-    func testResolvePromptTemplateProfilePrefersChatTemplateSignal() {
-        let model = LLMModel(id: "local", name: "Llama-3.2", path: nil)
-        let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: model, chatTemplate: "<|im_start|>assistant")
-        assertProfile(profile, is: .chatML)
+        XCTAssertEqual(profile, .llama3)
     }
 
     // MARK: - Stream output policy
@@ -175,78 +157,5 @@ final class LlamaLLMEngineTests: XCTestCase {
 
         XCTAssertTrue(result.didStop)
         XCTAssertEqual(result.output, "Praha je hlavne mesto Ceskej republiky.")
-    }
-
-    func testProcessPiecesForTestingStopsOnRepeatedLongSpan() {
-        let repeatedSentence = "Bratislava je hlavne mesto Slovenska a je centrom kultury a historie. "
-
-        let result = LlamaLLMEngine.processPiecesForTesting(
-            pieces: Array(repeating: repeatedSentence, count: 5),
-            profile: .chatML
-        )
-
-        XCTAssertTrue(result.didStop)
-        let fullRepetition = String(repeating: repeatedSentence, count: 5)
-        XCTAssertFalse(result.output.contains(fullRepetition))
-    }
-
-    func testProcessPiecesForTestingDoesNotStopForNonLoopingLongOutput() {
-        let result = LlamaLLMEngine.processPiecesForTesting(
-            pieces: [
-                "Bratislava je hlavne mesto Slovenska s bohatou historiou a kulturou. ",
-                "Mesto je zname hradom, Dunajom a historickym centrom. ",
-                "Dnes je Bratislava politickym, kulturnym a ekonomickym jadrom krajiny."
-            ],
-            profile: .chatML
-        )
-
-        XCTAssertFalse(result.didStop)
-        XCTAssertFalse(result.output.isEmpty)
-    }
-
-    // MARK: - Sampling defaults
-
-    func testDefaultSamplingConfigUsesConservativeAntiLoopValues() {
-        let config = LlamaLLMEngine.defaultSamplingConfig()
-
-        XCTAssertEqual(config.topK, 40)
-        XCTAssertEqual(config.topP, 0.95, accuracy: 0.0001)
-        XCTAssertEqual(config.minP, 0.05, accuracy: 0.0001)
-        XCTAssertEqual(config.minKeep, 1)
-        XCTAssertEqual(config.temperature, 0.8, accuracy: 0.0001)
-
-        XCTAssertEqual(config.penaltyLastN, 128)
-        XCTAssertEqual(config.penaltyRepeat, 1.15, accuracy: 0.0001)
-        XCTAssertEqual(config.penaltyFrequency, 0.05, accuracy: 0.0001)
-        XCTAssertEqual(config.penaltyPresence, 0.05, accuracy: 0.0001)
-    }
-
-    // MARK: - Test helpers
-
-    private func assertProfile(
-        _ actual: LlamaLLMEngine.PromptTemplateProfile,
-        is expected: LlamaLLMEngine.PromptTemplateProfile,
-        file: StaticString = #filePath,
-        line: UInt = #line
-    ) {
-        switch (actual, expected) {
-        case (.chatML, .chatML), (.llama3, .llama3):
-            return
-        default:
-            XCTFail("Expected \(expected) but got \(actual)", file: file, line: line)
-        }
-    }
-
-    private func assertOptionalProfile(
-        _ actual: LlamaLLMEngine.PromptTemplateProfile?,
-        is expected: LlamaLLMEngine.PromptTemplateProfile,
-        file: StaticString = #filePath,
-        line: UInt = #line
-    ) {
-        guard let actual else {
-            XCTFail("Expected non-nil profile", file: file, line: line)
-            return
-        }
-        assertProfile(actual, is: expected, file: file, line: line)
     }
 }
