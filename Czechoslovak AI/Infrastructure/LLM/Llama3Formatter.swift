@@ -13,9 +13,9 @@ import Foundation
 ///
 struct Llama3Formatter {
 
-    static let defaultSystemPrompt = "Si užitočný asistent. Odpovedaj jasne a stručne."
+    nonisolated static let defaultSystemPrompt = "Si užitočný asistent. Odpovedaj jasne a stručne."
 
-    static func format(_ messages: [Message]) -> String {
+    nonisolated static func format(_ messages: [Message]) -> String {
         var result = "<|begin_of_text|>"
 
         let hasSystemTurn = messages.first?.role == .system
@@ -32,11 +32,11 @@ struct Llama3Formatter {
         return result
     }
 
-    private static func turn(role: String, content: String) -> String {
+    nonisolated private static func turn(role: String, content: String) -> String {
         "<|start_header_id|>\(role)<|end_header_id|>\n\n\(content)<|eot_id|>"
     }
 
-    private static func roleName(for role: Message.Role) -> String {
+    nonisolated private static func roleName(for role: Message.Role) -> String {
         switch role {
         case .user:      return "user"
         case .assistant: return "assistant"

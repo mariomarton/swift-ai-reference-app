@@ -48,6 +48,10 @@ enum L10n {
         static var placeholder: String { l("composer.placeholder", "Napíšte správu") }
     }
 
+    enum MessageActions {
+        static var copy: String { l("message.action.copy", "Kopírovať") }
+    }
+
     enum Errors {
         static var repositoryError: String { l("error.repository",  "Chyba úložiska") }
         static var engineError: String     { l("error.engine",      "Chyba jazykového modelu") }

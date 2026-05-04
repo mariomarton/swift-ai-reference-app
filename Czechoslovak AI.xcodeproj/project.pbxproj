@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		DA86354F2F79A9E700CB10A3 /* LlamaBinary in Frameworks */ = {isa = PBXBuildFile; productRef = DA86354E2F79A9E700CB10A3 /* LlamaBinary */; };
-		DAC77A692FA5443600731B73 /* run6_czechoslovak_ai_q8_0.gguf in Resources */ = {isa = PBXBuildFile; fileRef = DAC77A682FA5443600731B73 /* run6_czechoslovak_ai_q8_0.gguf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -238,7 +237,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DAC77A692FA5443600731B73 /* run6_czechoslovak_ai_q8_0.gguf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

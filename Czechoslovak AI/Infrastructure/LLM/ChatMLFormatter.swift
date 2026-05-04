@@ -19,12 +19,12 @@ import Foundation
 struct ChatMLFormatter {
 
     /// Injected when the message history contains no system turn.
-    static let defaultSystemPrompt = "Si užitočný asistent. Odpovedaj jasne a stručne."
+    nonisolated static let defaultSystemPrompt = "Si užitočný asistent. Odpovedaj jasne a stručne."
 
     /// Formats `messages` into a ready-to-tokenise prompt string.
     /// A trailing `<|im_start|>assistant\n` is appended so the model knows
     /// it should produce the next assistant turn.
-    static func format(_ messages: [Message]) -> String {
+    nonisolated static func format(_ messages: [Message]) -> String {
         var result = ""
 
         let hasSystemTurn = messages.first?.role == .system
@@ -43,11 +43,11 @@ struct ChatMLFormatter {
 
     // MARK: - Private helpers
 
-    private static func turn(role: String, content: String) -> String {
+    nonisolated private static func turn(role: String, content: String) -> String {
         "<|im_start|>\(role)\n\(content)<|im_end|>\n"
     }
 
-    private static func roleName(for role: Message.Role) -> String {
+    nonisolated private static func roleName(for role: Message.Role) -> String {
         switch role {
         case .user:      return "user"
         case .assistant: return "assistant"

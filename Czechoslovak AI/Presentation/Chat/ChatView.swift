@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct ChatView: View {
     @StateObject private var viewModel: ChatViewModel
@@ -45,6 +48,10 @@ struct ChatView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
                         .padding(.bottom, 24)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        dismissActiveSelectionAndKeyboard()
                     }
                     .background(Color(.systemBackground))
                     .accessibilityIdentifier("messagesList")
@@ -100,5 +107,11 @@ struct ChatView: View {
                 }
             }
         }
+    }
+
+    private func dismissActiveSelectionAndKeyboard() {
+        #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        #endif
     }
 }

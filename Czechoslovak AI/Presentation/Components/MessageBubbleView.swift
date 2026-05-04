@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 enum MessageBubbleStyle {
     static func bubbleColor(for role: Message.Role) -> Color {
@@ -17,6 +20,22 @@ enum MessageBubbleStyle {
     }
 }
 
+struct MessageBubbleInteractionPolicy {
+    let enablesTextSelection: Bool
+    let showsCopyContextMenu: Bool
+
+    static func forRole(_ role: Message.Role) -> MessageBubbleInteractionPolicy {
+        switch role {
+        case .user:
+            return MessageBubbleInteractionPolicy(enablesTextSelection: false, showsCopyContextMenu: true)
+        case .assistant:
+            return MessageBubbleInteractionPolicy(enablesTextSelection: true, showsCopyContextMenu: false)
+        case .system:
+            return MessageBubbleInteractionPolicy(enablesTextSelection: false, showsCopyContextMenu: false)
+        }
+    }
+}
+
 struct MessageBubbleView: View {
     let message: Message
 
@@ -27,12 +46,7 @@ struct MessageBubbleView: View {
             }
 
             VStack(alignment: bubbleAlignment, spacing: 6) {
-                Text(message.text)
-                    .font(.body)
-                    .foregroundStyle(MessageBubbleStyle.foregroundColor(for: message.role))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(MessageBubbleStyle.bubbleColor(for: message.role), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                interactiveBubbleText
 
                 Text(message.date, style: .time)
                     .font(.caption2)
@@ -52,6 +66,64 @@ struct MessageBubbleView: View {
 
     private var frameAlignment: Alignment {
         message.role == .user ? .trailing : .leading
+    }
+
+    private var interactionPolicy: MessageBubbleInteractionPolicy {
+        MessageBubbleInteractionPolicy.forRole(message.role)
+    }
+
+    private var plainBubbleText: some View {
+        Text(message.text)
+            .font(.body)
+            .foregroundStyle(MessageBubbleStyle.foregroundColor(for: message.role))
+    }
+
+    @ViewBuilder
+    private var assistantSelectableText: some View {
+        #if canImport(UIKit)
+        SelectableAssistantTextView(
+            text: message.text,
+            textColor: UIColor(MessageBubbleStyle.foregroundColor(for: .assistant))
+        )
+        #else
+        plainBubbleText
+            .textSelection(.enabled)
+        #endif
+    }
+
+    private func bubbleTextContent<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(MessageBubbleStyle.bubbleColor(for: message.role), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var interactiveBubbleText: some View {
+        if interactionPolicy.showsCopyContextMenu {
+            bubbleTextContent {
+                plainBubbleText
+            }
+                .contextMenu {
+                    Button(L10n.MessageActions.copy) {
+                        copyMessageTextToPasteboard()
+                    }
+                }
+        } else if interactionPolicy.enablesTextSelection {
+            bubbleTextContent {
+                assistantSelectableText
+            }
+        } else {
+            bubbleTextContent {
+                plainBubbleText
+            }
+        }
+    }
+
+    private func copyMessageTextToPasteboard() {
+        #if canImport(UIKit)
+        UIPasteboard.general.string = message.text
+        #endif
     }
 
 }
