@@ -167,7 +167,7 @@ public final class LlamaLLMEngine: LLMEngine {
         return AsyncThrowingStream { continuation in
             // Run inference off the calling actor so llama's CPU-bound work
             // does not block the main actor.
-            Task.detached(priority: .userInitiated) {
+            Task.detached(priority: .utility) {
                 do {
                     let profile = Self.resolvePromptTemplateProfile(for: model, chatTemplate: modelChatTemplate)
                     let prompt = Self.formatPrompt(messages: messages, profile: profile)
@@ -201,7 +201,8 @@ public final class LlamaLLMEngine: LLMEngine {
         prefillBatchSize: Int32,
         maxGeneratedTokens: Int,
         continuation: AsyncThrowingStream<String, Error>.Continuation
-    ) throws {
+    ) async throws {
+        let decodeYieldInterval = 4
 
         // ── 1. Tokenise ──────────────────────────────────────────────────────
 
@@ -265,6 +266,9 @@ public final class LlamaLLMEngine: LLMEngine {
                             userInfo: [NSLocalizedDescriptionKey: "Prompt prefill failed"])
                 )
             }
+
+            // Let UI work interleave between large prefill chunks.
+            await Task.yield()
         }
 
         // ── 4. Build sampler chain ────────────────────────────────────────────
@@ -293,7 +297,7 @@ public final class LlamaLLMEngine: LLMEngine {
 
         // ── 5. Auto-regressive decode loop ───────────────────────────────────
 
-        for _ in 0 ..< maxNew {
+        for generatedTokenCount in 0 ..< maxNew {
             let newToken = llama_sampler_sample(sampler, context, -1)
             llama_sampler_accept(sampler, newToken)
 
@@ -319,6 +323,11 @@ public final class LlamaLLMEngine: LLMEngine {
                     NSError(domain: "ai.czechoslovak.llama", code: 13,
                             userInfo: [NSLocalizedDescriptionKey: "Decode failed at pos \(nPos)"])
                 )
+            }
+
+            // Yield periodically so long generations do not monopolize scheduling.
+            if (generatedTokenCount + 1).isMultiple(of: decodeYieldInterval) {
+                await Task.yield()
             }
         }
 

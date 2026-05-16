@@ -33,15 +33,8 @@ struct ChatView: View {
                                         .opacity(0.75)
                                         .id("streaming")
                                 } else {
-                                    HStack {
-                                        ProgressView()
-                                            .progressViewStyle(.circular)
-                                        Text(L10n.Chat.sendingIndicator)
-                                            .font(.footnote)
-                                            .foregroundStyle(.secondary)
-                                        Spacer()
-                                    }
-                                    .padding(.horizontal, 4)
+                                    ThinkingIndicatorView(title: L10n.Chat.sendingIndicator)
+                                        .id("streaming")
                                 }
                             }
                         }
@@ -113,5 +106,40 @@ struct ChatView: View {
         #if canImport(UIKit)
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         #endif
+    }
+}
+
+private struct ThinkingIndicatorView: View {
+    let title: String
+    @State private var isAnimating = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            HStack(spacing: 4) {
+                ForEach(0..<3) { index in
+                    Circle()
+                        .fill(Color(.systemOrange))
+                        .frame(width: 6, height: 6)
+                        .scaleEffect(isAnimating ? 1 : 0.55)
+                        .opacity(isAnimating ? 1 : 0.35)
+                        .animation(
+                            .easeInOut(duration: 0.7)
+                                .repeatForever()
+                                .delay(Double(index) * 0.14),
+                            value: isAnimating
+                        )
+                }
+            }
+
+            Text(title)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .padding(.horizontal, 4)
+        .onAppear {
+            isAnimating = true
+        }
     }
 }

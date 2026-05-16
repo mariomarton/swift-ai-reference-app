@@ -14,16 +14,26 @@ final class ChatViewModel: ObservableObject {
     @Published var alert: PresentationAlert?
 
     private let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
-    private let sendMessageUseCase: SendMessageUseCase
+    private let generationCoordinator: any MessageGenerationCoordinating
+    private var cancellables = Set<AnyCancellable>()
+    private var lastHandledTerminalEventID: UUID?
 
     init(
         conversationID: UUID,
         loadRecentMessagesUseCase: LoadRecentMessagesUseCase,
-        sendMessageUseCase: SendMessageUseCase
+        generationCoordinator: any MessageGenerationCoordinating
     ) {
         self.conversationID = conversationID
         self.loadRecentMessagesUseCase = loadRecentMessagesUseCase
-        self.sendMessageUseCase = sendMessageUseCase
+        self.generationCoordinator = generationCoordinator
+
+        generationCoordinator.statesPublisher
+            .sink { [weak self] states in
+                self?.applyGenerationState(states[conversationID])
+            }
+            .store(in: &cancellables)
+
+        applyGenerationState(generationCoordinator.state(for: conversationID))
     }
 
     func loadMessages(limit: Int? = nil) async {
@@ -47,34 +57,68 @@ final class ChatViewModel: ObservableObject {
         let trimmed = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isSending else { return }
 
-        isSending = true
         alert = nil
-        defer {
-            isSending = false
-            streamingText = nil
-        }
 
         let userMessage = Message(role: .user, text: trimmed)
-        let stream = sendMessageUseCase.send(message: userMessage, to: conversationID, model: selectedModel)
-        draftText = ""
-        streamingText = ""
+        let didStart = generationCoordinator.startGeneration(
+            message: userMessage,
+            to: conversationID,
+            model: selectedModel
+        )
 
-        do {
-            for try await token in stream {
-                streamingText = (streamingText ?? "") + token
-            }
-        } catch {
-            alert = PresentationAlert(
-                title: L10n.Chat.errorSendTitle,
-                message: error.localizedDescription
-            )
-            // Best-effort refresh — user message may have been persisted before the failure
-            do {
-                messages = try await loadRecentMessagesUseCase.loadRecentMessages(for: conversationID, limit: nil)
-            } catch { /* ignore secondary error */ }
+        guard didStart else { return }
+
+        messages.append(userMessage)
+        draftText = ""
+        applyGenerationState(generationCoordinator.state(for: conversationID))
+    }
+
+    private func applyGenerationState(_ state: MessageGenerationCoordinator.ConversationState?) {
+        guard let state else {
+            isSending = false
+            streamingText = nil
             return
         }
 
+        switch state.phase {
+        case .thinking:
+            isSending = true
+            streamingText = nil
+        case .streaming:
+            isSending = true
+            streamingText = state.streamedText.isEmpty ? nil : state.streamedText
+        case .completed:
+            isSending = false
+            streamingText = nil
+            handleTerminalStateIfNeeded(state)
+        case .failed:
+            isSending = false
+            streamingText = nil
+            handleTerminalStateIfNeeded(state)
+        }
+    }
+
+    private func handleTerminalStateIfNeeded(_ state: MessageGenerationCoordinator.ConversationState) {
+        guard let terminalEventID = state.terminalEventID, terminalEventID != lastHandledTerminalEventID else {
+            return
+        }
+
+        lastHandledTerminalEventID = terminalEventID
+
+        Task {
+            if state.phase == .failed {
+                alert = PresentationAlert(
+                    title: L10n.Chat.errorSendTitle,
+                    message: state.errorDescription ?? L10n.Errors.unknown
+                )
+            }
+
+            await refreshMessagesAfterGeneration()
+            generationCoordinator.clearTerminalState(for: conversationID, matching: terminalEventID)
+        }
+    }
+
+    private func refreshMessagesAfterGeneration() async {
         do {
             messages = try await loadRecentMessagesUseCase.loadRecentMessages(for: conversationID, limit: nil)
         } catch {

@@ -24,6 +24,7 @@ final class AppDependencies {
     let deleteConversationUseCase: DeleteConversationUseCase
     let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
     let sendMessageUseCase: SendMessageUseCase
+    let messageGenerationCoordinator: MessageGenerationCoordinator
 
     init(
         conversationRepository: ConversationRepository,
@@ -49,6 +50,9 @@ final class AppDependencies {
             conversationRepository: conversationRepository,
             engine: llmEngine,
             generateTitleUseCase: generateTitleUseCase
+        )
+        self.messageGenerationCoordinator = MessageGenerationCoordinator(
+            sendMessageUseCase: self.sendMessageUseCase
         )
     }
 
@@ -133,7 +137,7 @@ final class AppDependencies {
         ChatViewModel(
             conversationID: conversationID,
             loadRecentMessagesUseCase: loadRecentMessagesUseCase,
-            sendMessageUseCase: sendMessageUseCase
+            generationCoordinator: messageGenerationCoordinator
         )
     }
 }

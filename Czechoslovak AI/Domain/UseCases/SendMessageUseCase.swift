@@ -32,7 +32,12 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
 
     public func send(message: Message, to conversationID: UUID, model: LLMModel?) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
-            Task {
+            Task.detached(priority: .utility) { [weak self] in
+                guard let self else {
+                    continuation.finish()
+                    return
+                }
+
                 // Persist user message first
                 do {
                     try await repository.save(message: message, to: conversationID)
