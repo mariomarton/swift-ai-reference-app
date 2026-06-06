@@ -128,7 +128,8 @@ final class AppDependencies {
         ConversationsListViewModel(
             loadConversationsUseCase: loadConversationsUseCase,
             createConversationUseCase: createConversationUseCase,
-            deleteConversationUseCase: deleteConversationUseCase
+            deleteConversationUseCase: deleteConversationUseCase,
+            generationCoordinator: messageGenerationCoordinator
         )
     }
 

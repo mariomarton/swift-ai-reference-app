@@ -1,3 +1,4 @@
+import Combine
 import XCTest
 @testable import Czechoslovak_AI
 
@@ -31,16 +32,63 @@ private final class DeleteConversationUseCaseMock: DeleteConversationUseCase {
     }
 }
 
+private final class MessageGenerationCoordinatorMock: ConversationGenerationStateObserving {
+    @Published
+    private var states: [UUID: MessageGenerationCoordinator.ConversationState] = [:]
+
+    var statesPublisher: AnyPublisher<[UUID: MessageGenerationCoordinator.ConversationState], Never> {
+        $states.eraseToAnyPublisher()
+    }
+
+    func publishState(_ state: MessageGenerationCoordinator.ConversationState?, for conversationID: UUID) {
+        var updatedStates = states
+        if let state {
+            updatedStates[conversationID] = state
+        } else {
+            updatedStates.removeValue(forKey: conversationID)
+        }
+        states = updatedStates
+    }
+}
+
+private var retainedViewModels: [AnyObject] = []
+
+private func retainForTest(_ object: AnyObject) {
+    retainedViewModels.append(object)
+}
+
+@MainActor
+private func awaitGeneratingConversationIDs(
+    _ expected: Set<UUID>,
+    in sut: ConversationsListViewModel,
+    timeoutNanoseconds: UInt64 = 500_000_000
+) async {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: .nanoseconds(Int64(timeoutNanoseconds)))
+
+    while clock.now < deadline {
+        if sut.generatingConversationIDs == expected {
+            return
+        }
+
+        await Task.yield()
+    }
+
+    XCTFail("Timed out waiting for generatingConversationIDs to become \(expected)")
+}
+
 @MainActor
 private func makeViewModel(
     load: LoadConversationsUseCaseMock = .init(),
     create: CreateConversationUseCaseMock = .init(),
-    delete: DeleteConversationUseCaseMock = .init()
+    delete: DeleteConversationUseCaseMock = .init(),
+    coordinator: MessageGenerationCoordinatorMock? = nil
 ) -> ConversationsListViewModel {
     ConversationsListViewModel(
         loadConversationsUseCase: load,
         createConversationUseCase: create,
-        deleteConversationUseCase: delete
+        deleteConversationUseCase: delete,
+        generationCoordinator: coordinator
     )
 }
 
@@ -176,5 +224,84 @@ final class ConversationsListViewModelTests: XCTestCase {
         XCTAssertEqual(sut.conversations, [conv])
         XCTAssertNotNil(sut.alert)
         XCTAssertEqual(sut.alert?.isRetryable, false)
+    }
+
+    func testGeneratingConversationIDsReflectCoordinatorInProgressStates() async {
+        let coordinator = MessageGenerationCoordinatorMock()
+        let generatingID = UUID()
+        let idleID = UUID()
+
+        let sut = makeViewModel(coordinator: coordinator)
+
+        await Task.yield()
+
+        coordinator.publishState(
+            MessageGenerationCoordinator.ConversationState(
+                phase: .thinking,
+                streamedText: "",
+                errorDescription: nil,
+                terminalEventID: nil
+            ),
+            for: generatingID
+        )
+        coordinator.publishState(
+            MessageGenerationCoordinator.ConversationState(
+                phase: .completed,
+                streamedText: "",
+                errorDescription: nil,
+                terminalEventID: UUID()
+            ),
+            for: idleID
+        )
+
+        await awaitGeneratingConversationIDs([generatingID], in: sut)
+
+        XCTAssertEqual(sut.generatingConversationIDs, [generatingID])
+        XCTAssertTrue(sut.isGenerating(conversationID: generatingID))
+        XCTAssertFalse(sut.isGenerating(conversationID: idleID))
+
+        sut.stopGenerationObservation()
+        retainForTest(sut)
+    }
+
+    func testGeneratingConversationIDsClearOnTerminalAndRemovedStates() async {
+        let coordinator = MessageGenerationCoordinatorMock()
+        let conversationID = UUID()
+
+        let sut = makeViewModel(coordinator: coordinator)
+
+        await Task.yield()
+
+        coordinator.publishState(
+            MessageGenerationCoordinator.ConversationState(
+                phase: .streaming,
+                streamedText: "Ahoj",
+                errorDescription: nil,
+                terminalEventID: nil
+            ),
+            for: conversationID
+        )
+
+        await awaitGeneratingConversationIDs([conversationID], in: sut)
+
+        coordinator.publishState(
+            MessageGenerationCoordinator.ConversationState(
+                phase: .failed,
+                streamedText: "Ahoj",
+                errorDescription: "Interrupted",
+                terminalEventID: UUID()
+            ),
+            for: conversationID
+        )
+
+        await awaitGeneratingConversationIDs([], in: sut)
+
+        coordinator.publishState(nil, for: conversationID)
+
+        await awaitGeneratingConversationIDs([], in: sut)
+        XCTAssertFalse(sut.isGenerating(conversationID: conversationID))
+
+        sut.stopGenerationObservation()
+        retainForTest(sut)
     }
 }

@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import SwiftUI
 
 protocol MessageGenerationCoordinating: AnyObject {
     var statesPublisher: AnyPublisher<[UUID: MessageGenerationCoordinator.ConversationState], Never> { get }
@@ -9,11 +10,19 @@ protocol MessageGenerationCoordinating: AnyObject {
     @discardableResult
     func startGeneration(message: Message, to conversationID: UUID, model: LLMModel?) -> Bool
 
+    func interruptGeneration(for conversationID: UUID, errorDescription: String)
+    func handleScenePhaseChange(_ newPhase: ScenePhase)
+
     func clearTerminalState(for conversationID: UUID, matching terminalEventID: UUID?)
 }
 
 @MainActor
-final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoordinating {
+final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoordinating, ConversationGenerationStateObserving {
+    private struct TaskRecord {
+        let generationID: UUID
+        let task: Task<Void, Never>
+    }
+
     struct ConversationState: Equatable {
         enum Phase: Equatable {
             case thinking
@@ -44,14 +53,19 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
     }
 
     private let sendMessageUseCase: SendMessageUseCase
+    private let backgroundTaskManager: any BackgroundTaskManaging
     private let updateInterval: Duration
-    private var tasks: [UUID: Task<Void, Never>] = [:]
+    private var tasks: [UUID: TaskRecord] = [:]
+    private var scenePhase: ScenePhase = .active
+    private var activeBackgroundTaskConversationIDs: Set<UUID> = []
 
     init(
         sendMessageUseCase: SendMessageUseCase,
+        backgroundTaskManager: (any BackgroundTaskManaging)? = nil,
         updateInterval: Duration = .milliseconds(50)
     ) {
         self.sendMessageUseCase = sendMessageUseCase
+        self.backgroundTaskManager = backgroundTaskManager ?? UIKitBackgroundTaskManager()
         self.updateInterval = updateInterval
     }
 
@@ -63,6 +77,42 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         var updatedStates = states
         mutation(&updatedStates)
         states = updatedStates
+        reconcileBackgroundTasks()
+    }
+
+    private func reconcileBackgroundTasks() {
+        let activeConversationIDs = Set(states.compactMap { entry in
+            entry.value.isInProgress ? entry.key : nil
+        })
+
+        guard scenePhase == .background else {
+            for conversationID in activeBackgroundTaskConversationIDs {
+                backgroundTaskManager.endTask(for: conversationID)
+            }
+            activeBackgroundTaskConversationIDs.removeAll()
+            return
+        }
+
+        for conversationID in activeConversationIDs.subtracting(activeBackgroundTaskConversationIDs) {
+            let coordinator = self
+            let didBegin = backgroundTaskManager.beginTask(for: conversationID) {
+                Task { @MainActor in
+                    coordinator.interruptGeneration(
+                        for: conversationID,
+                        errorDescription: L10n.Chat.backgroundInterruptedMessage
+                    )
+                }
+            }
+
+            if didBegin {
+                activeBackgroundTaskConversationIDs.insert(conversationID)
+            }
+        }
+
+        for conversationID in activeBackgroundTaskConversationIDs.subtracting(activeConversationIDs) {
+            backgroundTaskManager.endTask(for: conversationID)
+            activeBackgroundTaskConversationIDs.remove(conversationID)
+        }
     }
 
     @discardableResult
@@ -70,6 +120,8 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         guard tasks[conversationID] == nil, !(states[conversationID]?.isInProgress ?? false) else {
             return false
         }
+
+        let generationID = UUID()
 
         updateStates { states in
             states[conversationID] = ConversationState(
@@ -84,7 +136,8 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         let updateInterval = self.updateInterval
         let stream = sendMessageUseCase.send(message: message, to: conversationID, model: model)
 
-        tasks[conversationID] = Task.detached(priority: .userInitiated) { [weak self] in
+        let task = Task.detached(priority: .userInitiated) { [weak self] in
+            guard let coordinator = self else { return }
             let clock = ContinuousClock()
 
             var bufferedText = ""
@@ -97,24 +150,57 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
                 let flushed = bufferedText
                 bufferedText = ""
                 lastFlush = clock.now
-                await self?.appendStreamedText(flushed, to: conversationID)
+                await coordinator.appendStreamedText(flushed, to: conversationID, generationID: generationID)
             }
 
             do {
                 for try await token in stream {
+                    try Task.checkCancellation()
                     bufferedText += token
                     await flushBuffer()
                 }
 
                 await flushBuffer(force: true)
-                await self?.markCompleted(for: conversationID)
+                await coordinator.markCompleted(for: conversationID, generationID: generationID)
+            } catch is CancellationError {
+                await flushBuffer(force: true)
             } catch {
                 await flushBuffer(force: true)
-                await self?.markFailed(for: conversationID, errorDescription: error.localizedDescription)
+                await coordinator.markFailed(
+                    for: conversationID,
+                    generationID: generationID,
+                    errorDescription: error.localizedDescription
+                )
             }
         }
 
+        tasks[conversationID] = TaskRecord(generationID: generationID, task: task)
+
         return true
+    }
+
+    func handleScenePhaseChange(_ newPhase: ScenePhase) {
+        scenePhase = newPhase
+        reconcileBackgroundTasks()
+    }
+
+    func interruptGeneration(for conversationID: UUID, errorDescription: String) {
+        guard let state = states[conversationID], state.isInProgress else {
+            return
+        }
+
+        let existing = states[conversationID]
+        let taskRecord = tasks.removeValue(forKey: conversationID)
+        taskRecord?.task.cancel()
+
+        updateStates { states in
+            states[conversationID] = ConversationState(
+                phase: .failed,
+                streamedText: existing?.streamedText ?? "",
+                errorDescription: errorDescription,
+                terminalEventID: UUID()
+            )
+        }
     }
 
     func clearTerminalState(for conversationID: UUID, matching terminalEventID: UUID? = nil) {
@@ -129,8 +215,9 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         }
     }
 
-    private func appendStreamedText(_ text: String, to conversationID: UUID) {
+    private func appendStreamedText(_ text: String, to conversationID: UUID, generationID: UUID) {
         guard !text.isEmpty else { return }
+        guard tasks[conversationID]?.generationID == generationID else { return }
 
         let existing = states[conversationID]
         let combinedText = (existing?.streamedText ?? "") + text
@@ -144,7 +231,9 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         }
     }
 
-    private func markCompleted(for conversationID: UUID) {
+    private func markCompleted(for conversationID: UUID, generationID: UUID) {
+        guard tasks[conversationID]?.generationID == generationID else { return }
+
         tasks[conversationID] = nil
         updateStates { states in
             states[conversationID] = ConversationState(
@@ -156,7 +245,9 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         }
     }
 
-    private func markFailed(for conversationID: UUID, errorDescription: String) {
+    private func markFailed(for conversationID: UUID, generationID: UUID, errorDescription: String) {
+        guard tasks[conversationID]?.generationID == generationID else { return }
+
         tasks[conversationID] = nil
         let existing = states[conversationID]
         updateStates { states in

@@ -18,7 +18,10 @@ struct ConversationsListView: View {
                     Button {
                         viewModel.selectConversation(id: conversation.id)
                     } label: {
-                        ConversationRowView(conversation: conversation)
+                        ConversationRowView(
+                            conversation: conversation,
+                            isGenerating: viewModel.isGenerating(conversationID: conversation.id)
+                        )
                     }
                     .buttonStyle(.plain)
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -93,6 +96,7 @@ struct ConversationsListView: View {
 
 private struct ConversationRowView: View {
     let conversation: Conversation
+    let isGenerating: Bool
 
     var body: some View {
         HStack(spacing: 14) {
@@ -117,9 +121,20 @@ private struct ConversationRowView: View {
 
             Spacer()
 
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.tertiary)
+            if isGenerating {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .controlSize(.small)
+
+                    Text(L10n.ConversationsList.generatingStatus)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(14)
         .background(

@@ -18,6 +18,7 @@ enum L10n {
         static var emptyStateTitle: String       { l("chat.emptyState.title",       "Zatiaľ bez správ") }
         static var emptyStateDescription: String { l("chat.emptyState.description", "Pošlite prvú správu a začnite konverzáciu.") }
         static var sendingIndicator: String      { l("chat.sendingIndicator",       "Asistent premýšľa...") }
+        static var backgroundInterruptedMessage: String { l("chat.backgroundInterrupted.message", "Generovanie bolo prerušené po presunutí aplikácie na pozadie.") }
         static var navigationTitle: String       { l("chat.navigationTitle",        "Chat") }
         static var loading: String               { l("chat.loading",                "Načítavam správy") }
         static var errorLoadTitle: String        { l("chat.error.load.title",       "Nepodarilo sa načítať správy") }
@@ -30,6 +31,7 @@ enum L10n {
         static var emptyStateDescription: String    { l("conversations.emptyState.description",  "Vytvorte prvý chat a začnite konverzáciu.") }
         static var navigationTitle: String          { l("conversations.navigationTitle",         "Konverzácie") }
         static var newConversationLabel: String     { l("conversations.newButton.label",         "Nová konverzácia") }
+        static var generatingStatus: String         { l("conversations.generating.status",       "Generuje...") }
         static var loading: String                  { l("conversations.loading",                 "Načítavam") }
         static var defaultConversationTitle: String { l("conversations.defaultTitle",            "Nový chat") }
         static var errorLoadTitle: String           { l("conversations.error.load.title",        "Nepodarilo sa načítať konverzácie") }

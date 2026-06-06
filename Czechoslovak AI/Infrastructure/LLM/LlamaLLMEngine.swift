@@ -167,7 +167,7 @@ public final class LlamaLLMEngine: LLMEngine {
         return AsyncThrowingStream { continuation in
             // Run inference off the calling actor so llama's CPU-bound work
             // does not block the main actor.
-            Task.detached(priority: .utility) {
+            let workerTask = Task.detached(priority: .utility) {
                 do {
                     let profile = Self.resolvePromptTemplateProfile(for: model, chatTemplate: modelChatTemplate)
                     let prompt = Self.formatPrompt(messages: messages, profile: profile)
@@ -181,11 +181,17 @@ public final class LlamaLLMEngine: LLMEngine {
                         maxGeneratedTokens: maxGeneratedTokens,
                         continuation: continuation
                     )
+                } catch is CancellationError {
+                    continuation.finish()
                 } catch let err as LlamaError {
                     continuation.finish(throwing: err)
                 } catch {
                     continuation.finish(throwing: LlamaError.inferenceFailed(error))
                 }
+            }
+
+            continuation.onTermination = { @Sendable _ in
+                workerTask.cancel()
             }
         }
     }
@@ -205,6 +211,8 @@ public final class LlamaLLMEngine: LLMEngine {
         let decodeYieldInterval = 4
 
         // ── 1. Tokenise ──────────────────────────────────────────────────────
+
+        try Task.checkCancellation()
 
         guard let vocab = llama_model_get_vocab(model) else {
             throw LlamaError.inferenceFailed(
@@ -254,6 +262,7 @@ public final class LlamaLLMEngine: LLMEngine {
         defer { llama_batch_free(batch) }
 
         for range in prefillChunkRanges(totalTokens: tokens.count, batchSize: batchCapacity) {
+            try Task.checkCancellation()
             batch.n_tokens = 0
             for i in range {
                 appendToken(&batch, token: tokens[i], pos: Int32(i),
@@ -298,6 +307,7 @@ public final class LlamaLLMEngine: LLMEngine {
         // ── 5. Auto-regressive decode loop ───────────────────────────────────
 
         for generatedTokenCount in 0 ..< maxNew {
+            try Task.checkCancellation()
             let newToken = llama_sampler_sample(sampler, context, -1)
             llama_sampler_accept(sampler, newToken)
 

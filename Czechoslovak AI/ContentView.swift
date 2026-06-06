@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     private let dependencies: AppDependencies
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel: ConversationsListViewModel
     @State private var path: [AppRoute] = []
 
@@ -36,6 +37,9 @@ struct ContentView: View {
             }
 
             viewModel.selectedConversationID = nil
+        }
+        .onChange(of: scenePhase) { _, newValue in
+            dependencies.messageGenerationCoordinator.handleScenePhaseChange(newValue)
         }
     }
 }

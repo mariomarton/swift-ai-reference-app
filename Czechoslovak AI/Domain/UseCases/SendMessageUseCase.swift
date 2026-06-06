@@ -32,7 +32,7 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
 
     public func send(message: Message, to conversationID: UUID, model: LLMModel?) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
-            Task.detached(priority: .utility) { [weak self] in
+            let workerTask = Task.detached(priority: .utility) { [weak self] in
                 guard let self else {
                     continuation.finish()
                     return
@@ -40,7 +40,11 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
 
                 // Persist user message first
                 do {
+                    try Task.checkCancellation()
                     try await repository.save(message: message, to: conversationID)
+                } catch is CancellationError {
+                    continuation.finish()
+                    return
                 } catch {
                     continuation.finish(throwing: DomainError.repositoryError(error))
                     return
@@ -56,7 +60,11 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
                 // Load full conversation history so the engine has context
                 let history: [Message]
                 do {
+                    try Task.checkCancellation()
                     history = try await repository.loadMessages(for: conversationID)
+                } catch is CancellationError {
+                    continuation.finish()
+                    return
                 } catch {
                     continuation.finish(throwing: DomainError.repositoryError(error))
                     return
@@ -66,9 +74,13 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
                 var accumulated = ""
                 do {
                     for try await token in engine.generateResponse(for: history, model: model) {
+                        try Task.checkCancellation()
                         accumulated += token
                         continuation.yield(token)
                     }
+                } catch is CancellationError {
+                    continuation.finish()
+                    return
                 } catch {
                     continuation.finish(throwing: DomainError.engineError(error))
                     return
@@ -76,12 +88,19 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
 
                 // Persist completed assistant message
                 do {
+                    try Task.checkCancellation()
                     let assistantMessage = Message(role: .assistant, text: accumulated)
                     try await repository.save(message: assistantMessage, to: conversationID)
+                    continuation.finish()
+                } catch is CancellationError {
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: DomainError.repositoryError(error))
                 }
+            }
+
+            continuation.onTermination = { @Sendable _ in
+                workerTask.cancel()
             }
         }
     }

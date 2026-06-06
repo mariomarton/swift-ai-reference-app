@@ -1,4 +1,5 @@
 import Combine
+import SwiftUI
 import XCTest
 @testable import Czechoslovak_AI
 
@@ -65,6 +66,20 @@ private final class MessageGenerationCoordinatorMock: MessageGenerationCoordinat
 
         return true
     }
+
+    func interruptGeneration(for conversationID: UUID, errorDescription: String) {
+        publishState(
+            ConversationState(
+                phase: .failed,
+                streamedText: statesSubject.value[conversationID]?.streamedText ?? "",
+                errorDescription: errorDescription,
+                terminalEventID: UUID()
+            ),
+            for: conversationID
+        )
+    }
+
+    func handleScenePhaseChange(_ newPhase: ScenePhase) {}
 
     func clearTerminalState(for conversationID: UUID, matching terminalEventID: UUID?) {
         clearCalls.append((conversationID, terminalEventID))
@@ -336,10 +351,12 @@ final class ChatViewModelTests: XCTestCase {
         ]
         loadMock.onLoad = { _, _ in expectedMessages }
 
-        let coordinator = MessageGenerationCoordinator(
-            sendMessageUseCase: sendMock,
-            updateInterval: .zero
-        )
+        let coordinator = await MainActor.run {
+            MessageGenerationCoordinator(
+                sendMessageUseCase: sendMock,
+                updateInterval: .zero
+            )
+        }
 
         let sut = ChatViewModel(
             conversationID: conversationID,

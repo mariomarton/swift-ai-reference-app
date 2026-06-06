@@ -1,4 +1,5 @@
 import Combine
+import SwiftUI
 import XCTest
 @testable import Czechoslovak_AI
 
@@ -12,6 +13,29 @@ private final class ControllableSendMessageUseCaseMock: SendMessageUseCase {
         return AsyncThrowingStream { continuation in
             self.continuation = continuation
         }
+    }
+}
+
+@MainActor
+private final class BackgroundTaskManagerMock: BackgroundTaskManaging {
+    private(set) var beginCalls: [UUID] = []
+    private(set) var endCalls: [UUID] = []
+    private var expirationHandlers: [UUID: @Sendable () -> Void] = [:]
+
+    @discardableResult
+    func beginTask(for conversationID: UUID, expirationHandler: @escaping @Sendable () -> Void) -> Bool {
+        beginCalls.append(conversationID)
+        expirationHandlers[conversationID] = expirationHandler
+        return true
+    }
+
+    func endTask(for conversationID: UUID) {
+        endCalls.append(conversationID)
+        expirationHandlers.removeValue(forKey: conversationID)
+    }
+
+    func triggerExpiration(for conversationID: UUID) {
+        expirationHandlers[conversationID]?()
     }
 }
 
@@ -61,7 +85,9 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
 
     func testStartGenerationTransitionsThroughThinkingStreamingAndCompleted() async {
         let useCase = ControllableSendMessageUseCaseMock()
-        let sut = MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        }
         let conversationID = UUID()
 
         let didStart = sut.startGeneration(
@@ -97,7 +123,9 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
 
     func testStatesPublisherEmitsStreamingAndCompletedUpdates() async {
         let useCase = ControllableSendMessageUseCaseMock()
-        let sut = MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        }
         let conversationID = UUID()
 
         let didStart = sut.startGeneration(
@@ -130,9 +158,100 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
         XCTAssertNotNil(completedState?.terminalEventID)
     }
 
+    func testBackgroundSceneBeginsTaskForActiveGeneration() async {
+        let useCase = ControllableSendMessageUseCaseMock()
+        let backgroundTaskManager = BackgroundTaskManagerMock()
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(
+                sendMessageUseCase: useCase,
+                backgroundTaskManager: backgroundTaskManager,
+                updateInterval: .zero
+            )
+        }
+        let conversationID = UUID()
+
+        let didStart = sut.startGeneration(
+            message: Message(role: .user, text: "Ahoj"),
+            to: conversationID,
+            model: nil
+        )
+
+        XCTAssertTrue(didStart)
+
+        sut.handleScenePhaseChange(.background)
+
+        XCTAssertEqual(backgroundTaskManager.beginCalls, [conversationID])
+    }
+
+    func testTerminalStateEndsBackgroundTaskWhileBackgrounded() async {
+        let useCase = ControllableSendMessageUseCaseMock()
+        let backgroundTaskManager = BackgroundTaskManagerMock()
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(
+                sendMessageUseCase: useCase,
+                backgroundTaskManager: backgroundTaskManager,
+                updateInterval: .zero
+            )
+        }
+        let conversationID = UUID()
+
+        let didStart = sut.startGeneration(
+            message: Message(role: .user, text: "Ahoj"),
+            to: conversationID,
+            model: nil
+        )
+        XCTAssertTrue(didStart)
+
+        sut.handleScenePhaseChange(.background)
+        useCase.continuation?.finish()
+
+        let completedState = await awaitConversationState(
+            for: conversationID,
+            in: sut,
+            where: { $0?.phase == .completed }
+        )
+
+        XCTAssertEqual(completedState?.phase, .completed)
+        XCTAssertEqual(backgroundTaskManager.endCalls, [conversationID])
+    }
+
+    func testBackgroundTaskExpirationInterruptsGeneration() async {
+        let useCase = ControllableSendMessageUseCaseMock()
+        let backgroundTaskManager = BackgroundTaskManagerMock()
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(
+                sendMessageUseCase: useCase,
+                backgroundTaskManager: backgroundTaskManager,
+                updateInterval: .zero
+            )
+        }
+        let conversationID = UUID()
+
+        let didStart = sut.startGeneration(
+            message: Message(role: .user, text: "Ahoj"),
+            to: conversationID,
+            model: nil
+        )
+        XCTAssertTrue(didStart)
+
+        sut.handleScenePhaseChange(.background)
+        backgroundTaskManager.triggerExpiration(for: conversationID)
+
+        let failedState = await awaitConversationState(
+            for: conversationID,
+            in: sut,
+            where: { $0?.phase == .failed }
+        )
+
+        XCTAssertEqual(failedState?.errorDescription, L10n.Chat.backgroundInterruptedMessage)
+        XCTAssertEqual(backgroundTaskManager.endCalls, [conversationID])
+    }
+
     func testStartGenerationRejectsDuplicateInFlightGeneration() async {
         let useCase = ControllableSendMessageUseCaseMock()
-        let sut = MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        }
         let conversationID = UUID()
 
         let first = sut.startGeneration(
