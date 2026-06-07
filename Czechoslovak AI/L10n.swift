@@ -19,6 +19,12 @@ enum L10n {
         static var emptyStateDescription: String { l("chat.emptyState.description", "Pošlite prvú správu a začnite konverzáciu.") }
         static var sendingIndicator: String      { l("chat.sendingIndicator",       "Asistent premýšľa...") }
         static var backgroundInterruptedMessage: String { l("chat.backgroundInterrupted.message", "Generovanie bolo prerušené po presunutí aplikácie na pozadie.") }
+        static var interruptedByNewConversationMessage: String { l("chat.interruptedByNewConversation.message", "Generovanie bolo zastavené, pretože ste spustili novú odpoveď v inom chate.") }
+        static var generationConflictMessage: String { l("chat.generationConflict.message", "Prebieha generovanie v inom chate. Počkajte kým skončí alebo ho zastavte.") }
+        static var generationConflictWaitAction: String { l("chat.generationConflict.waitAction", "Počkať") }
+        static var generationConflictStopAndSendAction: String { l("chat.generationConflict.stopAndSendAction", "Zastaviť a pokračovať tu") }
+        static var stopAction: String { l("chat.stopAction", "Zastaviť") }
+        static var userStoppedGenerationMessage: String { l("chat.userStoppedGeneration.message", "Generovanie bolo zastavené používateľom.") }
         static var navigationTitle: String       { l("chat.navigationTitle",        "Chat") }
         static var loading: String               { l("chat.loading",                "Načítavam správy") }
         static var errorLoadTitle: String        { l("chat.error.load.title",       "Nepodarilo sa načítať správy") }
@@ -48,6 +54,23 @@ enum L10n {
 
     enum Composer {
         static var placeholder: String { l("composer.placeholder", "Napíšte správu") }
+        static var stopAccessibilityLabel: String { l("composer.stop.accessibilityLabel", "Zastaviť generovanie") }
+        static var sendAccessibilityLabel: String { l("composer.send.accessibilityLabel", "Odoslať správu") }
+    }
+
+    enum Settings {
+        static var navigationTitle: String { l("settings.navigationTitle", "Nastavenia") }
+        static var modeTitle: String { l("settings.mode.title", "Režim odpovede") }
+        static var modeFooter: String { l("settings.mode.footer", "Režim pridáva krátku inštrukciu k systémovému promptu.") }
+        static var modeNone: String { l("settings.mode.none", "Bez režimu") }
+        static var modeConcise: String { l("settings.mode.concise", "Stručný") }
+        static var modeFriendly: String { l("settings.mode.friendly", "Priateľský") }
+        static var modeHumorous: String { l("settings.mode.humorous", "Vtipný") }
+        static var systemPromptTitle: String { l("settings.systemPrompt.title", "Systémový prompt") }
+        static var systemPromptFooter: String { l("settings.systemPrompt.footer", "Tento prompt sa použije pre všetky nové správy.") }
+        static var customInstructionsTitle: String { l("settings.customInstructions.title", "Dodatočné inštrukcie") }
+        static var customInstructionsFooter: String { l("settings.customInstructions.footer", "Použite na štýl, obmedzenia alebo preferencie odpovedí.") }
+        static var resetAction: String { l("settings.reset.action", "Obnoviť predvolené") }
     }
 
     enum MessageActions {

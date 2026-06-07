@@ -20,11 +20,23 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ConversationsListView(viewModel: viewModel)
+            ConversationsListView(
+                viewModel: viewModel,
+                onSettingsTapped: {
+                    path.append(.settings)
+                }
+            )
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
                     case .chat(let conversationID):
-                        ChatView(viewModel: dependencies.makeChatViewModel(conversationID: conversationID))
+                        ChatView(
+                            viewModel: dependencies.makeChatViewModel(conversationID: conversationID),
+                            onSettingsTapped: {
+                                path.append(.settings)
+                            }
+                        )
+                    case .settings:
+                        SettingsView(viewModel: dependencies.makeSettingsViewModel())
                     }
                 }
         }

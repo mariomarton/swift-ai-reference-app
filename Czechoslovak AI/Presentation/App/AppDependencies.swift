@@ -17,6 +17,7 @@ enum AppDependenciesError: LocalizedError {
 final class AppDependencies {
     let conversationRepository: ConversationRepository
     let messageRepository: MessageRepository
+    let promptSettingsRepository: PromptSettingsRepository
     let llmEngine: LLMEngine
 
     let createConversationUseCase: CreateConversationUseCase
@@ -29,10 +30,12 @@ final class AppDependencies {
     init(
         conversationRepository: ConversationRepository,
         messageRepository: MessageRepository,
+        promptSettingsRepository: PromptSettingsRepository,
         llmEngine: LLMEngine
     ) {
         self.conversationRepository = conversationRepository
         self.messageRepository = messageRepository
+        self.promptSettingsRepository = promptSettingsRepository
         self.llmEngine = llmEngine
 
         self.createConversationUseCase = DefaultCreateConversationUseCase(repository: conversationRepository)
@@ -49,6 +52,7 @@ final class AppDependencies {
             repository: messageRepository,
             conversationRepository: conversationRepository,
             engine: llmEngine,
+            promptSettingsRepository: promptSettingsRepository,
             generateTitleUseCase: generateTitleUseCase
         )
         self.messageGenerationCoordinator = MessageGenerationCoordinator(
@@ -59,6 +63,7 @@ final class AppDependencies {
     convenience init() throws {
         let conversationRepository = try FileBackedConversationRepository()
         let messageRepository = try FileBackedMessageRepository()
+        let promptSettingsRepository = UserDefaultsPromptSettingsRepository()
         let llmEngine: LLMEngine
 
         #if targetEnvironment(simulator)
@@ -91,6 +96,7 @@ final class AppDependencies {
         self.init(
             conversationRepository: conversationRepository,
             messageRepository: messageRepository,
+            promptSettingsRepository: promptSettingsRepository,
             llmEngine: llmEngine
         )
     }
@@ -140,5 +146,10 @@ final class AppDependencies {
             loadRecentMessagesUseCase: loadRecentMessagesUseCase,
             generationCoordinator: messageGenerationCoordinator
         )
+    }
+
+    @MainActor
+    func makeSettingsViewModel() -> SettingsViewModel {
+        SettingsViewModel(repository: promptSettingsRepository)
     }
 }

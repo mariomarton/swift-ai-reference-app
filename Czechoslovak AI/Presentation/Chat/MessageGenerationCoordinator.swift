@@ -2,13 +2,26 @@ import Combine
 import Foundation
 import SwiftUI
 
+enum MessageGenerationStartResult: Equatable {
+    case started
+    case blocked(activeConversationID: UUID)
+}
+
 protocol MessageGenerationCoordinating: AnyObject {
     var statesPublisher: AnyPublisher<[UUID: MessageGenerationCoordinator.ConversationState], Never> { get }
 
     func state(for conversationID: UUID) -> MessageGenerationCoordinator.ConversationState?
 
     @discardableResult
-    func startGeneration(message: Message, to conversationID: UUID, model: LLMModel?) -> Bool
+    func startGeneration(message: Message, to conversationID: UUID, model: LLMModel?) -> MessageGenerationStartResult
+
+    @discardableResult
+    func stopActiveGenerationAndStart(
+        message: Message,
+        to conversationID: UUID,
+        model: LLMModel?,
+        interruptionErrorDescription: String
+    ) -> MessageGenerationStartResult
 
     func interruptGeneration(for conversationID: UUID, errorDescription: String)
     func handleScenePhaseChange(_ newPhase: ScenePhase)
@@ -115,12 +128,11 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         }
     }
 
-    @discardableResult
-    func startGeneration(message: Message, to conversationID: UUID, model: LLMModel?) -> Bool {
-        guard tasks[conversationID] == nil, !(states[conversationID]?.isInProgress ?? false) else {
-            return false
-        }
+    private func activeGenerationConversationID() -> UUID? {
+        states.first(where: { $0.value.isInProgress })?.key
+    }
 
+    private func beginGeneration(message: Message, to conversationID: UUID, model: LLMModel?) {
         let generationID = UUID()
 
         updateStates { states in
@@ -142,14 +154,23 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
 
             var bufferedText = ""
             var lastFlush = clock.now
+            var hasPublishedStreaming = false
 
             func flushBuffer(force: Bool = false) async {
                 guard !bufferedText.isEmpty else { return }
-                guard force || lastFlush.duration(to: clock.now) >= updateInterval else { return }
+
+                let now = clock.now
+                let elapsed = lastFlush.duration(to: now)
+                let shouldFlushByInterval = updateInterval <= .zero || elapsed >= updateInterval
+
+                // Always publish the first streamed fragment immediately so the UI
+                // switches from thinking to streaming as soon as generation starts.
+                guard force || !hasPublishedStreaming || shouldFlushByInterval else { return }
 
                 let flushed = bufferedText
                 bufferedText = ""
-                lastFlush = clock.now
+                lastFlush = now
+                hasPublishedStreaming = true
                 await coordinator.appendStreamedText(flushed, to: conversationID, generationID: generationID)
             }
 
@@ -175,8 +196,30 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         }
 
         tasks[conversationID] = TaskRecord(generationID: generationID, task: task)
+    }
 
-        return true
+    @discardableResult
+    func startGeneration(message: Message, to conversationID: UUID, model: LLMModel?) -> MessageGenerationStartResult {
+        if let activeConversationID = activeGenerationConversationID() {
+            return .blocked(activeConversationID: activeConversationID)
+        }
+
+        beginGeneration(message: message, to: conversationID, model: model)
+        return .started
+    }
+
+    @discardableResult
+    func stopActiveGenerationAndStart(
+        message: Message,
+        to conversationID: UUID,
+        model: LLMModel?,
+        interruptionErrorDescription: String
+    ) -> MessageGenerationStartResult {
+        if let activeConversationID = activeGenerationConversationID(), activeConversationID != conversationID {
+            interruptGeneration(for: activeConversationID, errorDescription: interruptionErrorDescription)
+        }
+
+        return startGeneration(message: message, to: conversationID, model: model)
     }
 
     func handleScenePhaseChange(_ newPhase: ScenePhase) {

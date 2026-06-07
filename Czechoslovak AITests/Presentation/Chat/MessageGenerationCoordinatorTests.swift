@@ -90,13 +90,13 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
         }
         let conversationID = UUID()
 
-        let didStart = sut.startGeneration(
+        let startResult = sut.startGeneration(
             message: Message(role: .user, text: "Ahoj"),
             to: conversationID,
             model: nil
         )
 
-        XCTAssertTrue(didStart)
+        XCTAssertEqual(startResult, .started)
         XCTAssertEqual(sut.state(for: conversationID)?.phase, .thinking)
 
         useCase.continuation?.yield("Reply")
@@ -128,13 +128,13 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
         }
         let conversationID = UUID()
 
-        let didStart = sut.startGeneration(
+        let startResult = sut.startGeneration(
             message: Message(role: .user, text: "Ahoj"),
             to: conversationID,
             model: nil
         )
 
-        XCTAssertTrue(didStart)
+        XCTAssertEqual(startResult, .started)
 
         useCase.continuation?.yield("Reply")
 
@@ -170,13 +170,13 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
         }
         let conversationID = UUID()
 
-        let didStart = sut.startGeneration(
+        let startResult = sut.startGeneration(
             message: Message(role: .user, text: "Ahoj"),
             to: conversationID,
             model: nil
         )
 
-        XCTAssertTrue(didStart)
+        XCTAssertEqual(startResult, .started)
 
         sut.handleScenePhaseChange(.background)
 
@@ -195,12 +195,12 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
         }
         let conversationID = UUID()
 
-        let didStart = sut.startGeneration(
+        let startResult = sut.startGeneration(
             message: Message(role: .user, text: "Ahoj"),
             to: conversationID,
             model: nil
         )
-        XCTAssertTrue(didStart)
+        XCTAssertEqual(startResult, .started)
 
         sut.handleScenePhaseChange(.background)
         useCase.continuation?.finish()
@@ -227,12 +227,12 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
         }
         let conversationID = UUID()
 
-        let didStart = sut.startGeneration(
+        let startResult = sut.startGeneration(
             message: Message(role: .user, text: "Ahoj"),
             to: conversationID,
             model: nil
         )
-        XCTAssertTrue(didStart)
+        XCTAssertEqual(startResult, .started)
 
         sut.handleScenePhaseChange(.background)
         backgroundTaskManager.triggerExpiration(for: conversationID)
@@ -265,8 +265,8 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
             model: nil
         )
 
-        XCTAssertTrue(first)
-        XCTAssertFalse(second)
+        XCTAssertEqual(first, .started)
+        XCTAssertEqual(second, .blocked(activeConversationID: conversationID))
         XCTAssertEqual(useCase.calls.count, 1)
 
         useCase.continuation?.finish()
@@ -278,5 +278,142 @@ final class MessageGenerationCoordinatorTests: XCTestCase {
         )
 
         XCTAssertEqual(completedState?.phase, .completed)
+    }
+
+    func testStartGenerationBlocksOtherConversationWhileOneIsInFlight() async {
+        let useCase = ControllableSendMessageUseCaseMock()
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        }
+        let firstConversationID = UUID()
+        let secondConversationID = UUID()
+
+        let first = sut.startGeneration(
+            message: Message(role: .user, text: "First"),
+            to: firstConversationID,
+            model: nil
+        )
+        let second = sut.startGeneration(
+            message: Message(role: .user, text: "Second"),
+            to: secondConversationID,
+            model: nil
+        )
+
+        XCTAssertEqual(first, .started)
+        XCTAssertEqual(second, .blocked(activeConversationID: firstConversationID))
+        XCTAssertEqual(useCase.calls.count, 1)
+        XCTAssertEqual(useCase.calls.first?.1, firstConversationID)
+    }
+
+    func testStopActiveGenerationAndStartInterruptsPreviousConversation() async {
+        let useCase = ControllableSendMessageUseCaseMock()
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        }
+        let firstConversationID = UUID()
+        let secondConversationID = UUID()
+
+        let first = sut.startGeneration(
+            message: Message(role: .user, text: "First"),
+            to: firstConversationID,
+            model: nil
+        )
+        XCTAssertEqual(first, .started)
+
+        let second = sut.stopActiveGenerationAndStart(
+            message: Message(role: .user, text: "Second"),
+            to: secondConversationID,
+            model: nil,
+            interruptionErrorDescription: "Interrupted"
+        )
+        XCTAssertEqual(second, .started)
+
+        let interruptedState = await awaitConversationState(
+            for: firstConversationID,
+            in: sut,
+            where: { $0?.phase == .failed }
+        )
+        XCTAssertEqual(interruptedState?.errorDescription, "Interrupted")
+
+        let secondThinking = sut.state(for: secondConversationID)
+        XCTAssertEqual(secondThinking?.phase, .thinking)
+        XCTAssertEqual(useCase.calls.count, 2)
+        XCTAssertEqual(useCase.calls.last?.1, secondConversationID)
+    }
+
+    func testInterruptGenerationWhileThinkingTransitionsToFailed() async {
+        let useCase = ControllableSendMessageUseCaseMock()
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        }
+        let conversationID = UUID()
+
+        let start = sut.startGeneration(
+            message: Message(role: .user, text: "Ahoj"),
+            to: conversationID,
+            model: nil
+        )
+        XCTAssertEqual(start, .started)
+        XCTAssertEqual(sut.state(for: conversationID)?.phase, .thinking)
+
+        sut.interruptGeneration(for: conversationID, errorDescription: "Stopped")
+
+        let failedState = await awaitConversationState(
+            for: conversationID,
+            in: sut,
+            where: { $0?.phase == .failed }
+        )
+
+        XCTAssertEqual(failedState?.errorDescription, "Stopped")
+        XCTAssertEqual(failedState?.streamedText, "")
+        XCTAssertNotNil(failedState?.terminalEventID)
+    }
+
+    func testInterruptGenerationWhileStreamingPreservesPartialText() async {
+        let useCase = ControllableSendMessageUseCaseMock()
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        }
+        let conversationID = UUID()
+
+        let start = sut.startGeneration(
+            message: Message(role: .user, text: "Ahoj"),
+            to: conversationID,
+            model: nil
+        )
+        XCTAssertEqual(start, .started)
+
+        useCase.continuation?.yield("Par")
+        useCase.continuation?.yield("cial")
+
+        _ = await awaitConversationState(
+            for: conversationID,
+            in: sut,
+            where: { $0?.phase == .streaming && $0?.streamedText == "Parcial" }
+        )
+
+        sut.interruptGeneration(for: conversationID, errorDescription: "Stopped")
+
+        let failedState = await awaitConversationState(
+            for: conversationID,
+            in: sut,
+            where: { $0?.phase == .failed }
+        )
+
+        XCTAssertEqual(failedState?.streamedText, "Parcial")
+        XCTAssertEqual(failedState?.errorDescription, "Stopped")
+    }
+
+    func testInterruptGenerationIsNoOpWhenConversationIsIdle() async {
+        let useCase = ControllableSendMessageUseCaseMock()
+        let sut = await MainActor.run {
+            MessageGenerationCoordinator(sendMessageUseCase: useCase, updateInterval: .zero)
+        }
+        let conversationID = UUID()
+
+        sut.interruptGeneration(for: conversationID, errorDescription: "Stopped")
+
+        XCTAssertNil(sut.state(for: conversationID))
+        XCTAssertEqual(useCase.calls.count, 0)
     }
 }

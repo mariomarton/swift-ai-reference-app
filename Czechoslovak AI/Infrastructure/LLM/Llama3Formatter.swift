@@ -13,7 +13,7 @@ import Foundation
 ///
 struct Llama3Formatter {
 
-    nonisolated static let defaultSystemPrompt = "Si užitočný asistent. Odpovedaj jasne a stručne."
+    nonisolated static let defaultSystemPrompt = PromptSettings.defaultSystemPrompt
 
     nonisolated static func format(_ messages: [Message]) -> String {
         var result = "<|begin_of_text|>"

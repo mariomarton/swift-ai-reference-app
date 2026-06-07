@@ -5,9 +5,11 @@ import UIKit
 
 struct ChatView: View {
     @StateObject private var viewModel: ChatViewModel
+    let onSettingsTapped: () -> Void
 
-    init(viewModel: ChatViewModel) {
+    init(viewModel: ChatViewModel, onSettingsTapped: @escaping () -> Void) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onSettingsTapped = onSettingsTapped
     }
 
     var body: some View {
@@ -52,10 +54,40 @@ struct ChatView: View {
             }
             .navigationTitle(L10n.Chat.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        onSettingsTapped()
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel(L10n.Settings.navigationTitle)
+                }
+            }
             .safeAreaInset(edge: .bottom) {
-                ComposerView(text: $viewModel.draftText, isSending: viewModel.isSending) {
-                    Task {
-                        await viewModel.sendMessage()
+                VStack(spacing: 10) {
+                    if viewModel.generationConflictPrompt != nil {
+                        GenerationConflictBannerView(
+                            message: L10n.Chat.generationConflictMessage,
+                            waitActionTitle: L10n.Chat.generationConflictWaitAction,
+                            stopAndSendActionTitle: L10n.Chat.generationConflictStopAndSendAction,
+                            onWait: {
+                                viewModel.dismissGenerationConflictPrompt()
+                            },
+                            onStopAndSend: {
+                                viewModel.stopCurrentAndSendHere()
+                            }
+                        )
+                    }
+
+                    ComposerView(text: $viewModel.draftText, isSending: viewModel.isSending) {
+                        if viewModel.isSending {
+                            viewModel.stopGeneration()
+                        } else {
+                            Task {
+                                await viewModel.sendMessage()
+                            }
+                        }
                     }
                 }
             }
@@ -106,6 +138,38 @@ struct ChatView: View {
         #if canImport(UIKit)
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         #endif
+    }
+}
+
+private struct GenerationConflictBannerView: View {
+    let message: String
+    let waitActionTitle: String
+    let stopAndSendActionTitle: String
+    let onWait: () -> Void
+    let onStopAndSend: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(message)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 10) {
+                Button(waitActionTitle, action: onWait)
+                    .buttonStyle(.bordered)
+
+                Button(stopAndSendActionTitle, action: onStopAndSend)
+                    .buttonStyle(.borderedProminent)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .padding(.horizontal, 16)
     }
 }
 

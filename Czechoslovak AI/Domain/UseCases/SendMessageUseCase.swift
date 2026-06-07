@@ -16,23 +16,26 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
     private let repository: MessageRepository
     private let conversationRepository: ConversationRepository
     private let engine: LLMEngine
+    private let promptSettingsRepository: PromptSettingsRepository?
     private let generateTitleUseCase: GenerateConversationTitleUseCase?
 
     public init(
         repository: MessageRepository,
         conversationRepository: ConversationRepository,
         engine: LLMEngine,
+        promptSettingsRepository: PromptSettingsRepository? = nil,
         generateTitleUseCase: GenerateConversationTitleUseCase? = nil
     ) {
         self.repository = repository
         self.conversationRepository = conversationRepository
         self.engine = engine
+        self.promptSettingsRepository = promptSettingsRepository
         self.generateTitleUseCase = generateTitleUseCase
     }
 
     public func send(message: Message, to conversationID: UUID, model: LLMModel?) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
-            let workerTask = Task.detached(priority: .utility) { [weak self] in
+            let workerTask = Task(priority: .utility) { [weak self] in
                 guard let self else {
                     continuation.finish()
                     return
@@ -57,6 +60,9 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
                     model: model
                 )
 
+                let settings = promptSettingsRepository?.loadSettings() ?? PromptSettings()
+                let systemMessage = Message(role: .system, text: settings.composedSystemPrompt)
+
                 // Load full conversation history so the engine has context
                 let history: [Message]
                 do {
@@ -70,10 +76,12 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
                     return
                 }
 
+                let messagesForEngine = history.first?.role == .system ? history : [systemMessage] + history
+
                 // Stream tokens from engine, accumulating the full response for persistence
                 var accumulated = ""
                 do {
-                    for try await token in engine.generateResponse(for: history, model: model) {
+                    for try await token in engine.generateResponse(for: messagesForEngine, model: model) {
                         try Task.checkCancellation()
                         accumulated += token
                         continuation.yield(token)
@@ -89,7 +97,8 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
                 // Persist completed assistant message
                 do {
                     try Task.checkCancellation()
-                    let assistantMessage = Message(role: .assistant, text: accumulated)
+                    let assistantText = accumulated
+                    let assistantMessage = Message(role: .assistant, text: assistantText)
                     try await repository.save(message: assistantMessage, to: conversationID)
                     continuation.finish()
                 } catch is CancellationError {

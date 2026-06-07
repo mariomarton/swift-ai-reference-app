@@ -66,18 +66,32 @@ final class MockLLMEngine: LLMEngine {
     }
 }
 
+private final class MockPromptSettingsRepository: PromptSettingsRepository {
+    var settings: PromptSettings = PromptSettings()
+
+    func loadSettings() -> PromptSettings {
+        settings
+    }
+
+    func saveSettings(_ settings: PromptSettings) {
+        self.settings = settings
+    }
+}
+
 // MARK: - Helpers
 
 private func makeSendUseCase(
     messageRepo: MockMessageRepository = MockMessageRepository(),
     conversationRepo: MockConversationRepository = MockConversationRepository(),
     engine: MockLLMEngine = MockLLMEngine(),
+    promptSettingsRepo: PromptSettingsRepository? = nil,
     titleUseCase: GenerateConversationTitleUseCase? = nil
 ) -> DefaultSendMessageUseCase {
     DefaultSendMessageUseCase(
         repository: messageRepo,
         conversationRepository: conversationRepo,
         engine: engine,
+        promptSettingsRepository: promptSettingsRepo,
         generateTitleUseCase: titleUseCase
     )
 }
@@ -105,9 +119,12 @@ final class SendMessageUseCaseTests: XCTestCase {
         XCTAssertEqual(messages[1].text, "Ahoj! Ako môžem pomôcť?")
         XCTAssertEqual(messages[1].role, .assistant)
 
-        // Engine should have received the full history at call time (just the user message here)
+        // Engine should have received the full history with the default system prompt prepended.
         XCTAssertEqual(engine.capturedContexts.count, 1)
-        XCTAssertEqual(engine.capturedContexts[0], [user])
+        XCTAssertEqual(engine.capturedContexts[0].count, 2)
+        XCTAssertEqual(engine.capturedContexts[0][0].role, .system)
+        XCTAssertEqual(engine.capturedContexts[0][0].text, PromptSettings.defaultSystemPrompt)
+        XCTAssertEqual(engine.capturedContexts[0][1], user)
     }
 
     func testEngineErrorIsWrapped() async throws {
@@ -155,13 +172,14 @@ final class SendMessageUseCaseTests: XCTestCase {
         let newUserMessage = Message(role: .user, text: "Druhá otázka")
         for try await _ in useCase.send(message: newUserMessage, to: conversationID, model: nil) {}
 
-        // Engine must receive all three messages: the two prior turns + the new user message
+        // Engine must receive the full history with the default system prompt prepended.
         XCTAssertEqual(engine.capturedContexts.count, 1)
         let context = engine.capturedContexts[0]
-        XCTAssertEqual(context.count, 3)
-        XCTAssertEqual(context[0], prior1)
-        XCTAssertEqual(context[1], prior2)
-        XCTAssertEqual(context[2], newUserMessage)
+        XCTAssertEqual(context.count, 4)
+        XCTAssertEqual(context[0].role, .system)
+        XCTAssertEqual(context[1], prior1)
+        XCTAssertEqual(context[2], prior2)
+        XCTAssertEqual(context[3], newUserMessage)
     }
 
     func testMessagesIsolatedByConversation() async throws {
@@ -185,6 +203,9 @@ final class SendMessageUseCaseTests: XCTestCase {
         XCTAssertEqual(repo.stored[conv2]?.count, 2)
         XCTAssertEqual(repo.stored[conv1]?[0].text, "Conversation 1")
         XCTAssertEqual(repo.stored[conv2]?[0].text, "Conversation 2")
+        XCTAssertEqual(engine.capturedContexts.count, 2)
+        XCTAssertEqual(engine.capturedContexts[0].first?.role, .system)
+        XCTAssertEqual(engine.capturedContexts[1].first?.role, .system)
     }
 
     // MARK: - Auto-title orchestration
@@ -267,5 +288,35 @@ final class SendMessageUseCaseTests: XCTestCase {
         for try await _ in useCase.send(message: user, to: conv.id, model: nil) {}
 
         XCTAssertNil(convRepo.conversations.first?.title)
+    }
+
+    func testConfiguredPromptSettingsArePrependedToConversationHistory() async throws {
+        let messageRepo = MockMessageRepository()
+        let engine = MockLLMEngine()
+        let promptRepo = MockPromptSettingsRepository()
+        promptRepo.settings = PromptSettings(
+            systemPrompt: "Be direct.",
+            customInstructions: "Use bullets.",
+            tonePreset: .friendly
+        )
+
+        let useCase = makeSendUseCase(
+            messageRepo: messageRepo,
+            engine: engine,
+            promptSettingsRepo: promptRepo
+        )
+
+        let conversationID = UUID()
+        let user = Message(role: .user, text: "Hello")
+        for try await _ in useCase.send(message: user, to: conversationID, model: nil) {}
+
+        XCTAssertEqual(engine.capturedContexts.count, 1)
+        let context = engine.capturedContexts[0]
+        XCTAssertEqual(context.count, 2)
+        XCTAssertEqual(context[0].role, .system)
+        XCTAssertTrue(context[0].text.contains("Be direct."))
+        XCTAssertTrue(context[0].text.contains("Use a warm, friendly tone."))
+        XCTAssertTrue(context[0].text.contains("Use bullets."))
+        XCTAssertEqual(context[1], user)
     }
 }

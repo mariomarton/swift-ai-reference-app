@@ -35,8 +35,11 @@ private final class MessageGenerationCoordinatorMock: MessageGenerationCoordinat
     private let statesSubject = CurrentValueSubject<[UUID: ConversationState], Never>([:])
 
     private(set) var startCalls: [(Message, UUID, LLMModel?)] = []
+    private(set) var stopAndStartCalls: [(Message, UUID, LLMModel?, String)] = []
+    private(set) var interruptedConversations: [(UUID, String)] = []
+    private(set) var interruptCalls: [(UUID, String)] = []
     private(set) var clearCalls: [(UUID, UUID?)] = []
-    var startGenerationResult = true
+    var startGenerationResult: MessageGenerationStartResult = .started
 
     var statesPublisher: AnyPublisher<[UUID: ConversationState], Never> {
         statesSubject.eraseToAnyPublisher()
@@ -47,11 +50,11 @@ private final class MessageGenerationCoordinatorMock: MessageGenerationCoordinat
     }
 
     @discardableResult
-    func startGeneration(message: Message, to conversationID: UUID, model: LLMModel?) -> Bool {
+    func startGeneration(message: Message, to conversationID: UUID, model: LLMModel?) -> MessageGenerationStartResult {
         startCalls.append((message, conversationID, model))
 
-        guard startGenerationResult else {
-            return false
+        guard startGenerationResult == .started else {
+            return startGenerationResult
         }
 
         publishState(
@@ -64,10 +67,38 @@ private final class MessageGenerationCoordinatorMock: MessageGenerationCoordinat
             for: conversationID
         )
 
-        return true
+        return .started
+    }
+
+    @discardableResult
+    func stopActiveGenerationAndStart(
+        message: Message,
+        to conversationID: UUID,
+        model: LLMModel?,
+        interruptionErrorDescription: String
+    ) -> MessageGenerationStartResult {
+        stopAndStartCalls.append((message, conversationID, model, interruptionErrorDescription))
+
+        if case .blocked(let activeConversationID) = startGenerationResult,
+           activeConversationID != conversationID {
+            interruptedConversations.append((activeConversationID, interruptionErrorDescription))
+            publishState(
+                ConversationState(
+                    phase: .failed,
+                    streamedText: "",
+                    errorDescription: interruptionErrorDescription,
+                    terminalEventID: UUID()
+                ),
+                for: activeConversationID
+            )
+            startGenerationResult = .started
+        }
+
+        return startGeneration(message: message, to: conversationID, model: model)
     }
 
     func interruptGeneration(for conversationID: UUID, errorDescription: String) {
+        interruptCalls.append((conversationID, errorDescription))
         publishState(
             ConversationState(
                 phase: .failed,
@@ -315,6 +346,105 @@ final class ChatViewModelTests: XCTestCase {
         XCTAssertEqual(coordinator.startCalls.count, 0)
         XCTAssertEqual(loadMock.calls.count, 0)
         XCTAssertFalse(sut.isSending)
+    }
+
+    func testSendMessageWhenBlockedShowsGenerationConflictPrompt() async {
+        let conversationID = UUID()
+        let foreignConversationID = UUID()
+        let loadMock = LoadRecentMessagesUseCaseMock()
+        let coordinator = MessageGenerationCoordinatorMock()
+        coordinator.startGenerationResult = .blocked(activeConversationID: foreignConversationID)
+
+        let sut = makeSUT(conversationID: conversationID, loadMock: loadMock, coordinator: coordinator)
+        sut.draftText = "Ahoj"
+
+        await sut.sendMessage()
+
+        XCTAssertEqual(sut.messages.count, 0)
+        XCTAssertEqual(sut.draftText, "Ahoj")
+        XCTAssertEqual(sut.generationConflictPrompt?.activeConversationID, foreignConversationID)
+        XCTAssertFalse(sut.isSending)
+    }
+
+    func testStopCurrentAndSendHereStartsPendingMessage() async {
+        let conversationID = UUID()
+        let foreignConversationID = UUID()
+        let loadMock = LoadRecentMessagesUseCaseMock()
+        let coordinator = MessageGenerationCoordinatorMock()
+        coordinator.startGenerationResult = .blocked(activeConversationID: foreignConversationID)
+
+        let sut = makeSUT(conversationID: conversationID, loadMock: loadMock, coordinator: coordinator)
+        sut.draftText = "Ahoj"
+
+        await sut.sendMessage()
+
+        XCTAssertNotNil(sut.generationConflictPrompt)
+
+        sut.stopCurrentAndSendHere()
+
+        XCTAssertNil(sut.generationConflictPrompt)
+        XCTAssertEqual(sut.messages.count, 1)
+        XCTAssertEqual(sut.messages.first?.text, "Ahoj")
+        XCTAssertEqual(sut.draftText, "")
+        XCTAssertTrue(sut.isSending)
+        XCTAssertEqual(coordinator.stopAndStartCalls.count, 1)
+        XCTAssertEqual(coordinator.stopAndStartCalls.first?.1, conversationID)
+        XCTAssertEqual(coordinator.interruptedConversations.count, 1)
+        XCTAssertEqual(coordinator.interruptedConversations.first?.0, foreignConversationID)
+    }
+
+    func testStopGenerationInterruptsCurrentConversationWithoutAlert() async {
+        let conversationID = UUID()
+        let loadMock = LoadRecentMessagesUseCaseMock()
+        let coordinator = MessageGenerationCoordinatorMock()
+
+        let sut = makeSUT(conversationID: conversationID, loadMock: loadMock, coordinator: coordinator)
+        sut.draftText = "Ahoj"
+
+        await sut.sendMessage()
+        XCTAssertTrue(sut.isSending)
+
+        coordinator.publishState(
+            MessageGenerationCoordinator.ConversationState(
+                phase: .streaming,
+                streamedText: "Partial",
+                errorDescription: nil,
+                terminalEventID: nil
+            ),
+            for: conversationID
+        )
+
+        sut.stopGeneration()
+
+        await waitUntil { !sut.isSending }
+        await waitUntil { coordinator.clearCalls.count == 1 }
+
+        XCTAssertEqual(coordinator.interruptCalls.count, 1)
+        XCTAssertEqual(coordinator.interruptCalls.first?.0, conversationID)
+        XCTAssertEqual(coordinator.interruptCalls.first?.1, L10n.Chat.userStoppedGenerationMessage)
+        XCTAssertNil(sut.alert)
+    }
+
+    func testSendMessageWorksImmediatelyAfterStopGeneration() async {
+        let conversationID = UUID()
+        let loadMock = LoadRecentMessagesUseCaseMock()
+        let coordinator = MessageGenerationCoordinatorMock()
+
+        let sut = makeSUT(conversationID: conversationID, loadMock: loadMock, coordinator: coordinator)
+        sut.draftText = "Prvá"
+
+        await sut.sendMessage()
+        XCTAssertTrue(sut.isSending)
+
+        sut.stopGeneration()
+        await waitUntil { !sut.isSending }
+
+        sut.draftText = "Druhá"
+        await sut.sendMessage()
+
+        XCTAssertEqual(coordinator.startCalls.count, 2)
+        XCTAssertEqual(sut.messages.last?.text, "Druhá")
+        XCTAssertTrue(sut.isSending)
     }
 
     func testViewModelRestoresInProgressStreamingStateFromCoordinator() async {

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConversationsListView: View {
     @ObservedObject var viewModel: ConversationsListViewModel
+    let onSettingsTapped: () -> Void
 
     var body: some View {
         List {
@@ -45,6 +46,15 @@ struct ConversationsListView: View {
         .accessibilityIdentifier("conversationsList")
         .navigationTitle(L10n.ConversationsList.navigationTitle)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    onSettingsTapped()
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .accessibilityLabel(L10n.Settings.navigationTitle)
+            }
+
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Task {

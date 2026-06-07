@@ -483,7 +483,7 @@ public final class LlamaLLMEngine: LLMEngine {
     struct StreamOutputPolicy {
         private let stopSequences: [String]
         private let controlMarkers: [String]
-        private let holdbackLength: Int
+        private let maxMarkerLength: Int
         private let ngramLength = 16
         private let ngramThreshold = 4
         private let ngramWindowLength = 600
@@ -494,10 +494,10 @@ public final class LlamaLLMEngine: LLMEngine {
         init(profile: PromptTemplateProfile) {
             self.stopSequences = profile.stopSequences
             self.controlMarkers = profile.controlMarkers
-            self.holdbackLength = max(
+            self.maxMarkerLength = max(
                 1,
                 (stopSequences + controlMarkers).map(\.count).max() ?? 1
-            ) - 1
+            )
         }
 
         mutating func process(piece: String) -> (output: String, shouldStop: Bool) {
@@ -514,6 +514,8 @@ public final class LlamaLLMEngine: LLMEngine {
                 return (sanitizedOutput, true)
             }
 
+            let holdbackLength = trailingPotentialMarkerPrefixLength(in: buffer)
+
             guard buffer.count > holdbackLength else {
                 return ("", false)
             }
@@ -526,6 +528,23 @@ public final class LlamaLLMEngine: LLMEngine {
                 return ("", true)
             }
             return (sanitizedOutput, false)
+        }
+
+        private func trailingPotentialMarkerPrefixLength(in text: String) -> Int {
+            guard !text.isEmpty else { return 0 }
+
+            let markers = stopSequences + controlMarkers
+            let maxCandidateLength = min(maxMarkerLength - 1, text.count)
+            guard maxCandidateLength > 0 else { return 0 }
+
+            for length in stride(from: maxCandidateLength, through: 1, by: -1) {
+                let suffix = String(text.suffix(length))
+                if markers.contains(where: { $0.hasPrefix(suffix) }) {
+                    return length
+                }
+            }
+
+            return 0
         }
 
         mutating func finish() -> String {
