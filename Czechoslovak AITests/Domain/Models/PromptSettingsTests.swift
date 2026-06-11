@@ -16,7 +16,7 @@ final class PromptSettingsTests: XCTestCase {
         )
 
         XCTAssertTrue(settings.composedSystemPrompt.contains("Be helpful."))
-        XCTAssertTrue(settings.composedSystemPrompt.contains("Answer briefly and directly."))
+        XCTAssertTrue(settings.composedSystemPrompt.contains(L10n.PromptSettings.toneConcise))
         XCTAssertTrue(settings.composedSystemPrompt.contains("Prefer Czech."))
     }
 }

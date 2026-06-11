@@ -18,17 +18,17 @@ public enum LlamaError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .modelNotFound(let path):
-            return "Model file not found at path: \(path)"
+            return L10n.Llama.modelNotFound(path: path)
         case .modelLoadFailed:
-            return "Failed to load model — the file may be corrupted or in an unsupported format."
+            return L10n.Llama.modelLoadFailed
         case .unsupportedModelArchitecture(let description):
-            return "Unsupported model architecture: \(description). Use a decoder-only instruct/chat GGUF model."
+            return L10n.Llama.unsupportedModelArchitecture(description: description)
         case .contextCreationFailed:
-            return "Failed to create inference context — the device may not have enough memory."
+            return L10n.Llama.contextCreationFailed
         case .tokenizationFailed:
-            return "Failed to tokenise the input prompt."
+            return L10n.Llama.tokenizationFailed
         case .inferenceFailed(let err):
-            return "Inference failed: \(err.localizedDescription)"
+            return L10n.Llama.inferenceFailed(err.localizedDescription)
         }
     }
 }

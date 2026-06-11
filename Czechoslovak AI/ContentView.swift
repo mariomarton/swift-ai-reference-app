@@ -60,6 +60,6 @@ struct ContentView: View {
     if let dependencies = try? AppDependencies() {
         ContentView(dependencies: dependencies)
     } else {
-        Text("Preview unavailable")
+        Text(L10n.App.previewUnavailable)
     }
 }

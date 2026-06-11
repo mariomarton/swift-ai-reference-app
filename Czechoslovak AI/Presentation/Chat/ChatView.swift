@@ -118,16 +118,16 @@ struct ChatView: View {
                     Alert(
                         title: Text(alert.title),
                         message: Text(alert.message),
-                        primaryButton: .default(Text("Zopakovať")) {
+                        primaryButton: .default(Text(L10n.Common.retry)) {
                             Task { await viewModel.loadMessages() }
                         },
-                        secondaryButton: .cancel(Text("Zrušiť"))
+                        secondaryButton: .cancel(Text(L10n.Common.cancel))
                     )
                 } else {
                     Alert(
                         title: Text(alert.title),
                         message: Text(alert.message),
-                        dismissButton: .default(Text("OK"))
+                        dismissButton: .default(Text(L10n.Common.ok))
                     )
                 }
             }

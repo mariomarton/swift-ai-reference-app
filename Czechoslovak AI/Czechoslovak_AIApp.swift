@@ -34,7 +34,7 @@ private struct AppLaunchErrorView: View {
 
     var body: some View {
         ContentUnavailableView(
-            "App Failed to Start",
+            L10n.App.failedToStartTitle,
             systemImage: "exclamationmark.triangle",
             description: Text(error.localizedDescription)
         )

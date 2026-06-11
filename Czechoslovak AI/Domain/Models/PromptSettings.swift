@@ -13,17 +13,19 @@ public enum PromptTonePreset: String, Codable, CaseIterable, Identifiable, Hasha
         case .none:
             return nil
         case .concise:
-            return "Answer briefly and directly."
+            return L10n.PromptSettings.toneConcise
         case .friendly:
-            return "Use a warm, friendly tone."
+            return L10n.PromptSettings.toneFriendly
         case .humorous:
-            return "Add light, tasteful humor when appropriate."
+            return L10n.PromptSettings.toneHumorous
         }
     }
 }
 
 public struct PromptSettings: Codable, Equatable {
-    public static let defaultSystemPrompt = "Si užitočný asistent. Odpovedaj jasne a stručne."
+    public static var defaultSystemPrompt: String {
+        L10n.PromptSettings.defaultSystemPrompt
+    }
 
     public var systemPrompt: String
     public var customInstructions: String

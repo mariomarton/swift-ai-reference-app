@@ -7,9 +7,9 @@ enum AppDependenciesError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .modelNotConfigured:
-            return "No GGUF model was found. Provide a bundled .gguf model or set LLAMA_MODEL_PATH in your Run scheme environment."
+            return L10n.AppDependencies.modelNotConfigured
         case .llamaInitializationFailed(let underlying):
-            return "Failed to initialize local LLM: \(underlying.localizedDescription)"
+            return L10n.AppDependencies.llamaInitializationFailed(underlying.localizedDescription)
         }
     }
 }
