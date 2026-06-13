@@ -6,25 +6,33 @@ protocol ConversationGenerationStateObserving: AnyObject {
 }
 
 @MainActor
-final class ConversationsListViewModel: ObservableObject {
+final class ConversationsListViewModel: ObservableObject, SidebarConversationsManaging {
     @Published private(set) var conversations: [Conversation] = []
     @Published private(set) var generatingConversationIDs: Set<UUID> = []
+    @Published var searchText: String = ""
     @Published var selectedConversationID: UUID?
     @Published private(set) var isLoading = false
     @Published var alert: PresentationAlert?
     
     private let loadConversationsUseCase: LoadConversationsUseCase
+    private let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
+    private let searchConversationsUseCase: SearchConversationsUseCase
     private let createConversationUseCase: CreateConversationUseCase
     private let deleteConversationUseCase: DeleteConversationUseCase
     private var generationObservationTask: Task<Void, Never>?
+    private var searchableMessagesByConversationID: [UUID: [Message]] = [:]
     
     init(
         loadConversationsUseCase: LoadConversationsUseCase,
+        loadRecentMessagesUseCase: LoadRecentMessagesUseCase,
+        searchConversationsUseCase: SearchConversationsUseCase,
         createConversationUseCase: CreateConversationUseCase,
         deleteConversationUseCase: DeleteConversationUseCase,
         generationCoordinator: (any ConversationGenerationStateObserving)? = nil
     ) {
         self.loadConversationsUseCase = loadConversationsUseCase
+        self.loadRecentMessagesUseCase = loadRecentMessagesUseCase
+        self.searchConversationsUseCase = searchConversationsUseCase
         self.createConversationUseCase = createConversationUseCase
         self.deleteConversationUseCase = deleteConversationUseCase
 
@@ -48,6 +56,27 @@ final class ConversationsListViewModel: ObservableObject {
     func isGenerating(conversationID: UUID) -> Bool {
         generatingConversationIDs.contains(conversationID)
     }
+
+    var displayedConversations: [Conversation] {
+        let searchableConversations = conversations.map { conversation in
+            var enrichedConversation = conversation
+            if let messages = searchableMessagesByConversationID[conversation.id] {
+                enrichedConversation.messages = messages
+            }
+            return enrichedConversation
+        }
+
+        let matchedIDs = Set(
+            searchConversationsUseCase.execute(conversations: searchableConversations, query: searchText)
+                .map(\.id)
+        )
+
+        return conversations.filter { matchedIDs.contains($0.id) }
+    }
+
+    var hasActiveSearch: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
     
     func loadConversations() async {
         guard !isLoading else { return }
@@ -56,7 +85,9 @@ final class ConversationsListViewModel: ObservableObject {
         defer { isLoading = false }
         
         do {
-            conversations = try await loadConversationsUseCase.execute()
+            let loadedConversations = try await loadConversationsUseCase.execute()
+            searchableMessagesByConversationID = await loadSearchableMessages(for: loadedConversations)
+            conversations = loadedConversations
         } catch {
             alert = PresentationAlert(
                 title: L10n.ConversationsList.errorLoadTitle,
@@ -72,6 +103,7 @@ final class ConversationsListViewModel: ObservableObject {
         do {
             let created = try await createConversationUseCase.execute(title: title)
             conversations.insert(created, at: 0)
+            searchableMessagesByConversationID[created.id] = []
             selectedConversationID = created.id
         } catch {
             alert = PresentationAlert(
@@ -88,7 +120,9 @@ final class ConversationsListViewModel: ObservableObject {
     func deleteConversation(id: UUID) async {
         // Optimistic removal: update UI immediately, roll back if the operation fails
         let snapshot = conversations
+        let messageSnapshot = searchableMessagesByConversationID
         conversations.removeAll { $0.id == id }
+        searchableMessagesByConversationID.removeValue(forKey: id)
         if selectedConversationID == id {
             selectedConversationID = nil
         }
@@ -97,10 +131,20 @@ final class ConversationsListViewModel: ObservableObject {
             try await deleteConversationUseCase.execute(id: id)
         } catch {
             conversations = snapshot
+            searchableMessagesByConversationID = messageSnapshot
             alert = PresentationAlert(
                 title: L10n.ConversationsList.errorDeleteTitle,
                 message: error.localizedDescription
             )
         }
+    }
+
+    private func loadSearchableMessages(for conversations: [Conversation]) async -> [UUID: [Message]] {
+        var messageIndex: [UUID: [Message]] = [:]
+        for conversation in conversations {
+            let messages = (try? await loadRecentMessagesUseCase.loadRecentMessages(for: conversation.id, limit: nil)) ?? []
+            messageIndex[conversation.id] = messages
+        }
+        return messageIndex
     }
 }

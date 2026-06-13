@@ -18,6 +18,7 @@ final class AppDependencies {
     let conversationRepository: ConversationRepository
     let messageRepository: MessageRepository
     let promptSettingsRepository: PromptSettingsRepository
+    let searchConversationsUseCase: SearchConversationsUseCase
     let llmEngine: LLMEngine
 
     let createConversationUseCase: CreateConversationUseCase
@@ -36,6 +37,7 @@ final class AppDependencies {
         self.conversationRepository = conversationRepository
         self.messageRepository = messageRepository
         self.promptSettingsRepository = promptSettingsRepository
+        self.searchConversationsUseCase = DefaultSearchConversationsUseCase()
         self.llmEngine = llmEngine
 
         self.createConversationUseCase = DefaultCreateConversationUseCase(repository: conversationRepository)
@@ -133,6 +135,8 @@ final class AppDependencies {
     func makeConversationsListViewModel() -> ConversationsListViewModel {
         ConversationsListViewModel(
             loadConversationsUseCase: loadConversationsUseCase,
+            loadRecentMessagesUseCase: loadRecentMessagesUseCase,
+            searchConversationsUseCase: searchConversationsUseCase,
             createConversationUseCase: createConversationUseCase,
             deleteConversationUseCase: deleteConversationUseCase,
             generationCoordinator: messageGenerationCoordinator

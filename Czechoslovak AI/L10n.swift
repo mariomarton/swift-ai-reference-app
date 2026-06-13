@@ -25,6 +25,8 @@ enum L10n {
         static var stopAction: String { l("chat.stopAction", "Stop") }
         static var userStoppedGenerationMessage: String { l("chat.userStoppedGeneration.message", "Generation was stopped by the user.") }
         static var navigationTitle: String { l("chat.navigationTitle", "Chat") }
+        static var openSidebarLabel: String { l("chat.openSidebar.label", "Open conversations") }
+        static var searchConversationsLabel: String { l("chat.searchConversations.label", "Search conversations") }
         static var loading: String { l("chat.loading", "Loading messages") }
         static var errorLoadTitle: String { l("chat.error.load.title", "Could not load messages") }
         static var errorSendTitle: String { l("chat.error.send.title", "Could not send message") }
@@ -33,11 +35,14 @@ enum L10n {
 
     enum ConversationsList {
         static var emptyStateTitle: String { l("conversations.emptyState.title", "No conversations yet") }
-        static var emptyStateDescription: String { l("conversations.emptyState.description", "Create your first chat and start the conversation.") }
+        static var emptyStateDescription: String { l("conversations.emptyState.description", "Create your first conversation and start chatting.") }
+        static var searchPrompt: String { l("conversations.search.prompt", "Search conversations") }
+        static var searchEmptyTitle: String { l("conversations.search.empty.title", "No results found") }
+        static var searchEmptyDescription: String { l("conversations.search.empty.description", "Try a different conversation name or message.") }
         static var navigationTitle: String { l("conversations.navigationTitle", "Conversations") }
         static var newConversationLabel: String { l("conversations.newButton.label", "New conversation") }
         static var generatingStatus: String { l("conversations.generating.status", "Generating...") }
-        static var loading: String { l("conversations.loading", "Loading") }
+        static var loading: String { l("conversations.loading", "Loading...") }
         static var defaultConversationTitle: String { l("conversations.defaultTitle", "New chat") }
         static var errorLoadTitle: String { l("conversations.error.load.title", "Could not load conversations") }
         static var errorCreateTitle: String { l("conversations.error.create.title", "Could not create conversation") }

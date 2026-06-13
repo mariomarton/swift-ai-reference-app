@@ -18,11 +18,14 @@
 "chat.error.send.title" = "Nepodarilo sa odoslať správu";
 "chat.error.refresh.title" = "Nepodarilo sa obnoviť správy";
 "conversations.emptyState.title" = "Zatiaľ žiadne konverzácie";
-"conversations.emptyState.description" = "Vytvorte prvý chat a začnite konverzáciu.";
+"conversations.emptyState.description" = "Vytvorte prvú konverzáciu a začnite chatovať.";
+"conversations.search.prompt" = "Hľadať konverzácie";
+"conversations.search.empty.title" = "Nenašli sa žiadne výsledky";
+"conversations.search.empty.description" = "Skúste iný názov konverzácie alebo text správy.";
 "conversations.navigationTitle" = "Konverzácie";
 "conversations.newButton.label" = "Nová konverzácia";
 "conversations.generating.status" = "Generuje...";
-"conversations.loading" = "Načítavam";
+"conversations.loading" = "Načítavam...";
 "conversations.defaultTitle" = "Nový chat";
 "conversations.error.load.title" = "Nepodarilo sa načítať konverzácie";
 "conversations.error.create.title" = "Nepodarilo sa vytvoriť konverzáciu";

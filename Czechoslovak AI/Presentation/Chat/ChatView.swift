@@ -5,10 +5,16 @@ import UIKit
 
 struct ChatView: View {
     @StateObject private var viewModel: ChatViewModel
+    let onSearchTapped: () -> Void
     let onSettingsTapped: () -> Void
 
-    init(viewModel: ChatViewModel, onSettingsTapped: @escaping () -> Void) {
+    init(
+        viewModel: ChatViewModel,
+        onSearchTapped: @escaping () -> Void,
+        onSettingsTapped: @escaping () -> Void
+    ) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onSearchTapped = onSearchTapped
         self.onSettingsTapped = onSettingsTapped
     }
 
@@ -56,12 +62,10 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        onSettingsTapped()
-                    } label: {
-                        Image(systemName: "gearshape")
-                    }
-                    .accessibilityLabel(L10n.Settings.navigationTitle)
+                    ChatTopBarActionsView(
+                        onSearchTapped: onSearchTapped,
+                        onSettingsTapped: onSettingsTapped
+                    )
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -138,6 +142,37 @@ struct ChatView: View {
         #if canImport(UIKit)
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         #endif
+    }
+}
+
+private struct ChatTopBarActionsView: View {
+    let onSearchTapped: () -> Void
+    let onSettingsTapped: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button {
+                onSearchTapped()
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.body.weight(.semibold))
+            }
+            .accessibilityLabel(L10n.Chat.searchConversationsLabel)
+            .accessibilityIdentifier("searchConversationsButton")
+
+            Button {
+                onSettingsTapped()
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.body.weight(.semibold))
+            }
+            .accessibilityLabel(L10n.Settings.navigationTitle)
+            .accessibilityIdentifier("openSettingsButton")
+        }
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: Capsule())
     }
 }
 

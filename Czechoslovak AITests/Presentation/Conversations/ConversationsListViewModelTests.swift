@@ -22,6 +22,16 @@ private final class CreateConversationUseCaseMock: CreateConversationUseCase {
     }
 }
 
+private final class LoadRecentMessagesUseCaseMock: LoadRecentMessagesUseCase {
+    var messagesByConversationID: [UUID: [Message]] = [:]
+    private(set) var calls: [(UUID, Int?)] = []
+
+    func loadRecentMessages(for conversationID: UUID, limit: Int?) async throws -> [Message] {
+        calls.append((conversationID, limit))
+        return messagesByConversationID[conversationID] ?? []
+    }
+}
+
 private final class DeleteConversationUseCaseMock: DeleteConversationUseCase {
     var shouldThrow = false
     private(set) var deletedIDs: [UUID] = []
@@ -80,12 +90,16 @@ private func awaitGeneratingConversationIDs(
 @MainActor
 private func makeViewModel(
     load: LoadConversationsUseCaseMock = .init(),
+    loadRecentMessages: LoadRecentMessagesUseCaseMock = .init(),
+    search: SearchConversationsUseCase? = nil,
     create: CreateConversationUseCaseMock = .init(),
     delete: DeleteConversationUseCaseMock = .init(),
     coordinator: MessageGenerationCoordinatorMock? = nil
 ) -> ConversationsListViewModel {
     ConversationsListViewModel(
         loadConversationsUseCase: load,
+        loadRecentMessagesUseCase: loadRecentMessages,
+        searchConversationsUseCase: search ?? DefaultSearchConversationsUseCase(),
         createConversationUseCase: create,
         deleteConversationUseCase: delete,
         generationCoordinator: coordinator
@@ -107,6 +121,24 @@ final class ConversationsListViewModelTests: XCTestCase {
         XCTAssertEqual(sut.conversations, expected)
         XCTAssertNil(sut.alert)
         XCTAssertFalse(sut.isLoading)
+    }
+
+    func testSearchTextFiltersDisplayedConversations() async {
+        let loadMock = LoadConversationsUseCaseMock()
+        let messagesMock = LoadRecentMessagesUseCaseMock()
+        let matching = Conversation(title: "Travel")
+        let other = Conversation(title: "Work", messages: [Message(role: .user, text: "Quarterly planning")])
+        messagesMock.messagesByConversationID[matching.id] = [Message(role: .user, text: "Paris itinerary")]
+        messagesMock.messagesByConversationID[other.id] = [Message(role: .user, text: "Quarterly planning")]
+        loadMock.result = .success([matching, other])
+
+        let sut = makeViewModel(load: loadMock, loadRecentMessages: messagesMock)
+
+        await sut.loadConversations()
+        sut.searchText = "paris"
+
+        XCTAssertEqual(sut.displayedConversations, [matching])
+        XCTAssertTrue(sut.hasActiveSearch)
     }
 
     func testLoadConversationsFailureSetsAlert() async {

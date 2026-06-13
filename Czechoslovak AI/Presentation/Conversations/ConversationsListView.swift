@@ -2,20 +2,29 @@ import SwiftUI
 
 struct ConversationsListView: View {
     @ObservedObject var viewModel: ConversationsListViewModel
-    let onSettingsTapped: () -> Void
 
     var body: some View {
         List {
-            if viewModel.conversations.isEmpty, !viewModel.isLoading {
-                ContentUnavailableView(
-                    L10n.ConversationsList.emptyStateTitle,
-                    systemImage: "bubble.left.and.text.bubble.right",
-                    description: Text(L10n.ConversationsList.emptyStateDescription)
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+            if viewModel.displayedConversations.isEmpty, !viewModel.isLoading {
+                if viewModel.hasActiveSearch {
+                    ContentUnavailableView(
+                        L10n.ConversationsList.searchEmptyTitle,
+                        systemImage: "magnifyingglass",
+                        description: Text(L10n.ConversationsList.searchEmptyDescription)
+                    )
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                } else {
+                    ContentUnavailableView(
+                        L10n.ConversationsList.emptyStateTitle,
+                        systemImage: "bubble.left.and.text.bubble.right",
+                        description: Text(L10n.ConversationsList.emptyStateDescription)
+                    )
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                }
             } else {
-                ForEach(viewModel.conversations) { conversation in
+                ForEach(viewModel.displayedConversations) { conversation in
                     Button {
                         viewModel.selectConversation(id: conversation.id)
                     } label: {
@@ -45,16 +54,8 @@ struct ConversationsListView: View {
         .background(Color(.systemBackground))
         .accessibilityIdentifier("conversationsList")
         .navigationTitle(L10n.ConversationsList.navigationTitle)
+        .searchable(text: $viewModel.searchText, prompt: Text(L10n.ConversationsList.searchPrompt))
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    onSettingsTapped()
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .accessibilityLabel(L10n.Settings.navigationTitle)
-            }
-
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Task {
