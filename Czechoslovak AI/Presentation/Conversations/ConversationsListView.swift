@@ -58,9 +58,7 @@ struct ConversationsListView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    Task {
-                        await viewModel.createConversation(title: nil)
-                    }
+                    _ = viewModel.startConversation()
                 } label: {
                     Image(systemName: "square.and.pencil")
                 }

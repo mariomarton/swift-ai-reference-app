@@ -47,8 +47,15 @@ public actor FileBackedConversationRepository: ConversationRepository {
         }
     }
 
-    public func createConversation(title: String?) async throws -> Conversation {
-        let conversation = await Conversation(title: title)
+    public func createConversation(id: UUID, title: String?) async throws -> Conversation {
+        let conversation = await Conversation(
+            id: id,
+            title: title,
+            messages: [],
+            selectedModel: nil,
+            createdAt: .init(),
+            updatedAt: .init()
+        )
         cache.append(conversation)
         do {
             try writeCacheToDisk()

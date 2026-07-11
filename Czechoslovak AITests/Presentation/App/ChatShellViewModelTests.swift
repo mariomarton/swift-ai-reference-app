@@ -5,14 +5,13 @@ import XCTest
 @MainActor
 private final class SidebarConversationsManagerMock: SidebarConversationsManaging {
     var selectedConversationID: UUID?
-    var createdConversationID: UUID?
-    private(set) var createCallsCount = 0
-    private(set) var receivedTitles: [String?] = []
+    var conversationIDToStart = UUID()
+    private(set) var startCallsCount = 0
 
-    func createConversation(title: String?) async {
-        createCallsCount += 1
-        receivedTitles.append(title)
-        selectedConversationID = createdConversationID
+    func startConversation() -> UUID {
+        startCallsCount += 1
+        selectedConversationID = conversationIDToStart
+        return conversationIDToStart
     }
 }
 
@@ -21,13 +20,12 @@ final class ChatShellViewModelTests: XCTestCase {
     func testBootstrapCreatesConversationAndSelectsDetail() async {
         let manager = SidebarConversationsManagerMock()
         let createdID = UUID()
-        manager.createdConversationID = createdID
+        manager.conversationIDToStart = createdID
         let sut = ChatShellViewModel()
 
         await sut.bootstrapIfNeeded(using: manager, isCompactLayout: false)
 
-        XCTAssertEqual(manager.createCallsCount, 1)
-        XCTAssertEqual(manager.receivedTitles, [nil])
+        XCTAssertEqual(manager.startCallsCount, 1)
         XCTAssertEqual(sut.activeConversationID, createdID)
         XCTAssertEqual(sut.columnVisibility, .detailOnly)
         XCTAssertNil(manager.selectedConversationID)
@@ -35,13 +33,13 @@ final class ChatShellViewModelTests: XCTestCase {
 
     func testBootstrapRunsOnlyOnce() async {
         let manager = SidebarConversationsManagerMock()
-        manager.createdConversationID = UUID()
+        manager.conversationIDToStart = UUID()
         let sut = ChatShellViewModel()
 
         await sut.bootstrapIfNeeded(using: manager, isCompactLayout: false)
         await sut.bootstrapIfNeeded(using: manager, isCompactLayout: false)
 
-        XCTAssertEqual(manager.createCallsCount, 1)
+        XCTAssertEqual(manager.startCallsCount, 1)
     }
 
     func testHandleConversationSelectionHidesSidebar() {
@@ -89,7 +87,7 @@ final class ChatShellViewModelTests: XCTestCase {
     func testBootstrapInCompactCreatesConversationAndPushesRoute() async {
         let manager = SidebarConversationsManagerMock()
         let createdID = UUID()
-        manager.createdConversationID = createdID
+        manager.conversationIDToStart = createdID
         let sut = ChatShellViewModel()
 
         await sut.bootstrapIfNeeded(using: manager, isCompactLayout: true)

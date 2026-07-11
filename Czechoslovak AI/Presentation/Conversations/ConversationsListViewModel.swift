@@ -17,7 +17,6 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
     private let loadConversationsUseCase: LoadConversationsUseCase
     private let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
     private let searchConversationsUseCase: SearchConversationsUseCase
-    private let createConversationUseCase: CreateConversationUseCase
     private let deleteConversationUseCase: DeleteConversationUseCase
     private var generationObservationTask: Task<Void, Never>?
     private var searchableMessagesByConversationID: [UUID: [Message]] = [:]
@@ -26,14 +25,12 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         loadConversationsUseCase: LoadConversationsUseCase,
         loadRecentMessagesUseCase: LoadRecentMessagesUseCase,
         searchConversationsUseCase: SearchConversationsUseCase,
-        createConversationUseCase: CreateConversationUseCase,
         deleteConversationUseCase: DeleteConversationUseCase,
         generationCoordinator: (any ConversationGenerationStateObserving)? = nil
     ) {
         self.loadConversationsUseCase = loadConversationsUseCase
         self.loadRecentMessagesUseCase = loadRecentMessagesUseCase
         self.searchConversationsUseCase = searchConversationsUseCase
-        self.createConversationUseCase = createConversationUseCase
         self.deleteConversationUseCase = deleteConversationUseCase
 
         if let generationCoordinator {
@@ -97,20 +94,12 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         }
     }
     
-    func createConversation(title: String?) async {
+    func startConversation() -> UUID {
         alert = nil
-        
-        do {
-            let created = try await createConversationUseCase.execute(title: title)
-            conversations.insert(created, at: 0)
-            searchableMessagesByConversationID[created.id] = []
-            selectedConversationID = created.id
-        } catch {
-            alert = PresentationAlert(
-                title: L10n.ConversationsList.errorCreateTitle,
-                message: error.localizedDescription
-            )
-        }
+
+        let conversationID = UUID()
+        selectedConversationID = conversationID
+        return conversationID
     }
     
     func selectConversation(id: UUID) {

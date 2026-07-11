@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Conversation: Identifiable, Codable, Equatable {
+public struct Conversation: Identifiable, Codable, Equatable, Sendable {
     public let id: UUID
     public var title: String?
     public var messages: [Message]
@@ -26,4 +26,3 @@ public struct Conversation: Identifiable, Codable, Equatable {
         messages.last
     }
 }
-

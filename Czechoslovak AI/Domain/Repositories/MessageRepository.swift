@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol MessageRepository {
+public protocol MessageRepository: Sendable {
     /// Load messages for a specific conversation.
     /// - Parameter conversationID: the conversation to load messages from
     /// - Returns: array of messages for that conversation, sorted by date ascending

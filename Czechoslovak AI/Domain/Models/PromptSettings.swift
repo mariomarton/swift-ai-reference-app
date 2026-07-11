@@ -1,6 +1,6 @@
 import Foundation
 
-public enum PromptTonePreset: String, Codable, CaseIterable, Identifiable, Hashable {
+public enum PromptTonePreset: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
     case none
     case concise
     case friendly
@@ -22,7 +22,7 @@ public enum PromptTonePreset: String, Codable, CaseIterable, Identifiable, Hasha
     }
 }
 
-public struct PromptSettings: Codable, Equatable {
+public struct PromptSettings: Codable, Equatable, Sendable {
     public static var defaultSystemPrompt: String {
         L10n.PromptSettings.defaultSystemPrompt
     }

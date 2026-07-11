@@ -1,6 +1,6 @@
 import Foundation
 
-public final class UserDefaultsPromptSettingsRepository: PromptSettingsRepository {
+public final class UserDefaultsPromptSettingsRepository: PromptSettingsRepository, @unchecked Sendable {
     private let defaults: UserDefaults
 
     private enum Keys {

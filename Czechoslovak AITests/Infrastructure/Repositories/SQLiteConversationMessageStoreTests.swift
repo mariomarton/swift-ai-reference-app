@@ -1,0 +1,102 @@
+import XCTest
+@testable import Czechoslovak_AI
+
+@MainActor
+final class SQLiteConversationMessageStoreTests: XCTestCase {
+    private var tempDir: URL!
+    private var databaseURL: URL!
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        databaseURL = tempDir.appendingPathComponent("chat.sqlite3")
+    }
+
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: tempDir)
+        tempDir = nil
+        databaseURL = nil
+        try super.tearDownWithError()
+    }
+
+    func testPersistsConversationsAndMessagesAcrossInstances() async throws {
+        let store = try SQLiteConversationMessageStore(storageURL: databaseURL, fileManager: FileManager.default)
+        let conversationRepository = SQLiteConversationRepository(store: store)
+        let messageRepository = SQLiteMessageRepository(store: store)
+
+        let conversationID = UUID()
+        _ = try await conversationRepository.createConversation(id: conversationID, title: "Travel")
+        try await messageRepository.save(message: Message(role: .user, text: "Paris itinerary"), to: conversationID)
+
+        let conversations = try await conversationRepository.listConversations()
+        XCTAssertEqual(conversations.count, 1)
+        XCTAssertEqual(conversations.first?.id, conversationID)
+        XCTAssertEqual(conversations.first?.title, "Travel")
+
+        let messages = try await messageRepository.loadMessages(for: conversationID)
+        XCTAssertEqual(messages.count, 1)
+        XCTAssertEqual(messages.first?.text, "Paris itinerary")
+
+        let secondStore = try SQLiteConversationMessageStore(storageURL: databaseURL, fileManager: FileManager.default)
+        let secondConversationRepository = SQLiteConversationRepository(store: secondStore)
+        let secondMessageRepository = SQLiteMessageRepository(store: secondStore)
+
+        let reloadedConversations = try await secondConversationRepository.listConversations()
+        XCTAssertEqual(reloadedConversations.count, 1)
+        XCTAssertEqual(reloadedConversations.first?.id, conversationID)
+
+        let reloadedMessages = try await secondMessageRepository.loadMessages(for: conversationID)
+        XCTAssertEqual(reloadedMessages.count, 1)
+        XCTAssertEqual(reloadedMessages.first?.text, "Paris itinerary")
+    }
+
+    func testSearchIndexFindsConversationByMessageContent() async throws {
+        let store = try SQLiteConversationMessageStore(storageURL: databaseURL, fileManager: FileManager.default)
+        let conversationRepository = SQLiteConversationRepository(store: store)
+        let messageRepository = SQLiteMessageRepository(store: store)
+
+        let conversationID = UUID()
+        _ = try await conversationRepository.createConversation(id: conversationID, title: "Trips")
+        try await messageRepository.save(message: Message(role: .user, text: "Brno weekend ideas"), to: conversationID)
+
+        let matches = try store.searchConversations(matching: "weekend")
+        XCTAssertEqual(matches.map(\.id), [conversationID])
+    }
+
+    func testDeleteConversationRemovesMessages() async throws {
+        let store = try SQLiteConversationMessageStore(storageURL: databaseURL, fileManager: FileManager.default)
+        let conversationRepository = SQLiteConversationRepository(store: store)
+        let messageRepository = SQLiteMessageRepository(store: store)
+
+        let conversationID = UUID()
+        _ = try await conversationRepository.createConversation(id: conversationID, title: "Delete me")
+        try await messageRepository.save(message: Message(role: .user, text: "One"), to: conversationID)
+        try await messageRepository.save(message: Message(role: .assistant, text: "Two"), to: conversationID)
+
+        try await conversationRepository.deleteConversation(id: conversationID)
+
+        let loadedConversation = try await conversationRepository.loadConversation(id: conversationID)
+        XCTAssertNil(loadedConversation)
+
+        let loadedMessages = try await messageRepository.loadMessages(for: conversationID)
+        XCTAssertTrue(loadedMessages.isEmpty)
+    }
+
+    func testClearAllMessagesPreservesTitleSearch() async throws {
+        let store = try SQLiteConversationMessageStore(storageURL: databaseURL, fileManager: FileManager.default)
+        let conversationRepository = SQLiteConversationRepository(store: store)
+        let messageRepository = SQLiteMessageRepository(store: store)
+
+        let conversationID = UUID()
+        _ = try await conversationRepository.createConversation(id: conversationID, title: "Weekend trip")
+        try await messageRepository.save(message: Message(role: .user, text: "Brno lunch spots"), to: conversationID)
+
+        try await messageRepository.clearAll()
+
+        let matches = try store.searchConversations(matching: "weekend")
+        XCTAssertEqual(matches.map(\.id), [conversationID])
+        let loadedMessages = try await messageRepository.loadMessages(for: conversationID)
+        XCTAssertTrue(loadedMessages.isEmpty)
+    }
+}

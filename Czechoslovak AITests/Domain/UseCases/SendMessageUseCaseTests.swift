@@ -1,7 +1,7 @@
 import XCTest
 @testable import Czechoslovak_AI
 
-final class MockMessageRepository: MessageRepository {
+final class MockMessageRepository: MessageRepository, @unchecked Sendable {
     func deleteMessages(for conversationID: UUID) async throws {
         stored.removeValue(forKey: conversationID)
     }
@@ -66,7 +66,7 @@ final class MockLLMEngine: LLMEngine {
     }
 }
 
-private final class MockPromptSettingsRepository: PromptSettingsRepository {
+private final class MockPromptSettingsRepository: PromptSettingsRepository, @unchecked Sendable {
     var settings: PromptSettings = PromptSettings()
 
     func loadSettings() -> PromptSettings {
@@ -78,11 +78,46 @@ private final class MockPromptSettingsRepository: PromptSettingsRepository {
     }
 }
 
+final class SendMessageConversationRepositoryMock: ConversationRepository, @unchecked Sendable {
+    var conversations: [Conversation] = []
+    var shouldThrowOnCreate = false
+    var shouldThrowOnDelete = false
+    private(set) var createdConversationIDs: [UUID] = []
+
+    func loadConversation(id: UUID) async throws -> Conversation? {
+        conversations.first { $0.id == id }
+    }
+
+    func updateConversation(_ conversation: Conversation) async throws {
+        guard let index = conversations.firstIndex(where: { $0.id == conversation.id }) else {
+            throw NSError(domain: "mock", code: 2)
+        }
+        conversations[index] = conversation
+    }
+
+    func createConversation(id: UUID, title: String?) async throws -> Conversation {
+        if shouldThrowOnCreate { throw NSError(domain: "mock", code: 1) }
+        let conv = Conversation(id: id, title: title)
+        createdConversationIDs.append(id)
+        conversations.append(conv)
+        return conv
+    }
+
+    func listConversations() async throws -> [Conversation] {
+        conversations
+    }
+
+    func deleteConversation(id: UUID) async throws {
+        if shouldThrowOnDelete { throw NSError(domain: "mock", code: 3) }
+        conversations.removeAll { $0.id == id }
+    }
+}
+
 // MARK: - Helpers
 
 private func makeSendUseCase(
     messageRepo: MockMessageRepository = MockMessageRepository(),
-    conversationRepo: MockConversationRepository = MockConversationRepository(),
+    conversationRepo: SendMessageConversationRepositoryMock = SendMessageConversationRepositoryMock(),
     engine: MockLLMEngine = MockLLMEngine(),
     promptSettingsRepo: PromptSettingsRepository? = nil,
     titleUseCase: GenerateConversationTitleUseCase? = nil
@@ -212,8 +247,9 @@ final class SendMessageUseCaseTests: XCTestCase {
 
     func testAutoTitleIsGeneratedAndPersistedOnFirstMessage() async throws {
         let messageRepo = MockMessageRepository()
-        let convRepo = MockConversationRepository()
-        let conv = Conversation(title: nil)
+        let convRepo = SendMessageConversationRepositoryMock()
+        let conversationID = UUID()
+        let conv = Conversation(id: conversationID, title: nil)
         convRepo.conversations = [conv]
 
         let titleUseCase = MockGenerateConversationTitleUseCase()
@@ -223,7 +259,7 @@ final class SendMessageUseCaseTests: XCTestCase {
         let useCase = makeSendUseCase(messageRepo: messageRepo, conversationRepo: convRepo, engine: engine, titleUseCase: titleUseCase)
 
         let user = Message(role: .user, text: "Ako fungujú dane pre s.r.o.?")
-        for try await _ in useCase.send(message: user, to: conv.id, model: nil) {}
+        for try await _ in useCase.send(message: user, to: conversationID, model: nil) {}
 
         XCTAssertEqual(titleUseCase.invocationCount, 1)
         XCTAssertEqual(titleUseCase.capturedMessageText, "Ako fungujú dane pre s.r.o.?")
@@ -232,8 +268,9 @@ final class SendMessageUseCaseTests: XCTestCase {
 
     func testAutoTitleIsNotRetriggeredOnSubsequentMessages() async throws {
         let messageRepo = MockMessageRepository()
-        let convRepo = MockConversationRepository()
-        let conv = Conversation(title: "Existujúci názov")
+        let convRepo = SendMessageConversationRepositoryMock()
+        let conversationID = UUID()
+        let conv = Conversation(id: conversationID, title: "Existujúci názov")
         convRepo.conversations = [conv]
 
         let titleUseCase = MockGenerateConversationTitleUseCase()
@@ -243,7 +280,7 @@ final class SendMessageUseCaseTests: XCTestCase {
         let useCase = makeSendUseCase(messageRepo: messageRepo, conversationRepo: convRepo, engine: engine, titleUseCase: titleUseCase)
 
         let user = Message(role: .user, text: "Druhá otázka")
-        for try await _ in useCase.send(message: user, to: conv.id, model: nil) {}
+        for try await _ in useCase.send(message: user, to: conversationID, model: nil) {}
 
         // GenerateConversationTitleUseCase is called but returns nil (existing title) — no update
         XCTAssertEqual(titleUseCase.invocationCount, 1)
@@ -252,7 +289,7 @@ final class SendMessageUseCaseTests: XCTestCase {
 
     func testSendSucceedsEvenWhenTitleGenerationFails() async throws {
         let messageRepo = MockMessageRepository()
-        let convRepo = MockConversationRepository()
+        let convRepo = SendMessageConversationRepositoryMock()
         // Conversation not found — title generation will throw internally
         convRepo.conversations = []
 
@@ -277,17 +314,59 @@ final class SendMessageUseCaseTests: XCTestCase {
 
     func testAutoTitleIsNotAppliedWhenUseCaseIsNil() async throws {
         let messageRepo = MockMessageRepository()
-        let convRepo = MockConversationRepository()
-        let conv = Conversation(title: nil)
+        let convRepo = SendMessageConversationRepositoryMock()
+        let conversationID = UUID()
+        let conv = Conversation(id: conversationID, title: nil)
         convRepo.conversations = [conv]
 
         let engine = MockLLMEngine()
         let useCase = makeSendUseCase(messageRepo: messageRepo, conversationRepo: convRepo, engine: engine, titleUseCase: nil)
 
         let user = Message(role: .user, text: "Otázka")
-        for try await _ in useCase.send(message: user, to: conv.id, model: nil) {}
+        for try await _ in useCase.send(message: user, to: conversationID, model: nil) {}
 
         XCTAssertNil(convRepo.conversations.first?.title)
+    }
+
+    func testSendCreatesConversationWhenMissing() async throws {
+        let messageRepo = MockMessageRepository()
+        let convRepo = SendMessageConversationRepositoryMock()
+        let engine = MockLLMEngine()
+        let conversationID = UUID()
+        let useCase = makeSendUseCase(messageRepo: messageRepo, conversationRepo: convRepo, engine: engine)
+
+        let user = Message(role: .user, text: "Ahoj")
+        for try await _ in useCase.send(message: user, to: conversationID, model: nil) {}
+
+        XCTAssertEqual(convRepo.createdConversationIDs, [conversationID])
+        XCTAssertEqual(convRepo.conversations.first?.id, conversationID)
+        XCTAssertEqual(messageRepo.stored[conversationID]?.first, user)
+    }
+
+    func testSendRollsBackUserMessageWhenConversationCreationFails() async throws {
+        let messageRepo = MockMessageRepository()
+        let convRepo = SendMessageConversationRepositoryMock()
+        convRepo.shouldThrowOnCreate = true
+        let engine = MockLLMEngine()
+        let conversationID = UUID()
+        let useCase = makeSendUseCase(messageRepo: messageRepo, conversationRepo: convRepo, engine: engine)
+
+        let user = Message(role: .user, text: "Ahoj")
+
+        do {
+            for try await _ in useCase.send(message: user, to: conversationID, model: nil) {}
+            XCTFail("Expected error")
+        } catch let error as DomainError {
+            guard case .repositoryError = error else {
+                XCTFail("Wrong DomainError case: \(error)")
+                return
+            }
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        XCTAssertNil(messageRepo.stored[conversationID])
+        XCTAssertTrue(convRepo.conversations.isEmpty)
     }
 
     func testConfiguredPromptSettingsArePrependedToConversationHistory() async throws {

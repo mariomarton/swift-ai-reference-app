@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol PromptSettingsRepository {
+public protocol PromptSettingsRepository: Sendable {
     func loadSettings() -> PromptSettings
     func saveSettings(_ settings: PromptSettings)
 }

@@ -12,7 +12,7 @@ public protocol SendMessageUseCase {
     func send(message: Message, to conversationID: UUID, model: LLMModel?) -> AsyncThrowingStream<String, Error>
 }
 
-public final class DefaultSendMessageUseCase: SendMessageUseCase {
+public final class DefaultSendMessageUseCase: SendMessageUseCase, @unchecked Sendable {
     private let repository: MessageRepository
     private let conversationRepository: ConversationRepository
     private let engine: LLMEngine
@@ -44,7 +44,18 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase {
                 // Persist user message first
                 do {
                     try Task.checkCancellation()
+                    let conversationExists = try await conversationRepository.loadConversation(id: conversationID) != nil
                     try await repository.save(message: message, to: conversationID)
+
+                    if !conversationExists {
+                        do {
+                            _ = try await conversationRepository.createConversation(id: conversationID, title: nil)
+                        } catch {
+                            try await repository.deleteMessages(for: conversationID)
+                            continuation.finish(throwing: DomainError.repositoryError(error))
+                            return
+                        }
+                    }
                 } catch is CancellationError {
                     continuation.finish()
                     return

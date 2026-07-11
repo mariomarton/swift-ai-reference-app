@@ -12,16 +12,6 @@ private final class LoadConversationsUseCaseMock: LoadConversationsUseCase {
     }
 }
 
-private final class CreateConversationUseCaseMock: CreateConversationUseCase {
-    var result: Result<Conversation, Error> = .success(Conversation(title: "Untitled"))
-    private(set) var receivedTitle: String?
-
-    func execute(title: String?) async throws -> Conversation {
-        receivedTitle = title
-        return try result.get()
-    }
-}
-
 private final class LoadRecentMessagesUseCaseMock: LoadRecentMessagesUseCase {
     var messagesByConversationID: [UUID: [Message]] = [:]
     private(set) var calls: [(UUID, Int?)] = []
@@ -92,7 +82,6 @@ private func makeViewModel(
     load: LoadConversationsUseCaseMock = .init(),
     loadRecentMessages: LoadRecentMessagesUseCaseMock = .init(),
     search: SearchConversationsUseCase? = nil,
-    create: CreateConversationUseCaseMock = .init(),
     delete: DeleteConversationUseCaseMock = .init(),
     coordinator: MessageGenerationCoordinatorMock? = nil
 ) -> ConversationsListViewModel {
@@ -100,7 +89,6 @@ private func makeViewModel(
         loadConversationsUseCase: load,
         loadRecentMessagesUseCase: loadRecentMessages,
         searchConversationsUseCase: search ?? DefaultSearchConversationsUseCase(),
-        createConversationUseCase: create,
         deleteConversationUseCase: delete,
         generationCoordinator: coordinator
     )
@@ -178,33 +166,25 @@ final class ConversationsListViewModelTests: XCTestCase {
         XCTAssertEqual(sut.conversations.first?.title, "Vygenerovaný názov")
     }
 
-    func testCreateConversationSuccessSelectsCreatedConversation() async {
-        let createMock = CreateConversationUseCaseMock()
-        let created = Conversation(title: "New chat")
-        createMock.result = .success(created)
+    func testStartConversationSelectsTransientConversationWithoutPersistingIt() {
+        let sut = makeViewModel()
 
-        let sut = makeViewModel(create: createMock)
+        let conversationID = sut.startConversation()
 
-        await sut.createConversation(title: "New chat")
-
-        XCTAssertEqual(createMock.receivedTitle, "New chat")
-        XCTAssertEqual(sut.conversations.first?.id, created.id)
-        XCTAssertEqual(sut.selectedConversationID, created.id)
+        XCTAssertNotNil(sut.selectedConversationID)
+        XCTAssertEqual(sut.selectedConversationID, conversationID)
+        XCTAssertTrue(sut.conversations.isEmpty)
         XCTAssertNil(sut.alert)
     }
 
-    func testCreateConversationFailureSetsAlert() async {
-        let createMock = CreateConversationUseCaseMock()
-        createMock.result = .failure(NSError(domain: "test", code: 2))
+    func testStartConversationGeneratesFreshIDs() {
+        let sut = makeViewModel()
 
-        let sut = makeViewModel(create: createMock)
+        let first = sut.startConversation()
+        let second = sut.startConversation()
 
-        await sut.createConversation(title: "Will fail")
-
-        XCTAssertTrue(sut.conversations.isEmpty)
-        XCTAssertNil(sut.selectedConversationID)
-        XCTAssertNotNil(sut.alert)
-        XCTAssertEqual(sut.alert?.isRetryable, false)
+        XCTAssertNotEqual(first, second)
+        XCTAssertEqual(sut.selectedConversationID, second)
     }
 
     // MARK: - Delete

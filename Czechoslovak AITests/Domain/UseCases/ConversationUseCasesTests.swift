@@ -1,10 +1,11 @@
 import XCTest
 @testable import Czechoslovak_AI
 
-final class MockConversationRepository: ConversationRepository {
+final class MockConversationRepository: ConversationRepository, @unchecked Sendable {
     var conversations: [Conversation] = []
     var shouldThrowOnCreate = false
     var shouldThrowOnDelete = false
+    private(set) var createdConversationIDs: [UUID] = []
 
     func loadConversation(id: UUID) async throws -> Conversation? {
         conversations.first { $0.id == id }
@@ -17,9 +18,10 @@ final class MockConversationRepository: ConversationRepository {
         conversations[index] = conversation
     }
 
-    func createConversation(title: String?) async throws -> Conversation {
+    func createConversation(id: UUID, title: String?) async throws -> Conversation {
         if shouldThrowOnCreate { throw NSError(domain: "mock", code: 1) }
-        let conv = Conversation(title: title)
+        let conv = Conversation(id: id, title: title)
+        createdConversationIDs.append(id)
         conversations.append(conv)
         return conv
     }
@@ -39,8 +41,10 @@ final class ConversationUseCasesTests: XCTestCase {
     func testCreateConversationHappyPath() async throws {
         let repo = MockConversationRepository()
         let useCase = DefaultCreateConversationUseCase(repository: repo)
+        let conversationID = UUID()
 
-        let created = try await useCase.execute(title: "Test")
+        let created = try await useCase.execute(id: conversationID, title: "Test")
+        XCTAssertEqual(created.id, conversationID)
         XCTAssertEqual(created.title, "Test")
         XCTAssertEqual(repo.conversations.count, 1)
     }
@@ -60,11 +64,10 @@ final class ConversationUseCasesTests: XCTestCase {
         let useCase = DefaultCreateConversationUseCase(repository: repo)
 
         do {
-            _ = try await useCase.execute(title: "x")
+            _ = try await useCase.execute(id: UUID(), title: "x")
             XCTFail("Expected throw")
         } catch {
         }
-            // expected
     }
 
     // MARK: - Delete
@@ -129,4 +132,3 @@ final class ConversationUseCasesTests: XCTestCase {
         }
     }
 }
-

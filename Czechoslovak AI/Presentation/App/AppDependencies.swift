@@ -3,6 +3,7 @@ import Foundation
 enum AppDependenciesError: LocalizedError {
     case modelNotConfigured
     case llamaInitializationFailed(underlying: Error)
+    case storageInitializationFailed(underlying: Error)
 
     var errorDescription: String? {
         switch self {
@@ -10,18 +11,24 @@ enum AppDependenciesError: LocalizedError {
             return L10n.AppDependencies.modelNotConfigured
         case .llamaInitializationFailed(let underlying):
             return L10n.AppDependencies.llamaInitializationFailed(underlying.localizedDescription)
+        case .storageInitializationFailed(let underlying):
+            return "Failed to initialize storage: \(underlying.localizedDescription)"
         }
     }
 }
 
 final class AppDependencies {
+    enum StorageBackend {
+        case fileBacked
+        case sqlite
+    }
+
     let conversationRepository: ConversationRepository
     let messageRepository: MessageRepository
     let promptSettingsRepository: PromptSettingsRepository
     let searchConversationsUseCase: SearchConversationsUseCase
     let llmEngine: LLMEngine
 
-    let createConversationUseCase: CreateConversationUseCase
     let loadConversationsUseCase: LoadConversationsUseCase
     let deleteConversationUseCase: DeleteConversationUseCase
     let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
@@ -40,7 +47,6 @@ final class AppDependencies {
         self.searchConversationsUseCase = DefaultSearchConversationsUseCase()
         self.llmEngine = llmEngine
 
-        self.createConversationUseCase = DefaultCreateConversationUseCase(repository: conversationRepository)
         self.loadConversationsUseCase = DefaultLoadConversationsUseCase(repository: conversationRepository)
         self.deleteConversationUseCase = DefaultDeleteConversationUseCase(
             conversationRepository: conversationRepository,
@@ -63,8 +69,11 @@ final class AppDependencies {
     }
 
     convenience init() throws {
-        let conversationRepository = try FileBackedConversationRepository()
-        let messageRepository = try FileBackedMessageRepository()
+        try self.init(storageBackend: Self.resolveStorageBackend())
+    }
+
+    convenience init(storageBackend: StorageBackend) throws {
+        let (conversationRepository, messageRepository) = try Self.makeStorageRepositories(for: storageBackend)
         let promptSettingsRepository = UserDefaultsPromptSettingsRepository()
         let llmEngine: LLMEngine
 
@@ -103,6 +112,30 @@ final class AppDependencies {
         )
     }
 
+    private static func resolveStorageBackend() -> StorageBackend {
+        let rawValue = ProcessInfo.processInfo.environment["CZECHOSLOVAK_AI_STORAGE_BACKEND"]?.lowercased()
+        switch rawValue {
+        case "file", "filebacked":
+            return .fileBacked
+        default:
+            return .sqlite
+        }
+    }
+
+    private static func makeStorageRepositories(for backend: StorageBackend) throws -> (ConversationRepository, MessageRepository) {
+        switch backend {
+        case .fileBacked:
+            return (try FileBackedConversationRepository(), try FileBackedMessageRepository())
+        case .sqlite:
+            do {
+                let store = try SQLiteConversationMessageStore()
+                return (SQLiteConversationRepository(store: store), SQLiteMessageRepository(store: store))
+            } catch {
+                throw AppDependenciesError.storageInitializationFailed(underlying: error)
+            }
+        }
+    }
+
     private static func resolveModelPath() -> String? {
         let fm = FileManager.default
 
@@ -137,7 +170,6 @@ final class AppDependencies {
             loadConversationsUseCase: loadConversationsUseCase,
             loadRecentMessagesUseCase: loadRecentMessagesUseCase,
             searchConversationsUseCase: searchConversationsUseCase,
-            createConversationUseCase: createConversationUseCase,
             deleteConversationUseCase: deleteConversationUseCase,
             generationCoordinator: messageGenerationCoordinator
         )

@@ -5,7 +5,7 @@ import SwiftUI
 @MainActor
 protocol SidebarConversationsManaging: AnyObject {
     var selectedConversationID: UUID? { get set }
-    func createConversation(title: String?) async
+    func startConversation() -> UUID
 }
 
 @MainActor
@@ -24,8 +24,7 @@ final class ChatShellViewModel: ObservableObject {
         guard !didBootstrap else { return }
         didBootstrap = true
 
-        await conversationsManager.createConversation(title: nil)
-        guard let createdConversationID = conversationsManager.selectedConversationID else { return }
+        let createdConversationID = conversationsManager.startConversation()
 
         handleConversationSelection(id: createdConversationID, isCompactLayout: isCompactLayout)
         conversationsManager.selectedConversationID = nil

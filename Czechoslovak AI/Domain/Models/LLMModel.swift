@@ -1,6 +1,6 @@
 import Foundation
 
-public struct LLMModel: Identifiable, Codable, Equatable {
+public struct LLMModel: Identifiable, Codable, Equatable, Sendable {
     public let id: String
     public let name: String
     public let path: String?

@@ -23,11 +23,15 @@ final class FileBackedConversationRepositoryTests: XCTestCase {
     func testCreateAndListPersistsConversations() async throws {
         let repo = try FileBackedConversationRepository(storageURL: fileURL, fileManager: FileManager.default)
 
-        let conv1 = try await repo.createConversation(title: "Test 1")
-        let conv2 = try await repo.createConversation(title: "Test 2")
+        let conv1ID = UUID()
+        let conv2ID = UUID()
+        let conv1 = try await repo.createConversation(id: conv1ID, title: "Test 1")
+        let conv2 = try await repo.createConversation(id: conv2ID, title: "Test 2")
 
         let loaded = try await repo.listConversations()
         XCTAssertEqual(loaded.count, 2)
+        XCTAssertEqual(conv1.id, conv1ID)
+        XCTAssertEqual(conv2.id, conv2ID)
         XCTAssertTrue(loaded.contains(where: { $0.id == conv1.id }))
         XCTAssertTrue(loaded.contains(where: { $0.id == conv2.id }))
 
@@ -41,10 +45,10 @@ final class FileBackedConversationRepositoryTests: XCTestCase {
 
     func testConversationsAreSortedByUpdatedAt() async throws {
         let repo = try FileBackedConversationRepository(storageURL: fileURL, fileManager: FileManager.default)
-        _ = try await repo.createConversation(title: "A")
+        _ = try await repo.createConversation(id: UUID(), title: "A")
         // Simulate a later update
         sleep(1)
-        let conv2 = try await repo.createConversation(title: "B")
+        let conv2 = try await repo.createConversation(id: UUID(), title: "B")
         let loaded = try await repo.listConversations()
         XCTAssertEqual(loaded.first?.id, conv2.id)
     }
@@ -59,11 +63,12 @@ final class FileBackedConversationRepositoryTests: XCTestCase {
     func testLoadConversationByID() async throws {
         let repo = try FileBackedConversationRepository(storageURL: fileURL, fileManager: FileManager.default)
 
-        let created = try await repo.createConversation(title: "Test Conversation")
+        let conversationID = UUID()
+        let created = try await repo.createConversation(id: conversationID, title: "Test Conversation")
         let loaded = try await repo.loadConversation(id: created.id)
 
         XCTAssertNotNil(loaded)
-        XCTAssertEqual(loaded?.id, created.id)
+        XCTAssertEqual(loaded?.id, conversationID)
         XCTAssertEqual(loaded?.title, "Test Conversation")
     }
 
@@ -77,7 +82,7 @@ final class FileBackedConversationRepositoryTests: XCTestCase {
     func testUpdateConversation() async throws {
         let repo = try FileBackedConversationRepository(storageURL: fileURL, fileManager: FileManager.default)
 
-        let created = try await repo.createConversation(title: "Original Title")
+        let created = try await repo.createConversation(id: UUID(), title: "Original Title")
         var updated = created
         updated.title = "Updated Title"
 
@@ -89,19 +94,21 @@ final class FileBackedConversationRepositoryTests: XCTestCase {
 
     func testPersistenceAcrossInstances() async throws {
         let repo1 = try FileBackedConversationRepository(storageURL: fileURL, fileManager: FileManager.default)
-        let created = try await repo1.createConversation(title: "Persistent Conversation")
+        let conversationID = UUID()
+        let created = try await repo1.createConversation(id: conversationID, title: "Persistent Conversation")
 
         let repo2 = try FileBackedConversationRepository(storageURL: fileURL, fileManager: FileManager.default)
         let loaded = try await repo2.loadConversation(id: created.id)
 
         XCTAssertNotNil(loaded)
         XCTAssertEqual(loaded?.title, "Persistent Conversation")
+        XCTAssertEqual(loaded?.id, conversationID)
     }
 
     func testDeleteConversationRemovesItFromListAndPersists() async throws {
         let repo = try FileBackedConversationRepository(storageURL: fileURL, fileManager: FileManager.default)
-        let conv1 = try await repo.createConversation(title: "Keep")
-        let conv2 = try await repo.createConversation(title: "Delete me")
+        let conv1 = try await repo.createConversation(id: UUID(), title: "Keep")
+        let conv2 = try await repo.createConversation(id: UUID(), title: "Delete me")
 
         try await repo.deleteConversation(id: conv2.id)
 

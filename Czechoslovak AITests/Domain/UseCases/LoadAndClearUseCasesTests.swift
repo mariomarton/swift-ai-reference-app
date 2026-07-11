@@ -1,7 +1,7 @@
 import XCTest
 @testable import Czechoslovak_AI
 
-final class RepoMockForLoad: MessageRepository {
+final class RepoMockForLoad: MessageRepository, @unchecked Sendable {
     var stored: [UUID: [Message]] = [:]
     var shouldThrowOnLoad = false
 
