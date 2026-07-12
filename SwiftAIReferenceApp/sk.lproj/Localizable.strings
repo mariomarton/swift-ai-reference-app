@@ -1,7 +1,7 @@
 "app.preview.unavailable" = "Náhľad nie je k dispozícii";
 "app.launch.failedTitle" = "Aplikáciu sa nepodarilo spustiť";
-"app.dependencies.modelNotConfigured" = "Nenašiel sa žiadny GGUF model. Poskytnite zabudovaný .gguf model alebo nastavte LLAMA_MODEL_PATH v prostredí Run schémy.";
-"app.dependencies.llamaInitializationFailed" = "Nepodarilo sa inicializovať lokálny LLM: %@";
+"app.dependencies.startupWarningMissingModel" = "Nenašiel sa žiadny zabudovaný GGUF model. Aplikácia používa mock asistenta.";
+"app.dependencies.startupWarningModelLoadFailed" = "Zabudovaný GGUF model sa nepodarilo načítať. Aplikácia používa mock asistenta.";
 "chat.emptyState.title" = "Zatiaľ bez správ";
 "chat.emptyState.description" = "Pošlite prvú správu a začnite konverzáciu.";
 "chat.sendingIndicator" = "Asistent premýšľa...";

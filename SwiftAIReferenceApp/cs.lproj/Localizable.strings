@@ -1,7 +1,7 @@
 "app.preview.unavailable" = "Náhled není k dispozici";
 "app.launch.failedTitle" = "Aplikaci se nepodařilo spustit";
-"app.dependencies.modelNotConfigured" = "Nebyly nalezeny žádné GGUF modely. Přidejte zabudovaný .gguf model nebo nastavte LLAMA_MODEL_PATH v prostředí Run schématu.";
-"app.dependencies.llamaInitializationFailed" = "Nepodařilo se inicializovat lokální LLM: %@";
+"app.dependencies.startupWarningMissingModel" = "Nebyly nalezeny žádné zabudované GGUF modely. Aplikace používá mock asistenta.";
+"app.dependencies.startupWarningModelLoadFailed" = "Zabudovaný GGUF model se nepodařilo načíst. Aplikace používá mock asistenta.";
 "chat.emptyState.title" = "Zatím žádné zprávy";
 "chat.emptyState.description" = "Pošlete první zprávu a začněte konverzaci.";
 "chat.sendingIndicator" = "Asistent přemýšlí...";

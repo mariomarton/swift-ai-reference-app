@@ -1,7 +1,7 @@
 "app.preview.unavailable" = "Preview unavailable";
 "app.launch.failedTitle" = "App Failed to Start";
-"app.dependencies.modelNotConfigured" = "No GGUF model was found. Add a bundled .gguf model or set LLAMA_MODEL_PATH in your Run scheme environment.";
-"app.dependencies.llamaInitializationFailed" = "Failed to initialize the local LLM: %@";
+"app.dependencies.startupWarningMissingModel" = "No bundled GGUF model was found. The app is using the mock assistant.";
+"app.dependencies.startupWarningModelLoadFailed" = "The bundled GGUF model could not be loaded. The app is using the mock assistant.";
 "chat.emptyState.title" = "No messages yet";
 "chat.emptyState.description" = "Send the first message to start the conversation.";
 "chat.sendingIndicator" = "Assistant is thinking...";

@@ -28,27 +28,26 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		DA78D8792F629E1C00A17870 /* SwiftAIReferenceApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "SwiftAIReferenceApp.xcodeproj"; sourceTree = "<group>"; };
-		DAB9BE152F5DBF5600802680 /* SwiftAIReferenceApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SwiftAIReferenceApp.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DAB9BE222F5DBF5800802680 /* SwiftAIReferenceAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SwiftAIReferenceAppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DAB9BE2C2F5DBF5800802680 /* SwiftAIReferenceAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SwiftAIReferenceAppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		DAC77A682FA5443600731B73 /* run6_swiftaireferenceapp_q8_0.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = run6_swiftaireferenceapp_q8_0.gguf; sourceTree = "<group>"; };
+		DA78D8792F629E1C00A17870 /* SwiftAIReferenceApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = SwiftAIReferenceApp.xcodeproj; sourceTree = "<group>"; };
+		DAB9BE152F5DBF5600802680 /* SwiftAIReferenceApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftAIReferenceApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAB9BE222F5DBF5800802680 /* SwiftAIReferenceAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftAIReferenceAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAB9BE2C2F5DBF5800802680 /* SwiftAIReferenceAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftAIReferenceAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DAB9BE172F5DBF5600802680 /* SwiftAIReferenceApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "SwiftAIReferenceApp";
+			path = SwiftAIReferenceApp;
 			sourceTree = "<group>";
 		};
 		DAB9BE252F5DBF5800802680 /* SwiftAIReferenceAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "SwiftAIReferenceAppTests";
+			path = SwiftAIReferenceAppTests;
 			sourceTree = "<group>";
 		};
 		DAB9BE2F2F5DBF5800802680 /* SwiftAIReferenceAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "SwiftAIReferenceAppUITests";
+			path = SwiftAIReferenceAppUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -87,7 +86,6 @@
 		DAB9BE0C2F5DBF5600802680 = {
 			isa = PBXGroup;
 			children = (
-				DAC77A682FA5443600731B73 /* run6_swiftaireferenceapp_q8_0.gguf */,
 				DA78D8792F629E1C00A17870 /* SwiftAIReferenceApp.xcodeproj */,
 				DAB9BE172F5DBF5600802680 /* SwiftAIReferenceApp */,
 				DAB9BE252F5DBF5800802680 /* SwiftAIReferenceAppTests */,
@@ -278,7 +276,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "MODEL_SRC=\"\"\nMODEL_DIR=\"${PROJECT_DIR}\"\n\nif [ -n \"${LLAMA_MODEL_PATH}\" ] && [ -f \"${LLAMA_MODEL_PATH}\" ]; then\n  MODEL_SRC=\"${LLAMA_MODEL_PATH}\"\nfi\n\nif [ -z \"${MODEL_SRC}\" ] && [ -f \"${MODEL_DIR}/model.gguf\" ]; then\n  MODEL_SRC=\"${MODEL_DIR}/model.gguf\"\nfi\n\nif [ -z \"${MODEL_SRC}\" ] && [ -f \"${MODEL_DIR}/llama-3.2-1b-instruct-q8_0.gguf\" ]; then\n  MODEL_SRC=\"${MODEL_DIR}/llama-3.2-1b-instruct-q8_0.gguf\"\nfi\n\nif [ -z \"${MODEL_SRC}\" ]; then\n  MODEL_SRC=\"$(/bin/ls \"${MODEL_DIR}\"/*.gguf 2>/dev/null | /usr/bin/head -n 1)\"\nfi\n\nif [ -n \"${MODEL_SRC}\" ] && [ -f \"${MODEL_SRC}\" ]; then\n  DEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/model.gguf\"\n  /bin/cp -f \"${MODEL_SRC}\" \"${DEST}\"\n  echo \"Bundled model: ${MODEL_SRC} -> ${DEST}\"\nelse\n  echo \"No local GGUF found in ${MODEL_DIR}; skipping model bundle copy.\"\nfi";
+			shellScript = "MODEL_SRC=\"\"\nMODEL_DIR=\"${PROJECT_DIR}\"\n\nif [ -f \"${MODEL_DIR}/model.gguf\" ]; then\n  MODEL_SRC=\"${MODEL_DIR}/model.gguf\"\nfi\n\nif [ -z \"${MODEL_SRC}\" ] && [ -f \"${MODEL_DIR}/llama-3.2-1b-instruct-q8_0.gguf\" ]; then\n  MODEL_SRC=\"${MODEL_DIR}/llama-3.2-1b-instruct-q8_0.gguf\"\nfi\n\nif [ -z \"${MODEL_SRC}\" ]; then\n  MODEL_SRC=\"$(/bin/ls \"${MODEL_DIR}\"/*.gguf 2>/dev/null | /usr/bin/head -n 1)\"\nfi\n\nif [ -n \"${MODEL_SRC}\" ] && [ -f \"${MODEL_SRC}\" ]; then\n  DEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/model.gguf\"\n  /bin/cp -f \"${MODEL_SRC}\" \"${DEST}\"\n  echo \"Bundled model: ${MODEL_SRC} -> ${DEST}\"\nelse\n  echo \"No local GGUF found in ${MODEL_DIR}; skipping model bundle copy.\"\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -446,7 +444,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				
+				DEVELOPMENT_TEAM = C7KG9S4D97;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -460,7 +458,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceapp";
+				PRODUCT_BUNDLE_IDENTIFIER = io.mariomarton.swiftaireferenceapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -479,7 +477,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				
+				DEVELOPMENT_TEAM = C7KG9S4D97;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -493,7 +491,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceapp";
+				PRODUCT_BUNDLE_IDENTIFIER = io.mariomarton.swiftaireferenceapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -509,13 +507,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				
+				DEVELOPMENT_TEAM = C7KG9S4D97;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappTests";
+				PRODUCT_BUNDLE_IDENTIFIER = io.mariomarton.swiftaireferenceappTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -531,13 +530,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				
+				DEVELOPMENT_TEAM = C7KG9S4D97;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappTests";
+				PRODUCT_BUNDLE_IDENTIFIER = io.mariomarton.swiftaireferenceappTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -554,10 +554,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				
+				DEVELOPMENT_TEAM = C7KG9S4D97;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = io.mariomarton.swiftaireferenceappUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -574,10 +574,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				
+				DEVELOPMENT_TEAM = C7KG9S4D97;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "io.mariomarton.swiftaireferenceappUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = io.mariomarton.swiftaireferenceappUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

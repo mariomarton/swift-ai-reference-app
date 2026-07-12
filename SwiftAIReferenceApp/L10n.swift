@@ -89,18 +89,17 @@ enum L10n {
     }
 
     enum AppDependencies {
-        static var modelNotConfigured: String {
+        static var startupWarningMissingModel: String {
             l(
-                "app.dependencies.modelNotConfigured",
-                "No GGUF model was found. Provide a bundled .gguf model or set LLAMA_MODEL_PATH in your Run scheme environment."
+                "app.dependencies.startupWarningMissingModel",
+                "No bundled GGUF model was found. The app is using the mock assistant."
             )
         }
 
-        static func llamaInitializationFailed(_ underlyingDescription: String) -> String {
-            lf(
-                "app.dependencies.llamaInitializationFailed",
-                "Failed to initialize local LLM: %@",
-                underlyingDescription
+        static var startupWarningModelLoadFailed: String {
+            l(
+                "app.dependencies.startupWarningModelLoadFailed",
+                "The bundled GGUF model could not be loaded. The app is using the mock assistant."
             )
         }
     }

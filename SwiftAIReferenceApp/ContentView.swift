@@ -13,55 +13,64 @@ struct ContentView: View {
     }
 
     var body: some View {
-        Group {
-            if isCompactLayout {
-                NavigationStack(path: $shellViewModel.compactPath) {
-                    ConversationsListView(viewModel: conversationsViewModel)
-                        .navigationDestination(for: AppRoute.self) { route in
-                            switch route {
-                            case .chat(let conversationID):
+        VStack(spacing: 0) {
+            if let warning = dependencies.startupWarning {
+                StartupWarningBanner(message: warning)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
+            }
+
+            Group {
+                if isCompactLayout {
+                    NavigationStack(path: $shellViewModel.compactPath) {
+                        ConversationsListView(viewModel: conversationsViewModel)
+                            .navigationDestination(for: AppRoute.self) { route in
+                                switch route {
+                                case .chat(let conversationID):
+                                    ChatView(
+                                        viewModel: dependencies.makeChatViewModel(conversationID: conversationID),
+                                        onSearchTapped: {
+                                            shellViewModel.compactPath = []
+                                        },
+                                        onSettingsTapped: {
+                                            shellViewModel.presentSettings()
+                                        }
+                                    )
+                                case .settings:
+                                    SettingsView(viewModel: dependencies.makeSettingsViewModel())
+                                }
+                            }
+                    }
+                } else {
+                    NavigationSplitView(columnVisibility: $shellViewModel.columnVisibility) {
+                        NavigationStack {
+                            ConversationsListView(viewModel: conversationsViewModel)
+                        }
+                    } detail: {
+                        NavigationStack {
+                            if let conversationID = shellViewModel.activeConversationID {
                                 ChatView(
                                     viewModel: dependencies.makeChatViewModel(conversationID: conversationID),
                                     onSearchTapped: {
-                                        shellViewModel.compactPath = []
+                                        shellViewModel.showSearchInSidebar()
                                     },
                                     onSettingsTapped: {
                                         shellViewModel.presentSettings()
                                     }
                                 )
-                            case .settings:
-                                SettingsView(viewModel: dependencies.makeSettingsViewModel())
+                                .id(conversationID)
+                            } else {
+                                ContentUnavailableView(
+                                    L10n.ConversationsList.emptyStateTitle,
+                                    systemImage: "bubble.left.and.text.bubble.right",
+                                    description: Text(L10n.ConversationsList.emptyStateDescription)
+                                )
                             }
                         }
-                }
-            } else {
-                NavigationSplitView(columnVisibility: $shellViewModel.columnVisibility) {
-                    NavigationStack {
-                        ConversationsListView(viewModel: conversationsViewModel)
                     }
-                } detail: {
-                    NavigationStack {
-                        if let conversationID = shellViewModel.activeConversationID {
-                            ChatView(
-                                viewModel: dependencies.makeChatViewModel(conversationID: conversationID),
-                                onSearchTapped: {
-                                    shellViewModel.showSearchInSidebar()
-                                },
-                                onSettingsTapped: {
-                                    shellViewModel.presentSettings()
-                                }
-                            )
-                            .id(conversationID)
-                        } else {
-                            ContentUnavailableView(
-                                L10n.ConversationsList.emptyStateTitle,
-                                systemImage: "bubble.left.and.text.bubble.right",
-                                description: Text(L10n.ConversationsList.emptyStateDescription)
-                            )
-                        }
-                    }
+                    .navigationSplitViewStyle(.balanced)
                 }
-                .navigationSplitViewStyle(.balanced)
             }
         }
         .task {
@@ -91,6 +100,33 @@ struct ContentView: View {
 
     private var isCompactLayout: Bool {
         horizontalSizeClass == .compact
+    }
+}
+
+private struct StartupWarningBanner: View {
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .accessibilityHidden(true)
+
+            Text(message)
+                .font(.footnote)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: 680, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .background(.orange.opacity(0.14), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(.orange.opacity(0.25), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.08), radius: 10, y: 4)
     }
 }
 
