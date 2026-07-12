@@ -5,16 +5,16 @@ import UIKit
 
 struct ChatView: View {
     @StateObject private var viewModel: ChatViewModel
-    let onSearchTapped: () -> Void
+    let onNewConversationTapped: () -> Void
     let onSettingsTapped: () -> Void
 
     init(
         viewModel: ChatViewModel,
-        onSearchTapped: @escaping () -> Void,
+        onNewConversationTapped: @escaping () -> Void,
         onSettingsTapped: @escaping () -> Void
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
-        self.onSearchTapped = onSearchTapped
+        self.onNewConversationTapped = onNewConversationTapped
         self.onSettingsTapped = onSettingsTapped
     }
 
@@ -63,7 +63,7 @@ struct ChatView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     ChatTopBarActionsView(
-                        onSearchTapped: onSearchTapped,
+                        onNewConversationTapped: onNewConversationTapped,
                         onSettingsTapped: onSettingsTapped
                     )
                 }
@@ -146,19 +146,19 @@ struct ChatView: View {
 }
 
 private struct ChatTopBarActionsView: View {
-    let onSearchTapped: () -> Void
+    let onNewConversationTapped: () -> Void
     let onSettingsTapped: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
             Button {
-                onSearchTapped()
+                onNewConversationTapped()
             } label: {
-                Image(systemName: "magnifyingglass")
+                Image(systemName: "plus")
                     .font(.body.weight(.semibold))
             }
-            .accessibilityLabel(L10n.Chat.searchConversationsLabel)
-            .accessibilityIdentifier("searchConversationsButton")
+            .accessibilityLabel(L10n.ConversationsList.newConversationLabel)
+            .accessibilityIdentifier("createConversationButton")
 
             Button {
                 onSettingsTapped()

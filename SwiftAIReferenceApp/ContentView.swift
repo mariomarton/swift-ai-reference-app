@@ -30,8 +30,8 @@ struct ContentView: View {
                                 case .chat(let conversationID):
                                     ChatView(
                                         viewModel: dependencies.makeChatViewModel(conversationID: conversationID),
-                                        onSearchTapped: {
-                                            shellViewModel.compactPath = []
+                                        onNewConversationTapped: {
+                                            _ = conversationsViewModel.startConversation()
                                         },
                                         onSettingsTapped: {
                                             shellViewModel.presentSettings()
@@ -52,8 +52,8 @@ struct ContentView: View {
                             if let conversationID = shellViewModel.activeConversationID {
                                 ChatView(
                                     viewModel: dependencies.makeChatViewModel(conversationID: conversationID),
-                                    onSearchTapped: {
-                                        shellViewModel.showSearchInSidebar()
+                                    onNewConversationTapped: {
+                                        _ = conversationsViewModel.startConversation()
                                     },
                                     onSettingsTapped: {
                                         shellViewModel.presentSettings()

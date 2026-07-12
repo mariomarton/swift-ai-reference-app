@@ -5,6 +5,16 @@ struct ConversationsListView: View {
 
     var body: some View {
         List {
+            Button {
+                _ = viewModel.startConversation()
+            } label: {
+                NewConversationRowView()
+            }
+            .buttonStyle(.plain)
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowSeparator(.hidden)
+            .accessibilityIdentifier("createConversationButton")
+
             if viewModel.displayedConversations.isEmpty, !viewModel.isLoading {
                 if viewModel.hasActiveSearch {
                     ContentUnavailableView(
@@ -55,18 +65,6 @@ struct ConversationsListView: View {
         .accessibilityIdentifier("conversationsList")
         .navigationTitle(L10n.ConversationsList.navigationTitle)
         .searchable(text: $viewModel.searchText, prompt: Text(L10n.ConversationsList.searchPrompt))
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    _ = viewModel.startConversation()
-                } label: {
-                    Image(systemName: "square.and.pencil")
-                        .offset(x: 2, y: -2)
-                }
-                .accessibilityLabel(L10n.ConversationsList.newConversationLabel)
-                .accessibilityIdentifier("createConversationButton")
-            }
-        }
         .task {
             if viewModel.conversations.isEmpty {
                 await viewModel.loadConversations()
@@ -101,6 +99,44 @@ struct ConversationsListView: View {
                 )
             }
         }
+    }
+}
+
+private struct NewConversationRowView: View {
+    var body: some View {
+        HStack(spacing: 14) {
+            Circle()
+                .fill(Color(.tertiarySystemBackground))
+                .frame(width: 40, height: 40)
+                .overlay {
+                    Image(systemName: "plus")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Color(.systemOrange))
+                }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(L10n.ConversationsList.newConversationLabel)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Image(systemName: "plus")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.orange.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color.orange.opacity(0.20), lineWidth: 1)
+                )
+        )
     }
 }
 
