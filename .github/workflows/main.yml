@@ -39,8 +39,9 @@ jobs:
           echo "Using destination: $DEST"
       
           xcodebuild test \
-            -scheme "Czechoslovak AI" \
+            -project "SwiftAIReferenceApp.xcodeproj" \
+            -scheme "SwiftAIReferenceApp" \
             -destination "$DEST" \
-            -only-testing:"Czechoslovak AITests" \
+            -only-testing:"SwiftAIReferenceAppTests" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY=""
