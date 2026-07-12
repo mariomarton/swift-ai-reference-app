@@ -61,6 +61,7 @@ struct ConversationsListView: View {
                     _ = viewModel.startConversation()
                 } label: {
                     Image(systemName: "square.and.pencil")
+                        .offset(x: 2, y: -2)
                 }
                 .accessibilityLabel(L10n.ConversationsList.newConversationLabel)
                 .accessibilityIdentifier("createConversationButton")
