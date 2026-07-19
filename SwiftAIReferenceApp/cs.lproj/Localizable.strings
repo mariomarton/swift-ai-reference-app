@@ -49,10 +49,10 @@
 "settings.customInstructions.title" = "Další instrukce";
 "settings.customInstructions.footer" = "Použijte pro styl, omezení nebo preference odpovědí.";
 "settings.reset.action" = "Obnovit výchozí";
-"prompt.defaultSystemPrompt" = "Jste užitečný asistent. Odpovídejte jasně a stručně.";
-"prompt.tone.concise" = "Odpovídejte stručně a přímo.";
-"prompt.tone.friendly" = "Použijte přátelský, vstřícný tón.";
-"prompt.tone.humorous" = "Když je to vhodné, přidejte lehký, vkusný humor.";
+"prompt.defaultSystemPrompt" = "Jsi užitečný asistent. Odpovídej jasně a stručně.";
+"prompt.tone.concise" = "Odpovídej stručně a přímo.";
+"prompt.tone.friendly" = "Použij přátelský, vstřícný tón.";
+"prompt.tone.humorous" = "Když je to vhodné, přidej lehký, vkusný humor.";
 "message.action.copy" = "Kopírovat";
 "error.repository" = "Chyba úložiště";
 "error.engine" = "Chyba jazykového modelu";

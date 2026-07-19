@@ -1,5 +1,5 @@
 "app.preview.unavailable" = "Preview unavailable";
-"app.launch.failedTitle" = "App Failed to Start";
+"app.launch.failedTitle" = "App failed to start";
 "app.dependencies.startupWarningMissingModel" = "No bundled GGUF model was found. The app is using the mock assistant.";
 "app.dependencies.startupWarningModelLoadFailed" = "The bundled GGUF model could not be loaded. The app is using the mock assistant.";
 "chat.emptyState.title" = "No messages yet";
