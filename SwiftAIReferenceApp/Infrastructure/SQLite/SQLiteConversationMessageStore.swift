@@ -94,7 +94,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                         try Self.bindOptionalText(title, at: 2, on: statement)
                         try Self.bindOptionalText(selectedModel?.id, at: 3, on: statement)
                         try Self.bindOptionalText(selectedModel?.name, at: 4, on: statement)
-                        try Self.bindOptionalText(selectedModel?.path, at: 5, on: statement)
+                        try Self.bindOptionalText(nil, at: 5, on: statement)
                         try Self.bindDouble(createdAt.timeIntervalSince1970, at: 6, on: statement)
                         try Self.bindDouble(updatedAt.timeIntervalSince1970, at: 7, on: statement)
                     }
@@ -180,7 +180,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                         try Self.bindOptionalText(conversation.title, at: 1, on: statement)
                         try Self.bindOptionalText(conversation.selectedModel?.id, at: 2, on: statement)
                         try Self.bindOptionalText(conversation.selectedModel?.name, at: 3, on: statement)
-                        try Self.bindOptionalText(conversation.selectedModel?.path, at: 4, on: statement)
+                        try Self.bindOptionalText(nil, at: 4, on: statement)
                         try Self.bindDouble(conversation.updatedAt.timeIntervalSince1970, at: 5, on: statement)
                         try Self.bindUUID(conversation.id, at: 6, on: statement)
                     }
@@ -714,10 +714,9 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
         let title = readOptionalText(from: statement, column: 1)
         let selectedModelID = readOptionalText(from: statement, column: 2)
         let selectedModelName = readOptionalText(from: statement, column: 3)
-        let selectedModelPath = readOptionalText(from: statement, column: 4)
         let selectedModel: LLMModel?
         if let selectedModelID, let selectedModelName {
-            selectedModel = LLMModel(id: selectedModelID, name: selectedModelName, path: selectedModelPath)
+            selectedModel = LLMModel(id: selectedModelID, name: selectedModelName)
         } else {
             selectedModel = nil
         }

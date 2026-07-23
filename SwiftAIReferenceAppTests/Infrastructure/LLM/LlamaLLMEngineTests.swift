@@ -105,13 +105,7 @@ final class LlamaLLMEngineTests: XCTestCase {
     }
 
     func testResolvePromptTemplateProfileUsesLlama3ForModelName() {
-        let model = LLMModel(id: "local", name: "Llama-3.2-1B-Instruct", path: nil)
-        let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: model)
-        assertProfile(profile, is: .llama3)
-    }
-
-    func testResolvePromptTemplateProfileUsesLlama3ForModelPath() {
-        let model = LLMModel(id: "local", name: "Custom", path: "/models/meta-llama-custom.gguf")
+        let model = LLMModel(id: "local", name: "Llama-3.2-1B-Instruct")
         let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: model)
         assertProfile(profile, is: .llama3)
     }
@@ -129,7 +123,7 @@ final class LlamaLLMEngineTests: XCTestCase {
     }
 
     func testResolvePromptTemplateProfilePrefersChatTemplateSignal() {
-        let model = LLMModel(id: "local", name: "Llama-3.2", path: nil)
+        let model = LLMModel(id: "local", name: "Llama-3.2")
         let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: model, chatTemplate: "<|im_start|>assistant")
         assertProfile(profile, is: .chatML)
     }

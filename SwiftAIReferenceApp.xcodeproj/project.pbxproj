@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DA537B5A3012DA54004DA38F /* Llama-3.2-1B-Instruct-Q8_0.gguf in Resources */ = {isa = PBXBuildFile; fileRef = DA537B593012DA54004DA38F /* Llama-3.2-1B-Instruct-Q8_0.gguf */; };
 		DA86354F2F79A9E700CB10A3 /* LlamaBinary in Frameworks */ = {isa = PBXBuildFile; productRef = DA86354E2F79A9E700CB10A3 /* LlamaBinary */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		DA537B593012DA54004DA38F /* Llama-3.2-1B-Instruct-Q8_0.gguf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Llama-3.2-1B-Instruct-Q8_0.gguf"; sourceTree = "<group>"; };
 		DA78D8792F629E1C00A17870 /* SwiftAIReferenceApp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = SwiftAIReferenceApp.xcodeproj; sourceTree = "<group>"; };
 		DAB9BE152F5DBF5600802680 /* SwiftAIReferenceApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftAIReferenceApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAB9BE222F5DBF5800802680 /* SwiftAIReferenceAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftAIReferenceAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -86,6 +88,7 @@
 		DAB9BE0C2F5DBF5600802680 = {
 			isa = PBXGroup;
 			children = (
+				DA537B593012DA54004DA38F /* Llama-3.2-1B-Instruct-Q8_0.gguf */,
 				DA78D8792F629E1C00A17870 /* SwiftAIReferenceApp.xcodeproj */,
 				DAB9BE172F5DBF5600802680 /* SwiftAIReferenceApp */,
 				DAB9BE252F5DBF5800802680 /* SwiftAIReferenceAppTests */,
@@ -237,6 +240,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DA537B5A3012DA54004DA38F /* Llama-3.2-1B-Instruct-Q8_0.gguf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
