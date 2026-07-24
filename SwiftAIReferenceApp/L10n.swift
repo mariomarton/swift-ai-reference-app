@@ -4,165 +4,154 @@ import Foundation
 
 /// Central namespace for all user-visible strings.
 ///
-/// English is the built-in source language; localized `.strings` files can override
-/// the defaults for Slovak and Czech.
+/// Strings are resolved from localized `.strings` files, with `en.lproj` as the
+/// source language and `cs.lproj` / `sk.lproj` providing overrides.
 enum L10n {
 
     enum App {
-        static var previewUnavailable: String { l("app.preview.unavailable", "Preview unavailable") }
-        static var failedToStartTitle: String { l("app.launch.failedTitle", "App Failed to Start") }
+        static var previewUnavailable: String { l("app.preview.unavailable") }
+        static var failedToStartTitle: String { l("app.launch.failedTitle") }
     }
 
     enum Chat {
-        static var emptyStateTitle: String { l("chat.emptyState.title", "No messages yet") }
-        static var emptyStateDescription: String { l("chat.emptyState.description", "Send the first message to start the conversation.") }
-        static var sendingIndicator: String { l("chat.sendingIndicator", "Assistant is thinking...") }
-        static var backgroundInterruptedMessage: String { l("chat.backgroundInterrupted.message", "Generation was interrupted after the app was sent to the background.") }
-        static var interruptedByNewConversationMessage: String { l("chat.interruptedByNewConversation.message", "Generation stopped because you started a new reply in another chat.") }
-        static var generationConflictMessage: String { l("chat.generationConflict.message", "Generation is already in progress in another chat. Wait for it to finish or stop it.") }
-        static var generationConflictWaitAction: String { l("chat.generationConflict.waitAction", "Wait") }
-        static var generationConflictStopAndSendAction: String { l("chat.generationConflict.stopAndSendAction", "Stop and continue here") }
-        static var stopAction: String { l("chat.stopAction", "Stop") }
-        static var userStoppedGenerationMessage: String { l("chat.userStoppedGeneration.message", "Generation was stopped by the user.") }
-        static var navigationTitle: String { l("chat.navigationTitle", "Chat") }
-        static var openSidebarLabel: String { l("chat.openSidebar.label", "Open conversations") }
-        static var searchConversationsLabel: String { l("chat.searchConversations.label", "Search conversations") }
-        static var loading: String { l("chat.loading", "Loading messages") }
-        static var errorLoadTitle: String { l("chat.error.load.title", "Could not load messages") }
-        static var errorSendTitle: String { l("chat.error.send.title", "Could not send message") }
-        static var errorRefreshTitle: String { l("chat.error.refresh.title", "Could not refresh messages") }
+        static var emptyStateTitle: String { l("chat.emptyState.title") }
+        static var emptyStateDescription: String { l("chat.emptyState.description") }
+        static var sendingIndicator: String { l("chat.sendingIndicator") }
+        static var backgroundInterruptedMessage: String { l("chat.backgroundInterrupted.message") }
+        static var interruptedByNewConversationMessage: String { l("chat.interruptedByNewConversation.message") }
+        static var generationConflictMessage: String { l("chat.generationConflict.message") }
+        static var generationConflictWaitAction: String { l("chat.generationConflict.waitAction") }
+        static var generationConflictStopAndSendAction: String { l("chat.generationConflict.stopAndSendAction") }
+        static var stopAction: String { l("chat.stopAction") }
+        static var userStoppedGenerationMessage: String { l("chat.userStoppedGeneration.message") }
+        static var navigationTitle: String { l("chat.navigationTitle") }
+        static var openSidebarLabel: String { l("chat.openSidebar.label") }
+        static var searchConversationsLabel: String { l("chat.searchConversations.label") }
+        static var loading: String { l("chat.loading") }
+        static var errorLoadTitle: String { l("chat.error.load.title") }
+        static var errorSendTitle: String { l("chat.error.send.title") }
+        static var errorRefreshTitle: String { l("chat.error.refresh.title") }
     }
 
     enum ConversationsList {
-        static var emptyStateTitle: String { l("conversations.emptyState.title", "No conversations yet") }
-        static var emptyStateDescription: String { l("conversations.emptyState.description", "Create your first conversation and start chatting.") }
-        static var searchPrompt: String { l("conversations.search.prompt", "Search conversations") }
-        static var searchEmptyTitle: String { l("conversations.search.empty.title", "No results found") }
-        static var searchEmptyDescription: String { l("conversations.search.empty.description", "Try a different conversation name or message.") }
-        static var navigationTitle: String { l("conversations.navigationTitle", "Conversations") }
-        static var newConversationLabel: String { l("conversations.newButton.label", "New conversation") }
-        static var generatingStatus: String { l("conversations.generating.status", "Generating...") }
-        static var loading: String { l("conversations.loading", "Loading...") }
-        static var defaultConversationTitle: String { l("conversations.defaultTitle", "New chat") }
-        static var errorLoadTitle: String { l("conversations.error.load.title", "Could not load conversations") }
-        static var errorCreateTitle: String { l("conversations.error.create.title", "Could not create conversation") }
-        static var errorDeleteTitle: String { l("conversations.error.delete.title", "Could not delete conversation") }
-        static var deleteAction: String { l("conversations.action.delete", "Delete") }
+        static var emptyStateTitle: String { l("conversations.emptyState.title") }
+        static var emptyStateDescription: String { l("conversations.emptyState.description") }
+        static var searchPrompt: String { l("conversations.search.prompt") }
+        static var searchEmptyTitle: String { l("conversations.search.empty.title") }
+        static var searchEmptyDescription: String { l("conversations.search.empty.description") }
+        static var navigationTitle: String { l("conversations.navigationTitle") }
+        static var newConversationLabel: String { l("conversations.newButton.label") }
+        static var generatingStatus: String { l("conversations.generating.status") }
+        static var loading: String { l("conversations.loading") }
+        static var defaultConversationTitle: String { l("conversations.defaultTitle") }
+        static var errorLoadTitle: String { l("conversations.error.load.title") }
+        static var errorCreateTitle: String { l("conversations.error.create.title") }
+        static var errorDeleteTitle: String { l("conversations.error.delete.title") }
+        static var deleteAction: String { l("conversations.action.delete") }
     }
 
     enum Common {
-        static var retry: String { l("common.retry", "Retry") }
-        static var cancel: String { l("common.cancel", "Cancel") }
-        static var ok: String { l("common.ok", "OK") }
+        static var retry: String { l("common.retry") }
+        static var cancel: String { l("common.cancel") }
+        static var ok: String { l("common.ok") }
     }
 
     enum Composer {
-        static var placeholder: String { l("composer.placeholder", "Type your message") }
-        static var stopAccessibilityLabel: String { l("composer.stop.accessibilityLabel", "Stop generation") }
-        static var sendAccessibilityLabel: String { l("composer.send.accessibilityLabel", "Send message") }
+        static var placeholder: String { l("composer.placeholder") }
+        static var stopAccessibilityLabel: String { l("composer.stop.accessibilityLabel") }
+        static var sendAccessibilityLabel: String { l("composer.send.accessibilityLabel") }
     }
 
     enum Settings {
-        static var navigationTitle: String { l("settings.navigationTitle", "Settings") }
-        static var modeTitle: String { l("settings.mode.title", "Response style") }
-        static var modeFooter: String { l("settings.mode.footer", "The style adds a short instruction to the system prompt.") }
-        static var modeNone: String { l("settings.mode.none", "No style") }
-        static var modeConcise: String { l("settings.mode.concise", "Concise") }
-        static var modeFriendly: String { l("settings.mode.friendly", "Friendly") }
-        static var modeHumorous: String { l("settings.mode.humorous", "Humorous") }
-        static var systemPromptTitle: String { l("settings.systemPrompt.title", "System prompt") }
-        static var systemPromptFooter: String { l("settings.systemPrompt.footer", "This prompt will be used for all new messages.") }
-        static var customInstructionsTitle: String { l("settings.customInstructions.title", "Additional instructions") }
-        static var customInstructionsFooter: String { l("settings.customInstructions.footer", "Use this for style, limits, or reply preferences.") }
-        static var resetAction: String { l("settings.reset.action", "Restore defaults") }
+        static var navigationTitle: String { l("settings.navigationTitle") }
+        static var modeTitle: String { l("settings.mode.title") }
+        static var modeFooter: String { l("settings.mode.footer") }
+        static var modeNone: String { l("settings.mode.none") }
+        static var modeConcise: String { l("settings.mode.concise") }
+        static var modeFriendly: String { l("settings.mode.friendly") }
+        static var modeHumorous: String { l("settings.mode.humorous") }
+        static var systemPromptTitle: String { l("settings.systemPrompt.title") }
+        static var systemPromptFooter: String { l("settings.systemPrompt.footer") }
+        static var customInstructionsTitle: String { l("settings.customInstructions.title") }
+        static var customInstructionsFooter: String { l("settings.customInstructions.footer") }
+        static var resetAction: String { l("settings.reset.action") }
     }
 
     enum MessageActions {
-        static var copy: String { l("message.action.copy", "Copy") }
+        static var copy: String { l("message.action.copy") }
     }
 
     enum StubLLMEngine {
-        static var responsePrefix: String { l("stubLLMEngine.responsePrefix", "Stub response:") }
-        static var fallbackResponse: String { l("stubLLMEngine.fallbackResponse", "This is a stub assistant response.") }
+        static var responsePrefix: String { l("stubLLMEngine.responsePrefix") }
+        static var fallbackResponse: String { l("stubLLMEngine.fallbackResponse") }
     }
 
     enum Errors {
-        static var repositoryError: String { l("error.repository", "Repository error") }
-        static var engineError: String { l("error.engine", "Language model error") }
-        static var invalidModel: String { l("error.invalidModel", "Invalid or unsupported model") }
-        static var unknown: String { l("error.unknown", "An unknown error occurred") }
+        static var repositoryError: String { l("error.repository") }
+        static var engineError: String { l("error.engine") }
+        static var invalidModel: String { l("error.invalidModel") }
+        static var unknown: String { l("error.unknown") }
     }
 
     enum AppDependencies {
         static var startupWarningMissingModel: String {
-            l(
-                "app.dependencies.startupWarningMissingModel",
-                "No bundled GGUF model was found. The app is using the mock assistant."
-            )
+            l("app.dependencies.startupWarningMissingModel")
         }
 
         static var startupWarningModelLoadFailed: String {
-            l(
-                "app.dependencies.startupWarningModelLoadFailed",
-                "The bundled GGUF model could not be loaded. The app is using the mock assistant."
-            )
+            l("app.dependencies.startupWarningModelLoadFailed")
         }
     }
 
     enum PromptSettings {
         static var defaultSystemPrompt: String {
-            l("prompt.defaultSystemPrompt", "You are a helpful assistant. Answer clearly and concisely.")
+            l("prompt.defaultSystemPrompt")
         }
 
         static var toneConcise: String {
-            l("prompt.tone.concise", "Answer briefly and directly.")
+            l("prompt.tone.concise")
         }
 
         static var toneFriendly: String {
-            l("prompt.tone.friendly", "Use a warm, friendly tone.")
+            l("prompt.tone.friendly")
         }
 
         static var toneHumorous: String {
-            l("prompt.tone.humorous", "Add light, tasteful humor when appropriate.")
+            l("prompt.tone.humorous")
         }
     }
 
     enum Llama {
         static func modelNotFound(path: String) -> String {
-            lf("llama.modelNotFound", "Model file not found at path: %@", path)
+            lf("llama.modelNotFound", path)
         }
 
         static var modelLoadFailed: String {
-            l("llama.modelLoadFailed", "Failed to load model - the file may be corrupted or in an unsupported format.")
+            l("llama.modelLoadFailed")
         }
 
         static func unsupportedModelArchitecture(description: String) -> String {
-            lf(
-                "llama.unsupportedModelArchitecture",
-                "Unsupported model architecture: %@. Use a decoder-only instruct/chat GGUF model.",
-                description
-            )
+            lf("llama.unsupportedModelArchitecture", description)
         }
 
         static var contextCreationFailed: String {
-            l("llama.contextCreationFailed", "Failed to create inference context - the device may not have enough memory.")
+            l("llama.contextCreationFailed")
         }
 
         static var tokenizationFailed: String {
-            l("llama.tokenizationFailed", "Failed to tokenize the input prompt.")
+            l("llama.tokenizationFailed")
         }
 
         static func inferenceFailed(_ underlyingDescription: String) -> String {
-            lf("llama.inferenceFailed", "Inference failed: %@", underlyingDescription)
+            lf("llama.inferenceFailed", underlyingDescription)
         }
     }
 }
 
-// Short helper to avoid repeating NSLocalizedString boilerplate throughout the enum.
-private func l(_ key: String, _ defaultValue: String) -> String {
-    NSLocalizedString(key, value: defaultValue, comment: "")
+private func l(_ key: String) -> String {
+    NSLocalizedString(key, comment: "")
 }
 
-private func lf(_ key: String, _ defaultValue: String, _ arguments: CVarArg...) -> String {
-    String(format: l(key, defaultValue), arguments: arguments)
+private func lf(_ key: String, _ arguments: CVarArg...) -> String {
+    String(format: l(key), arguments: arguments)
 }
