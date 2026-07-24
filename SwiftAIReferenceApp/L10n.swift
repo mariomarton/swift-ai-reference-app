@@ -81,6 +81,11 @@ enum L10n {
         static var copy: String { l("message.action.copy", "Copy") }
     }
 
+    enum StubLLMEngine {
+        static var responsePrefix: String { l("stubLLMEngine.responsePrefix", "Stub response:") }
+        static var fallbackResponse: String { l("stubLLMEngine.fallbackResponse", "This is a stub assistant response.") }
+    }
+
     enum Errors {
         static var repositoryError: String { l("error.repository", "Repository error") }
         static var engineError: String { l("error.engine", "Language model error") }

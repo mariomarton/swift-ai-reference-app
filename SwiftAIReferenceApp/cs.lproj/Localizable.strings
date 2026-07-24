@@ -54,6 +54,8 @@
 "prompt.tone.friendly" = "Použij přátelský, vstřícný tón.";
 "prompt.tone.humorous" = "Když je to vhodné, přidej lehký, vkusný humor.";
 "message.action.copy" = "Kopírovat";
+"stubLLMEngine.responsePrefix" = "Ukázková odpověď:";
+"stubLLMEngine.fallbackResponse" = "Toto je ukázková odpověď asistenta.";
 "error.repository" = "Chyba úložiště";
 "error.engine" = "Chyba jazykového modelu";
 "error.invalidModel" = "Neplatný nebo nepodporovaný model";

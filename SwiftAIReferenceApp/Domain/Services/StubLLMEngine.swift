@@ -6,12 +6,7 @@ public final class StubLLMEngine: LLMEngine {
 
     public func generateResponse(for messages: [Message], model: LLMModel?) -> AsyncThrowingStream<String, Error> {
         let userMessage = messages.last { $0.role == .user }
-        let text: String
-        if let userText = userMessage?.text {
-            text = "(Stub) Odpoveď na: \(userText)"
-        } else {
-            text = "(Stub) Toto je ukážková odpoveď od asistenta."
-        }
+        let text = userMessage.map { "\(L10n.StubLLMEngine.responsePrefix) \($0.text)" } ?? L10n.StubLLMEngine.fallbackResponse
         return AsyncThrowingStream { continuation in
             continuation.yield(text)
             continuation.finish()

@@ -54,6 +54,8 @@
 "prompt.tone.friendly" = "Use a warm, friendly tone.";
 "prompt.tone.humorous" = "Add light, tasteful humor when appropriate.";
 "message.action.copy" = "Copy";
+"stubLLMEngine.responsePrefix" = "Stub response:";
+"stubLLMEngine.fallbackResponse" = "This is a stub assistant response.";
 "error.repository" = "Repository error";
 "error.engine" = "Language model error";
 "error.invalidModel" = "Invalid or unsupported model";
