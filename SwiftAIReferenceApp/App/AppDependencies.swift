@@ -51,7 +51,11 @@ final class AppDependencies {
         )
         self.loadRecentMessagesUseCase = DefaultLoadRecentMessagesUseCase(repository: messageRepository)
 
-        let titleGenerator = LlamaConversationTitleGenerator(engine: llmEngine)
+        let titlePromptProvider = LlamaConversationTitlePromptProvider()
+        let titleGenerator = LlamaConversationTitleGenerator(
+            engine: llmEngine,
+            promptProvider: titlePromptProvider
+        )
         let generateTitleUseCase = DefaultGenerateConversationTitleUseCase(generator: titleGenerator)
         self.sendMessageUseCase = DefaultSendMessageUseCase(
             repository: messageRepository,

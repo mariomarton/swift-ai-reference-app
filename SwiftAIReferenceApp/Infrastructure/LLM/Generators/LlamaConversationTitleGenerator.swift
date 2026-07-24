@@ -8,15 +8,17 @@ import Foundation
 public final class LlamaConversationTitleGenerator: ConversationTitleGenerator {
 
     private let engine: LLMEngine
+    private let promptProvider: any ConversationTitlePromptProviding
 
-    public init(engine: LLMEngine) {
+    public init(engine: LLMEngine, promptProvider: any ConversationTitlePromptProviding) {
         self.engine = engine
+        self.promptProvider = promptProvider
     }
 
     public func generateTitle(fromFirstUserMessage text: String, model: LLMModel?) async throws -> String? {
         let systemPrompt = Message(
             role: .system,
-            text: "You are a chat title assistant. When given the user's first message, respond with only a short, descriptive title for the conversation — maximum 45 characters, no quotes, no punctuation at the end, same language as the user's message."
+            text: promptProvider.titleSystemPrompt
         )
         let prompt = Message(
             role: .user,
