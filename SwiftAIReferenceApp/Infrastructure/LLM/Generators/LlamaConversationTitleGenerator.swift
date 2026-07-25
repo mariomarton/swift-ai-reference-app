@@ -15,18 +15,16 @@ public final class LlamaConversationTitleGenerator: ConversationTitleGenerator {
         self.promptProvider = promptProvider
     }
 
-    public func generateTitle(fromFirstUserMessage text: String, model: LLMModel?) async throws -> String? {
+    public func generateTitle(fromConversationMessages messages: [Message], model: LLMModel?) async throws -> String? {
+        guard !messages.isEmpty else { return nil }
+
         let systemPrompt = Message(
             role: .system,
             text: promptProvider.titleSystemPrompt
         )
-        let prompt = Message(
-            role: .user,
-            text: text
-        )
 
         var accumulated = ""
-        for try await token in engine.generateResponse(for: [systemPrompt, prompt], model: model) {
+        for try await token in engine.generateResponse(for: [systemPrompt] + messages, model: model) {
             accumulated += token
             // Stop collecting after we have enough for a title — avoids wasting inference
             if accumulated.count > 200 { break }
