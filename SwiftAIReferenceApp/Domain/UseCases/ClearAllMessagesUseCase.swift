@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol ClearAllMessagesUseCase {
-    func clearAll() async throws
+    func clearAllMessages() async throws
 }
 
 public final class DefaultClearAllMessagesUseCase: ClearAllMessagesUseCase {
@@ -11,7 +11,7 @@ public final class DefaultClearAllMessagesUseCase: ClearAllMessagesUseCase {
         self.repository = repository
     }
 
-    public func clearAll() async throws {
+    public func clearAllMessages() async throws {
         do {
             try await repository.clearAll()
         } catch {

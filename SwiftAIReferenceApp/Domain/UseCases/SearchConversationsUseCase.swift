@@ -2,13 +2,13 @@ import Foundation
 
 public protocol SearchConversationsUseCase {
     /// Returns conversations whose title or message contents match the query.
-    func execute(conversations: [Conversation], query: String) -> [Conversation]
+    func search(conversations: [Conversation], query: String) -> [Conversation]
 }
 
 public final class DefaultSearchConversationsUseCase: SearchConversationsUseCase {
     public init() {}
 
-    public func execute(conversations: [Conversation], query: String) -> [Conversation] {
+    public func search(conversations: [Conversation], query: String) -> [Conversation] {
         let normalizedQuery = Self.normalize(query)
         guard !normalizedQuery.isEmpty else {
             return conversations

@@ -64,7 +64,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         }
 
         let matchedIDs = Set(
-            searchConversationsUseCase.execute(conversations: searchableConversations, query: searchText)
+            searchConversationsUseCase.search(conversations: searchableConversations, query: searchText)
                 .map(\.id)
         )
 
@@ -82,7 +82,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         defer { isLoading = false }
         
         do {
-            let loadedConversations = try await loadConversationsUseCase.execute()
+            let loadedConversations = try await loadConversationsUseCase.loadConversations()
             searchableMessagesByConversationID = await loadSearchableMessages(for: loadedConversations)
             conversations = loadedConversations
         } catch {
@@ -117,7 +117,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         }
         
         do {
-            try await deleteConversationUseCase.execute(id: id)
+            try await deleteConversationUseCase.deleteConversation(id: id)
         } catch {
             conversations = snapshot
             searchableMessagesByConversationID = messageSnapshot

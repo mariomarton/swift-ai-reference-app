@@ -36,7 +36,7 @@ final class MockGenerateConversationTitleUseCase: GenerateConversationTitleUseCa
     private(set) var capturedExistingTitle: String??
     private(set) var capturedMessageText: String?
 
-    func execute(existingTitle: String?, firstUserMessageText: String, model: LLMModel?) async -> String? {
+    func generateTitle(existingTitle: String?, firstUserMessageText: String, model: LLMModel?) async -> String? {
         invocationCount += 1
         capturedExistingTitle = existingTitle
         capturedMessageText = firstUserMessageText

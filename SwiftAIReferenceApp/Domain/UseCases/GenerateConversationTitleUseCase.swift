@@ -8,7 +8,7 @@ public enum ConversationTitleTriggerPolicy: Equatable {
 public protocol GenerateConversationTitleUseCase {
     /// Returns a normalized title or nil when no title should be set.
     /// This use case never overwrites existing titles.
-    func execute(existingTitle: String?, firstUserMessageText: String, model: LLMModel?) async -> String?
+    func generateTitle(existingTitle: String?, firstUserMessageText: String, model: LLMModel?) async -> String?
 }
 
 public final class DefaultGenerateConversationTitleUseCase: GenerateConversationTitleUseCase {
@@ -25,7 +25,7 @@ public final class DefaultGenerateConversationTitleUseCase: GenerateConversation
         self.triggerPolicy = triggerPolicy
     }
 
-    public func execute(existingTitle: String?, firstUserMessageText: String, model: LLMModel?) async -> String? {
+    public func generateTitle(existingTitle: String?, firstUserMessageText: String, model: LLMModel?) async -> String? {
         guard triggerPolicy == .firstMessageOnly else {
             return nil
         }

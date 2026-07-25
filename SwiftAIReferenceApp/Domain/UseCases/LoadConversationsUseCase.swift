@@ -2,7 +2,7 @@ import Foundation
 
 public protocol LoadConversationsUseCase {
     /// Loads a list of conversations for display (e.g., list screen).
-    func execute() async throws -> [Conversation]
+    func loadConversations() async throws -> [Conversation]
 }
 
 public final class DefaultLoadConversationsUseCase: LoadConversationsUseCase {
@@ -12,7 +12,7 @@ public final class DefaultLoadConversationsUseCase: LoadConversationsUseCase {
         self.repository = repository
     }
 
-    public func execute() async throws -> [Conversation] {
+    public func loadConversations() async throws -> [Conversation] {
         return try await repository.listConversations()
     }
 }

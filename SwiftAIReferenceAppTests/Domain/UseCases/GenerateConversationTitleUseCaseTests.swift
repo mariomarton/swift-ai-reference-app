@@ -28,7 +28,7 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         generator.generatedTitle = "Ignored"
         let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
 
-        let result = await useCase.execute(
+        let result = await useCase.generateTitle(
             existingTitle: "Manual title",
             firstUserMessageText: "Ako funguje da\u{148} v s.r.o.?",
             model: nil
@@ -43,7 +43,7 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         generator.generatedTitle = "DPH povinnosti pre s.r.o."
         let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
 
-        let result = await useCase.execute(
+        let result = await useCase.generateTitle(
             existingTitle: nil,
             firstUserMessageText: "Ako funguje da\u{148} v s.r.o.?",
             model: nil
@@ -58,7 +58,7 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         generator.generatedTitle = "  \"  DPH\n povinnosti pre   s.r.o.  \"  "
         let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
 
-        let result = await useCase.execute(
+        let result = await useCase.generateTitle(
             existingTitle: nil,
             firstUserMessageText: "Ahoj",
             model: nil
@@ -72,7 +72,7 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         generator.shouldThrow = true
         let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
 
-        let result = await useCase.execute(
+        let result = await useCase.generateTitle(
             existingTitle: nil,
             firstUserMessageText: "Potrebujem poradit s danou. Co mam podat najskor?",
             model: nil
@@ -87,7 +87,7 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         generator.generatedTitle = "   "
         let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
 
-        let result = await useCase.execute(
+        let result = await useCase.generateTitle(
             existingTitle: nil,
             firstUserMessageText: "\n\nRozpis odvodov pre SZCO\nDruhy riadok",
             model: nil
@@ -101,7 +101,7 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         generator.generatedTitle = "Toto je velmi dlhy nazov konverzacie, ktory ma byt skrateny na limit"
         let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
 
-        let result = await useCase.execute(
+        let result = await useCase.generateTitle(
             existingTitle: nil,
             firstUserMessageText: "Ahoj",
             model: nil
@@ -117,7 +117,7 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         generator.generatedTitle = "X"
         let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
 
-        let result = await useCase.execute(
+        let result = await useCase.generateTitle(
             existingTitle: nil,
             firstUserMessageText: "   \n\n   ",
             model: nil
@@ -135,7 +135,7 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
             triggerPolicy: .afterEachMessage
         )
 
-        let result = await useCase.execute(
+        let result = await useCase.generateTitle(
             existingTitle: nil,
             firstUserMessageText: "Ahoj",
             model: nil

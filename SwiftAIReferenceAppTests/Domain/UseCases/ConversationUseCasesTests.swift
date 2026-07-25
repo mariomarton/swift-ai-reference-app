@@ -43,7 +43,7 @@ final class ConversationUseCasesTests: XCTestCase {
         let useCase = DefaultCreateConversationUseCase(repository: repo)
         let conversationID = UUID()
 
-        let created = try await useCase.execute(id: conversationID, title: "Test")
+        let created = try await useCase.createConversation(id: conversationID, title: "Test")
         XCTAssertEqual(created.id, conversationID)
         XCTAssertEqual(created.title, "Test")
         XCTAssertEqual(repo.conversations.count, 1)
@@ -54,7 +54,7 @@ final class ConversationUseCasesTests: XCTestCase {
         repo.conversations = [Conversation(title: "A"), Conversation(title: "B")]
         let useCase = DefaultLoadConversationsUseCase(repository: repo)
 
-        let loaded = try await useCase.execute()
+        let loaded = try await useCase.loadConversations()
         XCTAssertEqual(loaded.count, 2)
     }
 
@@ -64,7 +64,7 @@ final class ConversationUseCasesTests: XCTestCase {
         let useCase = DefaultCreateConversationUseCase(repository: repo)
 
         do {
-            _ = try await useCase.execute(id: UUID(), title: "x")
+            _ = try await useCase.createConversation(id: UUID(), title: "x")
             XCTFail("Expected throw")
         } catch {
         }
@@ -83,7 +83,7 @@ final class ConversationUseCasesTests: XCTestCase {
             messageRepository: messageRepo
         )
 
-        try await useCase.execute(id: toDelete.id)
+        try await useCase.deleteConversation(id: toDelete.id)
 
         XCTAssertFalse(conversationRepo.conversations.contains(where: { $0.id == toDelete.id }))
         XCTAssertEqual(conversationRepo.conversations.count, 1)
@@ -101,7 +101,7 @@ final class ConversationUseCasesTests: XCTestCase {
             messageRepository: messageRepo
         )
 
-        try await useCase.execute(id: conv.id)
+        try await useCase.deleteConversation(id: conv.id)
 
         XCTAssertNil(messageRepo.stored[conv.id])
         XCTAssertTrue(conversationRepo.conversations.isEmpty)
@@ -120,7 +120,7 @@ final class ConversationUseCasesTests: XCTestCase {
         )
 
         do {
-            try await useCase.execute(id: conv.id)
+            try await useCase.deleteConversation(id: conv.id)
             XCTFail("Expected DomainError")
         } catch let err as DomainError {
             guard case .repositoryError = err else {

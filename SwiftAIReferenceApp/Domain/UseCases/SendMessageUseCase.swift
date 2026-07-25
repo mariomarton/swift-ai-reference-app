@@ -139,7 +139,7 @@ public final class DefaultSendMessageUseCase: SendMessageUseCase, @unchecked Sen
                 return
             }
 
-            let title = await generateTitleUseCase.execute(
+            let title = await generateTitleUseCase.generateTitle(
                 existingTitle: conversation.title,
                 firstUserMessageText: firstUserMessageText,
                 model: model

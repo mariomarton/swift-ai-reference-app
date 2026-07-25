@@ -4,10 +4,10 @@ import XCTest
 
 private final class LoadConversationsUseCaseMock: LoadConversationsUseCase {
     var result: Result<[Conversation], Error> = .success([])
-    private(set) var executeCallCount = 0
+    private(set) var loadConversationsCallCount = 0
 
-    func execute() async throws -> [Conversation] {
-        executeCallCount += 1
+    func loadConversations() async throws -> [Conversation] {
+        loadConversationsCallCount += 1
         return try result.get()
     }
 }
@@ -26,7 +26,7 @@ private final class DeleteConversationUseCaseMock: DeleteConversationUseCase {
     var shouldThrow = false
     private(set) var deletedIDs: [UUID] = []
 
-    func execute(id: UUID) async throws {
+    func deleteConversation(id: UUID) async throws {
         if shouldThrow { throw NSError(domain: "mock", code: 3) }
         deletedIDs.append(id)
     }
@@ -105,7 +105,7 @@ final class ConversationsListViewModelTests: XCTestCase {
 
         await sut.loadConversations()
 
-        XCTAssertEqual(loadMock.executeCallCount, 1)
+        XCTAssertEqual(loadMock.loadConversationsCallCount, 1)
         XCTAssertEqual(sut.conversations, expected)
         XCTAssertNil(sut.alert)
         XCTAssertFalse(sut.isLoading)
@@ -137,7 +137,7 @@ final class ConversationsListViewModelTests: XCTestCase {
 
         await sut.loadConversations()
 
-        XCTAssertEqual(loadMock.executeCallCount, 1)
+        XCTAssertEqual(loadMock.loadConversationsCallCount, 1)
         XCTAssertTrue(sut.conversations.isEmpty)
         XCTAssertNotNil(sut.alert)
         XCTAssertEqual(sut.alert?.isRetryable, true)
@@ -162,7 +162,7 @@ final class ConversationsListViewModelTests: XCTestCase {
 
         await sut.loadConversations()
 
-        XCTAssertEqual(loadMock.executeCallCount, 2)
+        XCTAssertEqual(loadMock.loadConversationsCallCount, 2)
         XCTAssertEqual(sut.conversations.first?.title, "Vygenerovaný názov")
     }
 
