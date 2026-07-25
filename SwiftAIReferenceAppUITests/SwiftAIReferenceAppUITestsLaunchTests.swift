@@ -12,7 +12,7 @@ final class SwiftAIReferenceAppUITestsLaunchTests: XCTestCase {
 
     @MainActor
     func testLaunch() throws {
-        let app = XCUIApplication()
+        let app = UITestLaunchConfiguration.makeApp(testName: #function)
         app.launch()
 
         // Insert steps here to perform after app launch but before taking a screenshot,

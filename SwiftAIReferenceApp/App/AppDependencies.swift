@@ -99,13 +99,34 @@ final class AppDependencies {
         }
     }
 
+    private static func resolveStorageRootURL() -> URL? {
+        guard let rawValue = ProcessInfo.processInfo.environment["SWIFTAIREFERENCEAPP_STORAGE_ROOT"] else {
+            return nil
+        }
+
+        let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedValue.isEmpty else {
+            return nil
+        }
+
+        return URL(fileURLWithPath: trimmedValue, isDirectory: true)
+    }
+
     private static func makeStorageRepositories(for backend: StorageBackend) throws -> (ConversationRepository, MessageRepository) {
+        let storageRootURL = resolveStorageRootURL()
+
         switch backend {
         case .fileBacked:
-            return (try FileBackedConversationRepository(), try FileBackedMessageRepository())
+            let conversationsURL = storageRootURL?.appendingPathComponent("conversations.json")
+            let messagesURL = storageRootURL?.appendingPathComponent("messages", isDirectory: true)
+            return (
+                try FileBackedConversationRepository(storageURL: conversationsURL),
+                try FileBackedMessageRepository(storageURL: messagesURL)
+            )
         case .sqlite:
             do {
-                let store = try SQLiteConversationMessageStore()
+                let databaseURL = storageRootURL?.appendingPathComponent("chat.sqlite3")
+                let store = try SQLiteConversationMessageStore(storageURL: databaseURL)
                 return (SQLiteConversationRepository(store: store), SQLiteMessageRepository(store: store))
             } catch {
                 throw AppDependenciesError.storageInitializationFailed(underlying: error)
