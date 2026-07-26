@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol GenerateConversationTitleUseCase {
-    /// Returns a normalized title or nil when no title should be set.
+    /// Returns a normalized title, or nil when the conversation should keep its current title.
     /// User-managed titles are never overwritten.
     func generateTitle(
         existingTitle: String?,

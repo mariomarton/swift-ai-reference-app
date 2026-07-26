@@ -2,9 +2,6 @@ import XCTest
 @testable import SwiftAIReferenceApp
 
 final class ChatMLFormatterTests: XCTestCase {
-
-    // MARK: - Default system prompt injection
-
     func testInjectsDefaultSystemPromptWhenHistoryHasNoSystemTurn() {
         let messages = [Message(role: .user, text: "Ahoj")]
         let prompt = ChatMLFormatter.format(messages)
@@ -25,8 +22,6 @@ final class ChatMLFormatterTests: XCTestCase {
         XCTAssertFalse(prompt.contains(ChatMLFormatter.defaultSystemPrompt))
     }
 
-    // MARK: - Role names
-
     func testUserTurnFormattedCorrectly() {
         let messages = [Message(role: .user, text: "Hello")]
         let prompt = ChatMLFormatter.format(messages)
@@ -42,16 +37,12 @@ final class ChatMLFormatterTests: XCTestCase {
         XCTAssertTrue(prompt.contains("<|im_start|>assistant\nHi!<|im_end|>"))
     }
 
-    // MARK: - Trailing assistant opener
-
     func testPromptEndsWithOpenAssistantTurn() {
         let messages = [Message(role: .user, text: "Test")]
         let prompt = ChatMLFormatter.format(messages)
         XCTAssertTrue(prompt.hasSuffix("<|im_start|>assistant\n"),
                       "Prompt must end with the open assistant turn so the model continues from there")
     }
-
-    // MARK: - Multi-turn ordering
 
     func testMultiTurnOrderIsPreserved() {
         let messages: [Message] = [
@@ -69,19 +60,14 @@ final class ChatMLFormatterTests: XCTestCase {
         XCTAssertLessThan(r1.lowerBound, t2.lowerBound)
     }
 
-    // MARK: - Token boundary correctness
-
     func testEachTurnContainsImStartAndImEnd() {
         let messages = [
             Message(role: .user,      text: "Q"),
             Message(role: .assistant, text: "A"),
         ]
         let prompt = ChatMLFormatter.format(messages)
-        // Every closed turn must have a matching <|im_end|>
         let starts = prompt.components(separatedBy: "<|im_start|>").count - 1
-        let ends   = prompt.components(separatedBy: "<|im_end|>").count - 1
-        // starts = system + user + assistant (closed) + 1 open assistant = 4
-        // ends   = system + user + assistant (closed)                    = 3
+        let ends = prompt.components(separatedBy: "<|im_end|>").count - 1
         XCTAssertEqual(ends, starts - 1,
                        "Every turn except the trailing open assistant turn should be closed with <|im_end|>")
     }

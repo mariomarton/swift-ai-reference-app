@@ -35,8 +35,12 @@ enum SQLiteStorageError: LocalizedError {
     }
 }
 
+/// Shared SQLite store for conversations and messages.
+///
+/// It owns schema access, migration, and recency ordering so the repository adapters stay thin.
 final class SQLiteConversationMessageStore: @unchecked Sendable {
     private enum Schema {
+        // Bump this when the database schema changes.
         static let version: Int64 = 2
     }
 
@@ -116,6 +120,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
 
     func listConversations() throws -> [Conversation] {
         try locked {
+            // Sidebar recents should stay newest-first, with created-at as a tie breaker.
             try fetchConversations(
                 sql: """
                 SELECT

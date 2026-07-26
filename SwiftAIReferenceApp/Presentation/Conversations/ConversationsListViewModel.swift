@@ -5,6 +5,7 @@ protocol ConversationGenerationStateObserving: AnyObject {
     var statesPublisher: AnyPublisher<[UUID: MessageGenerationCoordinator.ConversationState], Never> { get }
 }
 
+/// Owns sidebar conversation state, search hydration, and generation badges.
 @MainActor
 final class ConversationsListViewModel: ObservableObject, SidebarConversationsManaging {
     @Published private(set) var conversations: [Conversation] = []
@@ -34,6 +35,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         self.deleteConversationUseCase = deleteConversationUseCase
 
         if let generationCoordinator {
+            // Keep the sidebar badge state in sync with active generations without polling.
             generationObservationTask = Task { [weak self] in
                 for await states in generationCoordinator.statesPublisher.values {
                     let generatingConversationIDs = Set(states.compactMap { entry in
@@ -55,6 +57,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
     }
 
     var displayedConversations: [Conversation] {
+        // Search uses cached recent messages so message text can match without reloading on every keystroke.
         let searchableConversations = conversations.map { conversation in
             var enrichedConversation = conversation
             if let messages = searchableMessagesByConversationID[conversation.id] {
@@ -107,7 +110,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
     }
     
     func deleteConversation(id: UUID) async {
-        // Optimistic removal: update UI immediately, roll back if the operation fails
+        // Optimistic removal keeps the list responsive; the snapshots let us roll back on failure.
         let snapshot = conversations
         let messageSnapshot = searchableMessagesByConversationID
         conversations.removeAll { $0.id == id }

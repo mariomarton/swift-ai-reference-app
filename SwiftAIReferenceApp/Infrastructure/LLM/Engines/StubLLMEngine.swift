@@ -1,6 +1,6 @@
-/// Stub implementation of LLMEngine for development and UI testing.
 import Foundation
 
+/// Deterministic `LLMEngine` stub used by simulator and tests.
 public final class StubLLMEngine: LLMEngine {
     public init() {}
 

@@ -187,8 +187,6 @@ final class ConversationsListViewModelTests: XCTestCase {
         XCTAssertEqual(sut.selectedConversationID, second)
     }
 
-    // MARK: - Delete
-
     func testDeleteConversationRemovesItFromListOptimistically() async {
         let loadMock = LoadConversationsUseCaseMock()
         let deleteMock = DeleteConversationUseCaseMock()
@@ -232,7 +230,6 @@ final class ConversationsListViewModelTests: XCTestCase {
 
         await sut.deleteConversation(id: conv.id)
 
-        // List should be restored
         XCTAssertEqual(sut.conversations, [conv])
         XCTAssertNotNil(sut.alert)
         XCTAssertEqual(sut.alert?.isRetryable, false)

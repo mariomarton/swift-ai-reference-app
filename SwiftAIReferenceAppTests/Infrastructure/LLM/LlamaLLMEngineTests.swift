@@ -1,14 +1,8 @@
 import XCTest
 @testable import SwiftAIReferenceApp
 
-/// Tests for `LlamaLLMEngine` that do **not** require a real GGUF model file.
-///
-/// Inference tests are intentionally omitted here — they belong in a separate
-/// UI / integration test suite that has access to a bundled model artefact.
+/// Tests for `LlamaLLMEngine` helpers that do not require a bundled GGUF model.
 final class LlamaLLMEngineTests: XCTestCase {
-
-    // MARK: - Init error paths
-
     func testInitThrowsModelNotFoundForNonExistentPath() throws {
         let bogusPath = "/tmp/nonexistent_model_\(UUID().uuidString).gguf"
 
@@ -27,8 +21,6 @@ final class LlamaLLMEngineTests: XCTestCase {
             }
         }
     }
-
-    // MARK: - LlamaError: LocalizedError
 
     func testModelNotFoundHasNonEmptyDescription() {
         let error = LlamaError.modelNotFound(path: "/some/path.gguf")
@@ -63,8 +55,6 @@ final class LlamaLLMEngineTests: XCTestCase {
                       "Description should surface the underlying error code")
     }
 
-    // MARK: - Batching / context-window helpers
-
     func testPrefillChunkRangesSplitsIntoBatchSizedChunks() {
         let ranges = LlamaLLMEngine.prefillChunkRanges(totalTokens: 1200, batchSize: 512)
         XCTAssertEqual(ranges.count, 3)
@@ -93,11 +83,8 @@ final class LlamaLLMEngineTests: XCTestCase {
             contextWindow: 4096,
             maxNewTokens: 1024
         )
-        // Budget = 4096 - 1024 - 1 = 3071, trim = 4000 - 3071 = 929
         XCTAssertEqual(start, 929)
     }
-
-    // MARK: - Prompt profile resolution
 
     func testResolvePromptTemplateProfileDefaultsToChatML() {
         let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: nil)
@@ -127,8 +114,6 @@ final class LlamaLLMEngineTests: XCTestCase {
         let profile = LlamaLLMEngine.resolvePromptTemplateProfile(for: model, chatTemplate: "<|im_start|>assistant")
         assertProfile(profile, is: .chatML)
     }
-
-    // MARK: - Stream output policy
 
     func testProcessPiecesForTestingStopsAtChatMLStopSequence() {
         let result = LlamaLLMEngine.processPiecesForTesting(
@@ -198,8 +183,6 @@ final class LlamaLLMEngineTests: XCTestCase {
         XCTAssertFalse(result.output.isEmpty)
     }
 
-    // MARK: - Sampling defaults
-
     func testDefaultSamplingConfigUsesConservativeAntiLoopValues() {
         let config = LlamaLLMEngine.defaultSamplingConfig()
 
@@ -214,8 +197,6 @@ final class LlamaLLMEngineTests: XCTestCase {
         XCTAssertEqual(config.penaltyFrequency, 0.05, accuracy: 0.0001)
         XCTAssertEqual(config.penaltyPresence, 0.05, accuracy: 0.0001)
     }
-
-    // MARK: - Test helpers
 
     private func assertProfile(
         _ actual: LlamaLLMEngine.PromptTemplateProfile,

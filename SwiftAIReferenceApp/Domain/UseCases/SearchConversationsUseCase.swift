@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol SearchConversationsUseCase {
-    /// Returns conversations whose title or message contents match the query.
+    /// Searches conversation titles and message text with normalized matching.
     func search(conversations: [Conversation], query: String) -> [Conversation]
 }
 

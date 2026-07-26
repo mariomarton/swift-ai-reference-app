@@ -29,6 +29,7 @@ protocol MessageGenerationCoordinating: AnyObject {
     func clearTerminalState(for conversationID: UUID, matching terminalEventID: UUID?)
 }
 
+/// Serializes active generations, buffers streamed tokens, and keeps background handling aligned with scene phase.
 @MainActor
 final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoordinating, ConversationGenerationStateObserving {
     private struct TaskRecord {
@@ -163,8 +164,7 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
                 let elapsed = lastFlush.duration(to: now)
                 let shouldFlushByInterval = updateInterval <= .zero || elapsed >= updateInterval
 
-                // Always publish the first streamed fragment immediately so the UI
-                // switches from thinking to streaming as soon as generation starts.
+                // Publish the first fragment immediately so the UI switches from thinking to streaming right away.
                 guard force || !hasPublishedStreaming || shouldFlushByInterval else { return }
 
                 let flushed = bufferedText

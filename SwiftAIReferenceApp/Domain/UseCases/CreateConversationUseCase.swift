@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol CreateConversationUseCase {
-    /// Creates a conversation with the supplied identifier and returns the created entity.
+    /// Creates a new conversation record.
     func createConversation(id: UUID, title: String?) async throws -> Conversation
 }
 

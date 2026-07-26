@@ -1,13 +1,8 @@
 import Foundation
 
-/// A simple file-backed implementation of `ConversationRepository`.
+/// File-backed `ConversationRepository` for local/offline storage.
 ///
-/// - Stores conversations as an array of `Conversation` encoded with `JSONEncoder` at the provided `storageURL`.
-/// - Uses an in-memory cache backed by an atomic disk write on updates.
-/// - Uses Swift `actor` to ensure safe concurrent access.
-///
-/// This implementation is intended for local/offline use and development. Swap with a database-backed
-/// implementation by replacing this concrete type without changing the domain/use-case layer.
+/// Conversations are cached in memory and rewritten atomically on each change.
 public actor FileBackedConversationRepository: ConversationRepository {
     public enum StorageError: Error {
         case failedToCreateDirectory
@@ -21,10 +16,7 @@ public actor FileBackedConversationRepository: ConversationRepository {
     nonisolated(unsafe) private let fileManager: FileManager
     private var cache: [Conversation]
 
-    /// Initialize with a specific storage URL, or default to Application Support/SwiftAIReferenceApp/conversations.json
-    /// - Parameters:
-    ///   - storageURL: if nil, will use Application Support/SwiftAIReferenceApp/conversations.json
-    ///   - fileManager: injected for easier tests
+    /// Uses Application Support/SwiftAIReferenceApp/conversations.json by default.
     public init(storageURL: URL? = nil, fileManager injectedFileManager: FileManager = .default) throws {
         self.fileManager = injectedFileManager
 
@@ -41,9 +33,8 @@ public actor FileBackedConversationRepository: ConversationRepository {
         do {
             self.cache = try FileBackedConversationRepository.loadConversations(from: self.storageURL, fileManager: injectedFileManager)
         } catch {
-            // If loading fails, prefer starting with an empty cache and propagate the error only on demand
+            // Start empty so the app can still launch; persistence errors surface on save.
             self.cache = []
-            // Note: we don't throw here so the repo can still be used, but callers will get persistence errors when saving
         }
     }
 
@@ -65,8 +56,8 @@ public actor FileBackedConversationRepository: ConversationRepository {
         return conversation
     }
 
+    /// Lists conversations newest-first for recents UIs.
     public func listConversations() async throws -> [Conversation] {
-        // Return conversations sorted by most recently updated first, for better UX in recents lists
         return cache.sorted { $0.updatedAt > $1.updatedAt }
     }
 
@@ -75,7 +66,6 @@ public actor FileBackedConversationRepository: ConversationRepository {
     }
 
     public func updateConversation(_ conversation: Conversation) async throws {
-        // Find and replace the conversation in cache
         if let index = cache.firstIndex(where: { $0.id == conversation.id }) {
             cache[index] = conversation
             do {

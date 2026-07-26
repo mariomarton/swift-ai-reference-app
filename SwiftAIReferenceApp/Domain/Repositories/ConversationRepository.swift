@@ -1,25 +1,19 @@
 import Foundation
 
-/// Conversation-level persistence boundary.
-/// Placed in `Domain/Services` to group domain service/protocol contracts (LLMEngine, MessageRepository, ConversationRepository).
+/// Persistence boundary for conversations.
 public protocol ConversationRepository: Sendable {
-    /// Create a new conversation with a stable identifier.
-    /// Title may be nil for auto-naming.
+    /// Creates and persists a conversation record.
     func createConversation(id: UUID, title: String?) async throws -> Conversation
 
-    /// Return all conversations, ideally sorted by recent activity (newest first).
+    /// Lists conversations in recency order.
     func listConversations() async throws -> [Conversation]
-    
-    /// Load a specific conversation by ID.
-    /// - Parameter id: the conversation ID to load
-    /// - Returns: the conversation if it exists
+
+    /// Loads a conversation by identifier.
     func loadConversation(id: UUID) async throws -> Conversation?
-    
-    /// Update an existing conversation (e.g., title, selectedModel, or timestamps).
-    /// - Parameter conversation: the conversation with updated fields to persist
+
+    /// Persists changes to an existing conversation.
     func updateConversation(_ conversation: Conversation) async throws
 
-    /// Permanently delete a conversation by ID.
-    /// - Parameter id: the ID of the conversation to delete
+    /// Permanently deletes a conversation record.
     func deleteConversation(id: UUID) async throws
 }

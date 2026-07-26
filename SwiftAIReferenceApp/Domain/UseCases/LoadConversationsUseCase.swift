@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol LoadConversationsUseCase {
-    /// Loads a list of conversations for display (e.g., list screen).
+    /// Loads conversations for the sidebar.
     func loadConversations() async throws -> [Conversation]
 }
 

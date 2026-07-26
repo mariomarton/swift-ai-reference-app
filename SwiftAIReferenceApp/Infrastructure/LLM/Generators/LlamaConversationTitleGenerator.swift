@@ -1,10 +1,6 @@
 import Foundation
 
-/// LLM-backed implementation of `ConversationTitleGenerator`.
-///
-/// Sends a short title-generation prompt to the engine and returns the first
-/// line of the response, cleaned and trimmed. Falls back gracefully — all
-/// errors are propagated to the caller, which applies the deterministic fallback.
+/// LLM-backed `ConversationTitleGenerator` that normalizes the first response line into a title.
 public final class LlamaConversationTitleGenerator: ConversationTitleGenerator {
 
     private let engine: LLMEngine
@@ -23,13 +19,7 @@ public final class LlamaConversationTitleGenerator: ConversationTitleGenerator {
             text: promptProvider.titleSystemPrompt
         )
 
-        // Flatten the conversation into a single user turn so the prompt
-        // always ends on `.user`, regardless of which role the conversation
-        // itself last ended on (title generation is typically triggered
-        // right after an assistant reply, so `messages.last` is usually
-        // `.assistant`). This avoids relying on chat-template behavior for
-        // a trailing assistant turn, which is undefined/fragile across
-        // local model templates.
+        // Flatten the transcript into one user turn so title generation does not depend on trailing assistant support.
         let transcript = messages
             .map { "\(label(for: $0.role)): \($0.text)" }
             .joined(separator: "\n")
@@ -38,7 +28,7 @@ public final class LlamaConversationTitleGenerator: ConversationTitleGenerator {
         var accumulated = ""
         for try await token in engine.generateResponse(for: [systemPrompt, userTurn], model: model) {
             accumulated += token
-            // Stop collecting after we have enough for a title — avoids wasting inference
+            // Stop early once we have enough text for a title.
             if accumulated.count > 200 { break }
         }
 
