@@ -1,6 +1,12 @@
 # Swift AI Reference App
 
-A SwiftUI iOS chat app for the Czechoslovak AI direction: local-first, layered, and ready to grow from on-device GGUF inference to other backends later.
+A SwiftUI iOS chat app built as a clean-code reference implementation: local-first, clearly layered, and designed to be easily extended with new models, backends, or features.
+
+## Screenshots
+
+| Chat | Conversations | Settings |
+| --- | --- | --- |
+| _Placeholder - add a chat screen screenshot here._ | _Placeholder - add a conversation list screenshot here._ | _Placeholder - add a settings screen screenshot here._ |
 
 ## Highlights
 
@@ -9,14 +15,8 @@ A SwiftUI iOS chat app for the Czechoslovak AI direction: local-first, layered, 
 | Chat | Streaming assistant replies, stop generation, and conflict handling when another chat is already generating |
 | Conversations | Create, search, delete, recents ordering, and automatic title generation |
 | Settings | System prompt, additional instructions, and response style presets |
-| Model runtime | Stub assistant for simulator and tests, plus llama.cpp-backed GGUF inference on device |
+| Model runtime | Stub assistant for simulator and tests, plus llama.cpp-backed GGUF inference on device, built behind an engine protocol so it is easy to extend with new models or backends |
 | Localization | English, Czech, and Slovak |
-
-## Screenshots
-
-| Chat | Conversations | Settings |
-| --- | --- | --- |
-| _Placeholder - add a chat screen screenshot here._ | _Placeholder - add a conversation list screenshot here._ | _Placeholder - add a settings screen screenshot here._ |
 
 ## Architecture
 
@@ -28,10 +28,11 @@ flowchart TD
   REPO --> INFRA[Infrastructure Implementations]
 ```
 
-- **UI**: SwiftUI views render state and forward actions.
-- **Presentation**: view models manage UI state, navigation, and orchestration.
-- **Domain**: models, use cases, repository/engine protocols, and typed errors.
-- **Infrastructure**: SQLite/file-backed persistence, prompt settings storage, and llama.cpp integration.
+- **UI (SwiftUI Views)**: render state and forward actions.
+- **VM (Presentation ViewModels)**: manage UI state, navigation, and orchestration.
+- **UC (Domain Use Cases)**: models, use cases, and typed errors.
+- **REPO (Repositories / Engine Protocols)**: define the contracts between domain logic and infrastructure. The `LLMEngine` protocol keeps room for future remote model providers, and repository protocols keep conversation and message storage swappable.
+- **INFRA (Infrastructure Implementations)**: SQLite/file-backed persistence, prompt settings storage, and llama.cpp integration.
 - **Vendor**: local llama.cpp package sources live under `Vendor/LlamaBinary`.
 
 ## Runtime behavior
@@ -39,8 +40,7 @@ flowchart TD
 - Storage defaults to SQLite.
 - Set `SWIFTAIREFERENCEAPP_STORAGE_BACKEND=file` or `filebacked` to use file-backed storage.
 - Set `SWIFTAIREFERENCEAPP_STORAGE_ROOT=/path/to/dir` to move the SQLite database or file-backed data into a custom directory.
-- The app looks for `model.gguf` in the app bundle, then falls back to the first bundled `.gguf` file.
-- The Xcode target includes a build step that copies a local GGUF into the bundle as `model.gguf`; it prefers `model.gguf`, then `llama-3.2-1b-instruct-q8_0.gguf`, then the first `.gguf` it finds in the project root.
+- The app looks for `model.gguf` in the app bundle, then falls back to the first bundled `.gguf` file; the Xcode target includes a build step that copies a local GGUF into the bundle as `model.gguf`, preferring `model.gguf`, then `llama-3.2-1b-instruct-q8_0.gguf`, then the first `.gguf` file found in the project root.
 - Simulator and test runs use `StubLLMEngine`.
 - If no model is found or loading fails, the app falls back to the stub engine and shows a startup warning banner.
 
@@ -67,7 +67,7 @@ Unit tests cover:
 - presentation logic for chat, conversations, and app shell behavior
 - llama.cpp formatting and engine behavior
 
-UI tests cover the launch flow.
+UI tests cover the launch flow, as well as basic flows such as sending a message, conversation title generation, and conversation persistence.
 
 ## Project structure
 
@@ -86,9 +86,3 @@ Vendor/
 SwiftAIReferenceAppTests/
 SwiftAIReferenceAppUITests/
 ```
-
-## Notes
-
-- The `LLMEngine` protocol keeps room for future remote model providers.
-- Conversation and message storage are swappable behind repository protocols.
-- The app is localized for English, Czech, and Slovak.
