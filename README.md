@@ -1,25 +1,24 @@
 # Swift AI Reference App
 
-A SwiftUI iOS chat app built with structured concurrency and a layered architecture. It is designed as a clean, maintainable reference that can grow into support for API-based cloud LLMs and other backends without reworking the app core.
+A SwiftUI iOS chat app for the Czechoslovak AI direction: local-first, layered, and ready to grow from on-device GGUF inference to other backends later.
 
-## What it does
+## Highlights
 
-- **LLM backends**
-  - Mock and local model implementations are the current status quo
-  - The app uses protocol boundaries so API-based cloud LLMs can be added later without changing the UI layer
-- **Storage backends**
-  - SQLite and file-backed implementations are the current status quo
-  - The repository interfaces keep the storage layer easy to expand or replace
-- **App features**
-  - Chat UI with streaming assistant responses
-  - Conversation list, search, delete, and recents sorting
-  - Prompt customization in Settings
-  - Conversation title generation
-  - Stub LLM for simulator and test runs
+| Area | What is in the app |
+| --- | --- |
+| Chat | Streaming assistant replies, stop generation, and conflict handling when another chat is already generating |
+| Conversations | Create, search, delete, recents ordering, and automatic title generation |
+| Settings | System prompt, additional instructions, and response style presets |
+| Model runtime | Stub assistant for simulator and tests, plus llama.cpp-backed GGUF inference on device |
+| Localization | English, Czech, and Slovak |
+
+## Screenshots
+
+| Chat | Conversations | Settings |
+| --- | --- | --- |
+| _Placeholder - add a chat screen screenshot here._ | _Placeholder - add a conversation list screenshot here._ | _Placeholder - add a settings screen screenshot here._ |
 
 ## Architecture
-
-The code is split into clear layers:
 
 ```mermaid
 flowchart TD
@@ -29,75 +28,52 @@ flowchart TD
   REPO --> INFRA[Infrastructure Implementations]
 ```
 
-- **Presentation**: SwiftUI views and view models; owns UI state and orchestration.
-- **Domain**: models, repository/engine protocols, and use cases.
-- **Infrastructure**: SQLite/file-backed repositories, prompt settings persistence, and llama.cpp integration.
+- **UI**: SwiftUI views render state and forward actions.
+- **Presentation**: view models manage UI state, navigation, and orchestration.
+- **Domain**: models, use cases, repository/engine protocols, and typed errors.
+- **Infrastructure**: SQLite/file-backed persistence, prompt settings storage, and llama.cpp integration.
 - **Vendor**: local llama.cpp package sources live under `Vendor/LlamaBinary`.
 
-## Current storage and model options
+## Runtime behavior
 
-- **Storage**
-  - `sqlite` (default)
-  - `file` / `filebacked` via `SWIFTAIREFERENCEAPP_STORAGE_BACKEND`
-- **LLM**
-  - `StubLLMEngine` for simulator and tests
-  - `LlamaLLMEngine` for on-device GGUF inference on a physical device
-
-## Requirements
-
-- Xcode with the iOS SDK
-- A macOS development machine capable of running the iOS simulator
-- A physical iPhone or iPad if you want to test real on-device inference
-- For real on-device inference, a GGUF model file bundled with the app
-- Standard Xcode code signing setup for device builds and installs
-- The local `Vendor/LlamaBinary` package dependency available in the workspace
+- Storage defaults to SQLite.
+- Set `SWIFTAIREFERENCEAPP_STORAGE_BACKEND=file` or `filebacked` to use file-backed storage.
+- Set `SWIFTAIREFERENCEAPP_STORAGE_ROOT=/path/to/dir` to move the SQLite database or file-backed data into a custom directory.
+- The app looks for `model.gguf` in the app bundle, then falls back to the first bundled `.gguf` file.
+- The Xcode target includes a build step that copies a local GGUF into the bundle as `model.gguf`; it prefers `model.gguf`, then `llama-3.2-1b-instruct-q8_0.gguf`, then the first `.gguf` it finds in the project root.
+- Simulator and test runs use `StubLLMEngine`.
+- If no model is found or loading fails, the app falls back to the stub engine and shows a startup warning banner.
 
 ## Getting started
 
 1. Open `SwiftAIReferenceApp.xcodeproj` in Xcode.
-2. Make sure the app target is signed in Xcode if you want to run on a physical device.
-3. Build and run the `SwiftAIReferenceApp` scheme.
-4. For on-device inference, include a GGUF model in the app bundle.
+2. Build and run the `SwiftAIReferenceApp` scheme.
+3. For on-device inference, keep a GGUF model in the project root or bundle one into the app target.
 
-### Model setup
+## Requirements
 
-The app looks for:
-
-1. `model.gguf` in the app bundle
-2. the first `.gguf` file in the bundle resources
-
-If no model is found, the app shows a warning banner and uses the stub engine. Simulator and test runs also use the stub engine.
-
-### Optional storage backend
-
-Set the environment variable:
-
-```bash
-SWIFTAIREFERENCEAPP_STORAGE_BACKEND=file
-```
-
-Use `sqlite` to keep the default SQLite-backed storage.
+- Xcode with the iOS SDK
+- A macOS development machine that can run the iOS simulator
+- A physical iPhone or iPad for real on-device inference
+- `Vendor/LlamaBinary` available as a local package dependency in the workspace
 
 ## Testing
 
-Most of the app behavior is covered by unit tests for:
+Unit tests cover:
 
 - domain models and use cases
-- repositories and SQLite storage
+- file-backed and SQLite persistence
 - prompt settings persistence
-- chat and conversation presentation logic
+- presentation logic for chat, conversations, and app shell behavior
 - llama.cpp formatting and engine behavior
 
-UI tests are also included for the app shell and launch flow.
-
-For smaller contributions, UI testing is usually not needed, but unit tests are strongly encouraged.
-
-Run tests from Xcode or with `xcodebuild` using the `SwiftAIReferenceApp` scheme.
+UI tests cover the launch flow.
 
 ## Project structure
 
 ```text
 SwiftAIReferenceApp/
+  App/
   Domain/
   Infrastructure/
   Presentation/
@@ -114,5 +90,5 @@ SwiftAIReferenceAppUITests/
 ## Notes
 
 - The `LLMEngine` protocol keeps room for future remote model providers.
-- Conversation and message storage are intentionally swappable behind repository protocols.
+- Conversation and message storage are swappable behind repository protocols.
 - The app is localized for English, Czech, and Slovak.
