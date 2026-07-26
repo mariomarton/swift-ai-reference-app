@@ -23,8 +23,20 @@ public final class LlamaConversationTitleGenerator: ConversationTitleGenerator {
             text: promptProvider.titleSystemPrompt
         )
 
+        // Flatten the conversation into a single user turn so the prompt
+        // always ends on `.user`, regardless of which role the conversation
+        // itself last ended on (title generation is typically triggered
+        // right after an assistant reply, so `messages.last` is usually
+        // `.assistant`). This avoids relying on chat-template behavior for
+        // a trailing assistant turn, which is undefined/fragile across
+        // local model templates.
+        let transcript = messages
+            .map { "\(label(for: $0.role)): \($0.text)" }
+            .joined(separator: "\n")
+        let userTurn = Message(role: .user, text: transcript)
+
         var accumulated = ""
-        for try await token in engine.generateResponse(for: [systemPrompt] + messages, model: model) {
+        for try await token in engine.generateResponse(for: [systemPrompt, userTurn], model: model) {
             accumulated += token
             // Stop collecting after we have enough for a title — avoids wasting inference
             if accumulated.count > 200 { break }
@@ -35,5 +47,13 @@ public final class LlamaConversationTitleGenerator: ConversationTitleGenerator {
             .first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
         return firstLine?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func label(for role: Message.Role) -> String {
+        switch role {
+        case .user: return "User"
+        case .assistant: return "Assistant"
+        case .system: return "System"
+        }
     }
 }
