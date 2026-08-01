@@ -22,6 +22,38 @@ final class UserDefaultsPromptSettingsRepositoryTests: XCTestCase {
         XCTAssertEqual(repository.loadSettings(), expected)
     }
 
+    func testSavingDefaultSystemPromptRemovesStoredOverride() {
+        let suiteName = "prompt-settings-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let repository = UserDefaultsPromptSettingsRepository(defaults: defaults)
+        repository.saveSettings(PromptSettings())
+
+        XCTAssertNil(defaults.string(forKey: "promptSettings.systemPromptOverride"))
+        XCTAssertNil(defaults.string(forKey: "promptSettings.systemPrompt"))
+    }
+
+    func testLoadSettingsMigratesLegacySystemPromptOverride() {
+        let suiteName = "prompt-settings-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        defaults.set("Custom system", forKey: "promptSettings.systemPrompt")
+        defaults.set("Extra instructions", forKey: "promptSettings.customInstructions")
+
+        let repository = UserDefaultsPromptSettingsRepository(defaults: defaults)
+
+        XCTAssertEqual(
+            repository.loadSettings(),
+            PromptSettings(systemPrompt: "Custom system", customInstructions: "Extra instructions")
+        )
+    }
+
     func testLoadSettingsReturnsDefaultsWhenNothingWasSaved() {
         let suiteName = "prompt-settings-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

@@ -27,6 +27,10 @@ public struct PromptSettings: Codable, Equatable, Sendable {
         L10n.PromptSettings.defaultSystemPrompt
     }
 
+    static func normalizedSystemPrompt(_ prompt: String) -> String {
+        prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     public var systemPrompt: String
     public var customInstructions: String
     public var tonePreset: PromptTonePreset
@@ -41,17 +45,21 @@ public struct PromptSettings: Codable, Equatable, Sendable {
         self.tonePreset = tonePreset
     }
 
+    public var effectiveSystemPrompt: String {
+        let normalizedSystemPrompt = Self.normalizedSystemPrompt(systemPrompt)
+        return normalizedSystemPrompt.isEmpty ? Self.defaultSystemPrompt : normalizedSystemPrompt
+    }
+
     public var composedSystemPrompt: String {
         var sections: [String] = []
 
-        let normalizedSystemPrompt = systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        sections.append(normalizedSystemPrompt.isEmpty ? Self.defaultSystemPrompt : normalizedSystemPrompt)
+        sections.append(effectiveSystemPrompt)
 
         if let toneInstruction = tonePreset.instructionText {
             sections.append(toneInstruction)
         }
 
-        let normalizedCustomInstructions = customInstructions.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedCustomInstructions = Self.normalizedSystemPrompt(customInstructions)
         if !normalizedCustomInstructions.isEmpty {
             sections.append(normalizedCustomInstructions)
         }

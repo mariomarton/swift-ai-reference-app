@@ -72,6 +72,7 @@ enum L10n {
         static var modeHumorous: String { l("settings.mode.humorous") }
         static var systemPromptTitle: String { l("settings.systemPrompt.title") }
         static var systemPromptFooter: String { l("settings.systemPrompt.footer") }
+        static var systemPromptAction: String { l("settings.systemPrompt.action") }
         static var customInstructionsTitle: String { l("settings.customInstructions.title") }
         static var customInstructionsFooter: String { l("settings.customInstructions.footer") }
         static var resetAction: String { l("settings.reset.action") }

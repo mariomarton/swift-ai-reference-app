@@ -20,16 +20,6 @@ struct SettingsView: View {
             }
 
             Section {
-                TextEditor(text: $viewModel.systemPrompt)
-                    .frame(minHeight: 140)
-                    .scrollContentBackground(.hidden)
-            } header: {
-                Text(L10n.Settings.systemPromptTitle)
-            } footer: {
-                Text(L10n.Settings.systemPromptFooter)
-            }
-
-            Section {
                 TextEditor(text: $viewModel.customInstructions)
                     .frame(minHeight: 140)
                     .scrollContentBackground(.hidden)
@@ -37,6 +27,26 @@ struct SettingsView: View {
                 Text(L10n.Settings.customInstructionsTitle)
             } footer: {
                 Text(L10n.Settings.customInstructionsFooter)
+            }
+
+            Section {
+                NavigationLink {
+                    SystemPromptEditorView(viewModel: viewModel)
+                } label: {
+                    Label {
+                        Text(L10n.Settings.systemPromptAction)
+                    } icon: {
+                        Image(systemName: "square.and.pencil")
+                            .foregroundStyle(.secondary)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text(L10n.Settings.systemPromptTitle)
+            } footer: {
+                Text(L10n.Settings.systemPromptFooter)
+                    .foregroundStyle(.red)
+                    .fontWeight(.semibold)
             }
 
             Section {
