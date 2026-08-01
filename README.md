@@ -1,6 +1,6 @@
 # Swift AI Reference App
 
-A SwiftUI iOS chat app built as a clean-code reference implementation: local-first, clearly layered, and designed to be easily extended with new models, backends, or features.
+A Swift and SwiftUI iOS LLM-chat app built as a clean-code reference implementation: clearly layered, and designed to be easily extended with new models, backends, or features.
 
 ## Screenshots
 
@@ -8,81 +8,93 @@ A SwiftUI iOS chat app built as a clean-code reference implementation: local-fir
 | --- | --- | --- |
 | _Placeholder - add a chat screen screenshot here._ | _Placeholder - add a conversation list screenshot here._ | _Placeholder - add a settings screen screenshot here._ |
 
-## Highlights
+## Feature Overview
 
 | Area | What is in the app |
 | --- | --- |
+| Model backends | Stub model for simulator/testing. Llama.cpp GGUF inference for real usage. Designed to make adding new models or backends easy |
+| Repositories | SQLite and file-backed conversation/message repositories; swappable and easy to extend|
 | Chat | Streaming assistant replies, stop generation, and conflict handling when another chat is already generating |
-| Conversations | Create, search, delete, recents ordering, and automatic title generation |
-| Settings | System prompt, additional instructions, and response style presets |
-| Model runtime | Stub assistant for simulator and tests, plus llama.cpp-backed GGUF inference on device, built behind an engine protocol so it is easy to extend with new models or backends |
-| Localization | English, Czech, and Slovak |
+| Conversations | Create, search, delete, sorted by last activity, with continuous title generation |
+| Settings | Custom instructions, response style presets, and system prompt override |
+| Localization | Centralized L10n namespace with strings organized into per-language `.lproj` folders. Adding a language is as simple as a new folder. Currently supports English, Czech, and Slovak |
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-  UI[SwiftUI Views] --> VM[Presentation ViewModels]
-  VM --> UC[Domain Use Cases]
-  UC --> REPO[Repositories / Engine Protocols]
-  REPO --> INFRA[Infrastructure Implementations]
+    UI[SwiftUI Views] --> VM[Presentation ViewModels]
+    VM --> UC[Domain Use Cases]
+    UC --> REPO[Repositories / Engine Protocols]
+    REPO --> INFRA[Infrastructure Implementations]
+
+    classDef ui fill:#dbeafe,stroke:#3b82f6,stroke-width:1px,color:#1e3a8a,rx:8,ry:8
+    classDef vm fill:#e0e7ff,stroke:#6366f1,stroke-width:1px,color:#312e81,rx:8,ry:8
+    classDef uc fill:#ede9fe,stroke:#8b5cf6,stroke-width:1px,color:#4c1d95,rx:8,ry:8
+    classDef repo fill:#fae8ff,stroke:#d946ef,stroke-width:1px,color:#701a75,rx:8,ry:8
+    classDef infra fill:#fce7f3,stroke:#ec4899,stroke-width:1px,color:#831843,rx:8,ry:8
+
+    class UI ui
+    class VM vm
+    class UC uc
+    class REPO repo
+    class INFRA infra
 ```
 
-- **UI (SwiftUI Views)**: render state and forward actions.
-- **VM (Presentation ViewModels)**: manage UI state, navigation, and orchestration.
-- **UC (Domain Use Cases)**: models, use cases, and typed errors.
-- **REPO (Repositories / Engine Protocols)**: define the contracts between domain logic and infrastructure. The `LLMEngine` protocol keeps room for future remote model providers, and repository protocols keep conversation and message storage swappable.
-- **INFRA (Infrastructure Implementations)**: SQLite/file-backed persistence, prompt settings storage, and llama.cpp integration.
-- **Vendor**: local llama.cpp package sources live under `Vendor/LlamaBinary`.
+- **SwiftUI Views**: render state and forward user actions to the ViewModel.
+- **Presentation ViewModels**: manage UI state, navigation, and user-action flow between views and domain use cases.
+- **Domain Use Cases**: models, use cases, and typed errors.
+- **Repositories / Engine Protocols**: define the contracts between domain logic and infrastructure. The `LLMEngine` protocol keeps room for future model providers, and repositories keep conversation and message storage swappable.
+- **Infrastructure Implementations**: concrete adapters for persistence, prompt settings, prompt formatting, model execution, and title generation.
 
 ## Runtime behavior
 
 - Storage defaults to SQLite.
-- Set `SWIFTAIREFERENCEAPP_STORAGE_BACKEND=file` or `filebacked` to use file-backed storage.
-- Set `SWIFTAIREFERENCEAPP_STORAGE_ROOT=/path/to/dir` to move the SQLite database or file-backed data into a custom directory.
-- The app looks for `model.gguf` in the app bundle, then falls back to the first bundled `.gguf` file; the Xcode target includes a build step that copies a local GGUF into the bundle as `model.gguf`, preferring `model.gguf`, then `llama-3.2-1b-instruct-q8_0.gguf`, then the first `.gguf` file found in the project root.
+- Set `SWIFTAIREFERENCEAPP_STORAGE_BACKEND` (environment variable) to `file` or `filebacked` to use file-backed storage.
+- Set `SWIFTAIREFERENCEAPP_STORAGE_ROOT` (environment variable) to `/path/to/dir` to move the SQLite database or file-backed data into a custom directory.
+- A build step copies a `.gguf` file found in the project into the app bundle as `model.gguf`, if one exists.
+- If no model is found or loading fails, the app falls back to the stub engine and shows a warning banner.
 - Simulator and test runs use `StubLLMEngine`.
-- If no model is found or loading fails, the app falls back to the stub engine and shows a startup warning banner.
-
-## Getting started
-
-1. Open `SwiftAIReferenceApp.xcodeproj` in Xcode.
-2. Build and run the `SwiftAIReferenceApp` scheme.
-3. For on-device inference, keep a GGUF model in the project root or bundle one into the app target.
 
 ## Requirements
 
-- Xcode with the iOS SDK
-- A macOS development machine that can run the iOS simulator
-- A physical iPhone or iPad for real on-device inference
-- `Vendor/LlamaBinary` available as a local package dependency in the workspace
+- a Mac running macOS Sequoia 15.6 or later with Xcode 26.2 or later (includes the iOS 26.2 SDK and Simulator)
+
+## Getting Started
+
+1. Clone the repo.
+2. Run `open SwiftAIReferenceApp.xcodeproj` from the project root.
+3. You can now build and run the app in the Simulator, it will use `StubLLMEngine`. To use an actual LLM, complete the steps below as well.
+4. Set your Team under Signing & Capabilities to enable running the app on physical devices.
+5. Get a llama.cpp-compatible GGUF model file (ChatML or Llama-3 prompt format) and place it in the project root to enable on-device inference. For example, a good small model (works well on M1 Macs) is `Llama-3.2-1B-Instruct-Q8_0.gguf`, which you can download from [bartowski's Hugging Face repo](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/tree/main).
+6. Build and run the app with the Run Destination set to a physical iOS device, or to `My Mac (Designed for iPad)` on your Mac. The Mac option is a particularly convenient run destination.
 
 ## Testing
 
-Unit tests cover:
+Unit tests cover pretty much everything (domain models and use cases, persistence, prompt settings, presentation logic, and llama.cpp formatting and engine behavior).
 
-- domain models and use cases
-- file-backed and SQLite persistence
-- prompt settings persistence
-- presentation logic for chat, conversations, and app shell behavior
-- llama.cpp formatting and engine behavior
-
-UI tests cover the launch flow, as well as basic flows such as sending a message, conversation title generation, and conversation persistence.
+UI tests cover the launch flow and basic end-to-end flows such as sending a message, conversation title generation, and conversation persistence.
 
 ## Project structure
 
 ```text
+SwiftAIReferenceApp.xcodeproj/
 SwiftAIReferenceApp/
+  cs.lproj/
+  en.lproj/
+  sk.lproj/
   App/
+  Assets.xcassets/
   Domain/
   Infrastructure/
   Presentation/
-  Assets.xcassets/
-  en.lproj/
-  cs.lproj/
-  sk.lproj/
+SwiftAIReferenceAppTests/
+  Domain/
+  Infrastructure/
+  Presentation/
+SwiftAIReferenceAppUITests/
 Vendor/
   LlamaBinary/
-SwiftAIReferenceAppTests/
-SwiftAIReferenceAppUITests/
+docs/
+<your-model>.gguf  # put your local model file for on-device inference here
 ```
