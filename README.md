@@ -4,9 +4,13 @@ A Swift and SwiftUI iOS LLM-chat app built as a clean-code reference implementat
 
 ## Screenshots
 
-| Chat | Conversations | Settings |
-| --- | --- | --- |
-| _Placeholder - add a chat screen screenshot here._ | _Placeholder - add a conversation list screenshot here._ | _Placeholder - add a settings screen screenshot here._ |
+<table width="100%">
+  <tr>
+    <td align="center" width="33%"><img src="docs/screenshots/screen1_conversations.PNG" width="260"></td>
+    <td align="center" width="33%"><img src="docs/screenshots/screen2_chat.PNG" width="260"></td>
+    <td align="center" width="33%"><img src="docs/screenshots/screen3_settings.PNG" width="260"></td>
+  </tr>
+</table>
 
 ## Feature Overview
 
@@ -96,5 +100,5 @@ SwiftAIReferenceAppUITests/
 Vendor/
   LlamaBinary/
 docs/
-<your-model>.gguf  # put your local model file for on-device inference here
+<your-model>.gguf  # put your gguf model file here
 ```
