@@ -55,6 +55,13 @@ struct ConversationsListView: View {
                         } label: {
                             Label(L10n.ConversationsList.deleteAction, systemImage: "trash")
                         }
+
+                        Button {
+                            viewModel.beginRenaming(conversation: conversation)
+                        } label: {
+                            Label(L10n.ConversationsList.renameAction, systemImage: "pencil")
+                        }
+                        .tint(.blue)
                     }
                 }
             }
@@ -75,6 +82,12 @@ struct ConversationsListView: View {
         }
         .refreshable {
             await viewModel.loadConversations()
+        }
+        .sheet(item: $viewModel.renameConversationContext) { _ in
+            NavigationStack {
+                RenameConversationSheet(viewModel: viewModel)
+            }
+            .presentationDetents([.medium])
         }
         .overlay {
             if viewModel.isLoading, viewModel.conversations.isEmpty {
@@ -97,6 +110,44 @@ struct ConversationsListView: View {
                     message: Text(alert.message),
                     dismissButton: .default(Text(L10n.Common.ok))
                 )
+            }
+        }
+    }
+}
+
+private struct RenameConversationSheet: View {
+    @ObservedObject var viewModel: ConversationsListViewModel
+
+    var body: some View {
+        Form {
+            Section {
+                TextField(L10n.ConversationsList.renamePlaceholder, text: $viewModel.renameDraftTitle)
+                    .textInputAutocapitalization(.sentences)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        guard viewModel.canSubmitConversationRename else { return }
+                        Task {
+                            await viewModel.commitConversationRename()
+                        }
+                    }
+            }
+        }
+        .navigationTitle(L10n.ConversationsList.renameTitle)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(L10n.Common.cancel) {
+                    viewModel.cancelConversationRename()
+                }
+            }
+
+            ToolbarItem(placement: .confirmationAction) {
+                Button(L10n.ConversationsList.renameSaveAction) {
+                    Task {
+                        await viewModel.commitConversationRename()
+                    }
+                }
+                .disabled(!viewModel.canSubmitConversationRename)
             }
         }
     }

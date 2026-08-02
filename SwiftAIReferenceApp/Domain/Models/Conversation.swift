@@ -32,6 +32,12 @@ public struct Conversation: Identifiable, Codable, Equatable, Sendable {
         updatedAt = Date()
     }
 
+    public mutating func rename(to title: String) {
+        self.title = title
+        titleOrigin = .manual
+        updatedAt = Date()
+    }
+
     public var lastMessage: Message? {
         messages.last
     }

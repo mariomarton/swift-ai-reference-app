@@ -30,7 +30,12 @@
 "conversations.error.load.title" = "Nepodařilo se načíst konverzace";
 "conversations.error.create.title" = "Nepodařilo se vytvořit konverzaci";
 "conversations.error.delete.title" = "Nepodařilo se odstranit konverzaci";
+"conversations.error.rename.title" = "Nepodařilo se přejmenovat konverzaci";
 "conversations.action.delete" = "Smazat";
+"conversations.action.rename" = "Přejmenovat";
+"conversations.rename.title" = "Přejmenovat konverzaci";
+"conversations.rename.placeholder" = "Název konverzace";
+"conversations.rename.saveAction" = "Uložit";
 "common.retry" = "Zkusit znovu";
 "common.cancel" = "Zrušit";
 "common.ok" = "OK";
@@ -60,6 +65,8 @@
 "error.repository" = "Chyba úložiště";
 "error.engine" = "Chyba jazykového modelu";
 "error.invalidModel" = "Neplatný nebo nepodporovaný model";
+"error.invalidConversationTitle" = "Název konverzace nesmí být prázdný";
+"error.conversationNotFound" = "Konverzace nebyla nalezena";
 "error.unknown" = "Došlo k neznámé chybě";
 "llama.modelNotFound" = "Soubor modelu nebyl nalezen na cestě: %@";
 "llama.modelLoadFailed" = "Nepodařilo se načíst model - soubor může být poškozený nebo v nepodporovaném formátu.";

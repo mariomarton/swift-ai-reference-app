@@ -30,7 +30,12 @@
 "conversations.error.load.title" = "Could not load conversations";
 "conversations.error.create.title" = "Could not create conversation";
 "conversations.error.delete.title" = "Could not delete conversation";
+"conversations.error.rename.title" = "Could not rename conversation";
 "conversations.action.delete" = "Delete";
+"conversations.action.rename" = "Rename";
+"conversations.rename.title" = "Rename conversation";
+"conversations.rename.placeholder" = "Conversation title";
+"conversations.rename.saveAction" = "Save";
 "common.retry" = "Retry";
 "common.cancel" = "Cancel";
 "common.ok" = "OK";
@@ -60,6 +65,8 @@
 "error.repository" = "Repository error";
 "error.engine" = "Language model error";
 "error.invalidModel" = "Invalid or unsupported model";
+"error.invalidConversationTitle" = "Conversation title cannot be empty";
+"error.conversationNotFound" = "Conversation was not found";
 "error.unknown" = "An unknown error occurred";
 "llama.modelNotFound" = "Model file not found at path: %@";
 "llama.modelLoadFailed" = "Failed to load model - the file may be corrupted or in an unsupported format.";

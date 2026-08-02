@@ -4,6 +4,8 @@ public enum DomainError: Error, LocalizedError {
     case repositoryError(Error)
     case engineError(Error)
     case invalidModel
+    case invalidConversationTitle
+    case conversationNotFound
     case unknown
 
     public var errorDescription: String? {
@@ -14,6 +16,10 @@ public enum DomainError: Error, LocalizedError {
             return "\(L10n.Errors.engineError): \(err.localizedDescription)"
         case .invalidModel:
             return L10n.Errors.invalidModel
+        case .invalidConversationTitle:
+            return L10n.Errors.invalidConversationTitle
+        case .conversationNotFound:
+            return L10n.Errors.conversationNotFound
         case .unknown:
             return L10n.Errors.unknown
         }

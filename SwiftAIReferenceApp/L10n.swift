@@ -47,7 +47,12 @@ enum L10n {
         static var errorLoadTitle: String { l("conversations.error.load.title") }
         static var errorCreateTitle: String { l("conversations.error.create.title") }
         static var errorDeleteTitle: String { l("conversations.error.delete.title") }
+        static var errorRenameTitle: String { l("conversations.error.rename.title") }
         static var deleteAction: String { l("conversations.action.delete") }
+        static var renameAction: String { l("conversations.action.rename") }
+        static var renameTitle: String { l("conversations.rename.title") }
+        static var renamePlaceholder: String { l("conversations.rename.placeholder") }
+        static var renameSaveAction: String { l("conversations.rename.saveAction") }
     }
 
     enum Common {
@@ -91,6 +96,8 @@ enum L10n {
         static var repositoryError: String { l("error.repository") }
         static var engineError: String { l("error.engine") }
         static var invalidModel: String { l("error.invalidModel") }
+        static var invalidConversationTitle: String { l("error.invalidConversationTitle") }
+        static var conversationNotFound: String { l("error.conversationNotFound") }
         static var unknown: String { l("error.unknown") }
     }
 

@@ -26,6 +26,7 @@ final class AppDependencies {
 
     let loadConversationsUseCase: LoadConversationsUseCase
     let deleteConversationUseCase: DeleteConversationUseCase
+    let renameConversationUseCase: RenameConversationUseCase
     let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
     let sendMessageUseCase: SendMessageUseCase
     let messageGenerationCoordinator: MessageGenerationCoordinator
@@ -49,6 +50,7 @@ final class AppDependencies {
             conversationRepository: conversationRepository,
             messageRepository: messageRepository
         )
+        self.renameConversationUseCase = DefaultRenameConversationUseCase(repository: conversationRepository)
         self.loadRecentMessagesUseCase = DefaultLoadRecentMessagesUseCase(repository: messageRepository)
 
         let titlePromptProvider = LlamaConversationTitlePromptProvider()
@@ -191,6 +193,7 @@ final class AppDependencies {
             loadRecentMessagesUseCase: loadRecentMessagesUseCase,
             searchConversationsUseCase: searchConversationsUseCase,
             deleteConversationUseCase: deleteConversationUseCase,
+            renameConversationUseCase: renameConversationUseCase,
             generationCoordinator: messageGenerationCoordinator
         )
     }

@@ -8,17 +8,26 @@ protocol ConversationGenerationStateObserving: AnyObject {
 /// Owns sidebar conversation state, search hydration, and generation badges.
 @MainActor
 final class ConversationsListViewModel: ObservableObject, SidebarConversationsManaging {
+    struct ConversationRenameContext: Identifiable, Equatable {
+        let conversationID: UUID
+
+        var id: UUID { conversationID }
+    }
+
     @Published private(set) var conversations: [Conversation] = []
     @Published private(set) var generatingConversationIDs: Set<UUID> = []
     @Published var searchText: String = ""
     @Published var selectedConversationID: UUID?
     @Published private(set) var isLoading = false
     @Published var alert: PresentationAlert?
+    @Published var renameConversationContext: ConversationRenameContext?
+    @Published var renameDraftTitle: String = ""
     
     private let loadConversationsUseCase: LoadConversationsUseCase
     private let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
     private let searchConversationsUseCase: SearchConversationsUseCase
     private let deleteConversationUseCase: DeleteConversationUseCase
+    private let renameConversationUseCase: RenameConversationUseCase
     private var generationObservationTask: Task<Void, Never>?
     private var searchableMessagesByConversationID: [UUID: [Message]] = [:]
     
@@ -27,12 +36,14 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         loadRecentMessagesUseCase: LoadRecentMessagesUseCase,
         searchConversationsUseCase: SearchConversationsUseCase,
         deleteConversationUseCase: DeleteConversationUseCase,
+        renameConversationUseCase: RenameConversationUseCase,
         generationCoordinator: (any ConversationGenerationStateObserving)? = nil
     ) {
         self.loadConversationsUseCase = loadConversationsUseCase
         self.loadRecentMessagesUseCase = loadRecentMessagesUseCase
         self.searchConversationsUseCase = searchConversationsUseCase
         self.deleteConversationUseCase = deleteConversationUseCase
+        self.renameConversationUseCase = renameConversationUseCase
 
         if let generationCoordinator {
             // Keep the sidebar badge state in sync with active generations without polling.
@@ -126,6 +137,44 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
             searchableMessagesByConversationID = messageSnapshot
             alert = PresentationAlert(
                 title: L10n.ConversationsList.errorDeleteTitle,
+                message: error.localizedDescription
+            )
+        }
+    }
+
+    func beginRenaming(conversation: Conversation) {
+        alert = nil
+        renameDraftTitle = conversation.title ?? ""
+        renameConversationContext = ConversationRenameContext(conversationID: conversation.id)
+    }
+
+    func cancelConversationRename() {
+        renameConversationContext = nil
+        renameDraftTitle = ""
+    }
+
+    var canSubmitConversationRename: Bool {
+        !renameDraftTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    func commitConversationRename() async {
+        guard let context = renameConversationContext else { return }
+
+        alert = nil
+        do {
+            let updatedConversation = try await renameConversationUseCase.renameConversation(
+                id: context.conversationID,
+                title: renameDraftTitle
+            )
+
+            if let index = conversations.firstIndex(where: { $0.id == updatedConversation.id }) {
+                conversations[index] = updatedConversation
+            }
+
+            cancelConversationRename()
+        } catch {
+            alert = PresentationAlert(
+                title: L10n.ConversationsList.errorRenameTitle,
                 message: error.localizedDescription
             )
         }
