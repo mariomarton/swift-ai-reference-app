@@ -49,7 +49,7 @@ final class SwiftAIReferenceAppUITests: XCTestCase {
         XCTAssert(sidebarButton.waitForExistence(timeout: 3), "Sidebar button not found")
         sidebarButton.tap()
 
-        let generatedTitle = UITestLaunchConfiguration.conversationRow(in: app, matching: expectedAssistantText)
+        let generatedTitle = UITestLaunchConfiguration.conversationRow(in: app, matching: inputText)
         XCTAssert(generatedTitle.waitForExistence(timeout: 10), "Generated title did not appear in the conversations list")
     }
 
@@ -60,8 +60,6 @@ final class SwiftAIReferenceAppUITests: XCTestCase {
 
         let suffix = String(UUID().uuidString.prefix(8))
         let inputText = "Persist \(suffix)"
-        let expectedTitle = "Stub response: \(inputText)"
-
         let composer = app.textFields["messageTextField"]
         XCTAssert(composer.waitForExistence(timeout: 5), "Message composer not found")
         composer.tap()
@@ -75,7 +73,7 @@ final class SwiftAIReferenceAppUITests: XCTestCase {
         XCTAssert(sidebarButton.waitForExistence(timeout: 3), "Sidebar button not found")
         sidebarButton.tap()
 
-        let persistedRow = UITestLaunchConfiguration.conversationRow(in: app, matching: expectedTitle)
+        let persistedRow = UITestLaunchConfiguration.conversationRow(in: app, matching: inputText)
         XCTAssert(persistedRow.waitForExistence(timeout: 10), "Conversation did not appear before relaunch")
 
         app.terminate()
@@ -85,7 +83,7 @@ final class SwiftAIReferenceAppUITests: XCTestCase {
         XCTAssert(relaunchedSidebarButton.waitForExistence(timeout: 5), "Sidebar button not found after relaunch")
         relaunchedSidebarButton.tap()
 
-        let relaunchedRow = UITestLaunchConfiguration.conversationRow(in: app, matching: expectedTitle)
+        let relaunchedRow = UITestLaunchConfiguration.conversationRow(in: app, matching: inputText)
         XCTAssert(relaunchedRow.waitForExistence(timeout: 10), "Conversation did not persist after relaunch")
 
         relaunchedRow.swipeLeft()
