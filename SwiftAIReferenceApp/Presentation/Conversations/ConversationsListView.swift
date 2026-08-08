@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConversationsListView: View {
     @ObservedObject var viewModel: ConversationsListViewModel
+    let onSettingsTapped: () -> Void
 
     var body: some View {
         List {
@@ -72,6 +73,11 @@ struct ConversationsListView: View {
         .accessibilityIdentifier("conversationsList")
         .navigationTitle(L10n.ConversationsList.navigationTitle)
         .searchable(text: $viewModel.searchText, prompt: Text(L10n.ConversationsList.searchPrompt))
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                ConversationsListToolbarActionsView(onSettingsTapped: onSettingsTapped)
+            }
+        }
         .task {
             if viewModel.conversations.isEmpty {
                 await viewModel.loadConversations()
@@ -112,6 +118,25 @@ struct ConversationsListView: View {
                 )
             }
         }
+    }
+}
+
+struct ConversationsListToolbarActionsView: View {
+    let onSettingsTapped: () -> Void
+
+    var body: some View {
+        Button(action: handleSettingsTap) {
+            Image(systemName: "gearshape")
+                .font(.body.weight(.medium))
+        }
+        .foregroundStyle(.tertiary)
+        .accessibilityLabel(L10n.Settings.navigationTitle)
+        .accessibilityIdentifier("openSettingsButton")
+    }
+
+    @MainActor
+    func handleSettingsTap() {
+        onSettingsTapped()
     }
 }
 

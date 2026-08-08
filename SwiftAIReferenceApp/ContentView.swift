@@ -24,7 +24,12 @@ struct ContentView: View {
             Group {
                 if isCompactLayout {
                     NavigationStack(path: $shellViewModel.compactPath) {
-                        ConversationsListView(viewModel: conversationsViewModel)
+                        ConversationsListView(
+                            viewModel: conversationsViewModel,
+                            onSettingsTapped: {
+                                shellViewModel.presentSettings()
+                            }
+                        )
                             .navigationDestination(for: AppRoute.self) { route in
                                 switch route {
                                 case .chat(let conversationID):
@@ -45,7 +50,12 @@ struct ContentView: View {
                 } else {
                     NavigationSplitView(columnVisibility: $shellViewModel.columnVisibility) {
                         NavigationStack {
-                            ConversationsListView(viewModel: conversationsViewModel)
+                            ConversationsListView(
+                                viewModel: conversationsViewModel,
+                                onSettingsTapped: {
+                                    shellViewModel.presentSettings()
+                                }
+                            )
                         }
                     } detail: {
                         NavigationStack {
