@@ -1,4 +1,9 @@
-# Swift AI Reference App
+<table>
+  <tr>
+    <td valign="middle"><img src="docs/icon/icon_dark_true_rounded.png" alt="Swift AI Reference App icon" width="47" style="margin-top:-12px;"></td>
+    <td valign="middle"><h1>Swift AI Reference App</h1></td>
+  </tr>
+</table>
 
 A Swift and SwiftUI iOS LLM-chat app built as a clean-code reference implementation: clearly layered, and designed to be easily extended with new models, backends, or features.
 
@@ -102,3 +107,11 @@ Vendor/
 docs/
 <your-model>.gguf  # put your gguf model file here
 ```
+
+## Credits
+
+The app icon is based on an icon from [Lucide](https://lucide.dev/).
+
+## License
+
+This project is licensed under the MIT License.
