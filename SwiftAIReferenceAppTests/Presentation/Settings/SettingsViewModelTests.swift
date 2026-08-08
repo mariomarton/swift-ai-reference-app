@@ -14,7 +14,7 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.responseStylePickerIdentity, PromptAccentColor.teal.rawValue)
     }
 
-    func testResetToDefaultsRestoresOrangeAccentColor() {
+    func testResetToDefaultsRestoresGreenAccentColor() {
         let repository = MockPromptSettingsRepository(
             initialSettings: PromptSettings(
                 systemPrompt: "Custom",
