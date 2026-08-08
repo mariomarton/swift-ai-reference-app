@@ -6,6 +6,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var systemPrompt: String
     @Published var customInstructions: String
     @Published var tonePreset: PromptTonePreset
+    @Published var accentColor: PromptAccentColor
 
     private let repository: PromptSettingsRepository
 
@@ -16,6 +17,7 @@ final class SettingsViewModel: ObservableObject {
         systemPrompt = settings.systemPrompt
         customInstructions = settings.customInstructions
         tonePreset = settings.tonePreset
+        accentColor = settings.accentColor
     }
 
     func save() {
@@ -26,6 +28,7 @@ final class SettingsViewModel: ObservableObject {
         systemPrompt = PromptSettings.defaultSystemPrompt
         customInstructions = ""
         tonePreset = .none
+        accentColor = .green
         save()
     }
 
@@ -33,7 +36,12 @@ final class SettingsViewModel: ObservableObject {
         PromptSettings(
             systemPrompt: systemPrompt,
             customInstructions: customInstructions,
-            tonePreset: tonePreset
+            tonePreset: tonePreset,
+            accentColor: accentColor
         )
+    }
+
+    var responseStylePickerIdentity: String {
+        accentColor.rawValue
     }
 }

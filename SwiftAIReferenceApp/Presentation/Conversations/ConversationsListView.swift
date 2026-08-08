@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConversationsListView: View {
     @ObservedObject var viewModel: ConversationsListViewModel
+    let accentColor: PromptAccentColor
     let onSettingsTapped: () -> Void
 
     var body: some View {
@@ -9,7 +10,7 @@ struct ConversationsListView: View {
             Button {
                 _ = viewModel.startConversation()
             } label: {
-                NewConversationRowView()
+                NewConversationRowView(accentColor: accentColor)
             }
             .buttonStyle(.plain)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -41,7 +42,8 @@ struct ConversationsListView: View {
                     } label: {
                         ConversationRowView(
                             conversation: conversation,
-                            isGenerating: viewModel.isGenerating(conversationID: conversation.id)
+                            isGenerating: viewModel.isGenerating(conversationID: conversation.id),
+                            accentColor: accentColor
                         )
                     }
                     .buttonStyle(.plain)
@@ -62,7 +64,7 @@ struct ConversationsListView: View {
                         } label: {
                             Label(L10n.ConversationsList.renameAction, systemImage: "pencil")
                         }
-                        .tint(.blue)
+                        .tint(accentColor.color)
                     }
                 }
             }
@@ -179,6 +181,8 @@ private struct RenameConversationSheet: View {
 }
 
 private struct NewConversationRowView: View {
+    let accentColor: PromptAccentColor
+
     var body: some View {
         HStack(spacing: 14) {
             Circle()
@@ -187,7 +191,7 @@ private struct NewConversationRowView: View {
                 .overlay {
                     Image(systemName: "plus")
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(Color(.systemOrange))
+                        .foregroundStyle(accentColor.color)
                 }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -207,10 +211,10 @@ private struct NewConversationRowView: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.orange.opacity(0.10))
+                .fill(accentColor.color.opacity(0.10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.orange.opacity(0.20), lineWidth: 1)
+                        .stroke(accentColor.color.opacity(0.20), lineWidth: 1)
                 )
         )
     }
@@ -219,6 +223,7 @@ private struct NewConversationRowView: View {
 private struct ConversationRowView: View {
     let conversation: Conversation
     let isGenerating: Bool
+    let accentColor: PromptAccentColor
 
     var body: some View {
         HStack(spacing: 14) {
@@ -227,7 +232,7 @@ private struct ConversationRowView: View {
                 .frame(width: 44, height: 44)
                 .overlay {
                     Image(systemName: "bubble.left.and.text.bubble.right.fill")
-                        .foregroundStyle(Color(.systemOrange))
+                        .foregroundStyle(accentColor.color)
                 }
 
             VStack(alignment: .leading, spacing: 4) {

@@ -43,6 +43,15 @@
 "composer.stop.accessibilityLabel" = "Zastaviť generovanie";
 "composer.send.accessibilityLabel" = "Odoslať správu";
 "settings.navigationTitle" = "Nastavenia";
+"settings.accentColor.title" = "Farba zvýraznenia";
+"settings.accentColor.footer" = "Vyberte farbu zvýraznenia v aplikácii.";
+"settings.accentColor.orange" = "Oranžová";
+"settings.accentColor.blue" = "Modrá";
+"settings.accentColor.indigo" = "Indigová";
+"settings.accentColor.purple" = "Fialová";
+"settings.accentColor.teal" = "Tyrkysová";
+"settings.accentColor.green" = "Zelená";
+"settings.accentColor.red" = "Červená";
 "settings.mode.title" = "Režim odpovede";
 "settings.mode.footer" = "Režim pridáva krátku inštrukciu k vstavanému systémovému promptu.";
 "settings.mode.none" = "Bez režimu";

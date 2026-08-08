@@ -69,6 +69,15 @@ enum L10n {
 
     enum Settings {
         static var navigationTitle: String { l("settings.navigationTitle") }
+        static var accentColorTitle: String { l("settings.accentColor.title") }
+        static var accentColorFooter: String { l("settings.accentColor.footer") }
+        static var accentColorOrange: String { l("settings.accentColor.orange") }
+        static var accentColorBlue: String { l("settings.accentColor.blue") }
+        static var accentColorIndigo: String { l("settings.accentColor.indigo") }
+        static var accentColorPurple: String { l("settings.accentColor.purple") }
+        static var accentColorTeal: String { l("settings.accentColor.teal") }
+        static var accentColorGreen: String { l("settings.accentColor.green") }
+        static var accentColorRed: String { l("settings.accentColor.red") }
         static var modeTitle: String { l("settings.mode.title") }
         static var modeFooter: String { l("settings.mode.footer") }
         static var modeNone: String { l("settings.mode.none") }

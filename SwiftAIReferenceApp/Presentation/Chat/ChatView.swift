@@ -5,15 +5,18 @@ import UIKit
 
 struct ChatView: View {
     @StateObject private var viewModel: ChatViewModel
+    let accentColor: PromptAccentColor
     let onNewConversationTapped: () -> Void
     let onSettingsTapped: () -> Void
 
     init(
         viewModel: ChatViewModel,
+        accentColor: PromptAccentColor,
         onNewConversationTapped: @escaping () -> Void,
         onSettingsTapped: @escaping () -> Void
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.accentColor = accentColor
         self.onNewConversationTapped = onNewConversationTapped
         self.onSettingsTapped = onSettingsTapped
     }
@@ -31,17 +34,20 @@ struct ChatView: View {
                     ScrollView {
                         LazyVStack(spacing: 12) {
                             ForEach(viewModel.messages) { message in
-                                MessageBubbleView(message: message)
+                                MessageBubbleView(message: message, accentColor: accentColor)
                                     .id(message.id)
                             }
 
                             if viewModel.isSending {
                                 if let streaming = viewModel.streamingText {
-                                    MessageBubbleView(message: Message(role: .assistant, text: streaming.isEmpty ? "..." : streaming))
+                                    MessageBubbleView(
+                                        message: Message(role: .assistant, text: streaming.isEmpty ? "..." : streaming),
+                                        accentColor: accentColor
+                                    )
                                         .opacity(0.75)
                                         .id("streaming")
                                 } else {
-                                    ThinkingIndicatorView(title: L10n.Chat.sendingIndicator)
+                                    ThinkingIndicatorView(title: L10n.Chat.sendingIndicator, accentColor: accentColor)
                                         .id("streaming")
                                 }
                             }
@@ -84,7 +90,11 @@ struct ChatView: View {
                         )
                     }
 
-                    ComposerView(text: $viewModel.draftText, isSending: viewModel.isSending) {
+                    ComposerView(
+                        text: $viewModel.draftText,
+                        isSending: viewModel.isSending,
+                        accentColor: accentColor
+                    ) {
                         if viewModel.isSending {
                             viewModel.stopGeneration()
                         } else {
@@ -210,6 +220,7 @@ private struct GenerationConflictBannerView: View {
 
 private struct ThinkingIndicatorView: View {
     let title: String
+    let accentColor: PromptAccentColor
     @State private var isAnimating = false
 
     var body: some View {
@@ -217,7 +228,7 @@ private struct ThinkingIndicatorView: View {
             HStack(spacing: 4) {
                 ForEach(0..<3) { index in
                     Circle()
-                        .fill(Color(.systemOrange))
+                        .fill(accentColor.color)
                         .frame(width: 6, height: 6)
                         .scaleEffect(isAnimating ? 1 : 0.55)
                         .opacity(isAnimating ? 1 : 0.35)

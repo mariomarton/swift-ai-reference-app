@@ -14,7 +14,8 @@ final class UserDefaultsPromptSettingsRepositoryTests: XCTestCase {
         let expected = PromptSettings(
             systemPrompt: "Custom system",
             customInstructions: "Extra instructions",
-            tonePreset: .humorous
+            tonePreset: .humorous,
+            accentColor: .purple
         )
 
         repository.saveSettings(expected)
@@ -34,6 +35,19 @@ final class UserDefaultsPromptSettingsRepositoryTests: XCTestCase {
 
         XCTAssertNil(defaults.string(forKey: "promptSettings.systemPromptOverride"))
         XCTAssertNil(defaults.string(forKey: "promptSettings.systemPrompt"))
+    }
+
+    func testSavingDefaultSettingsStoresGreenAccentColor() {
+        let suiteName = "prompt-settings-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let repository = UserDefaultsPromptSettingsRepository(defaults: defaults)
+        repository.saveSettings(PromptSettings())
+
+        XCTAssertEqual(defaults.string(forKey: "promptSettings.accentColor"), PromptAccentColor.green.rawValue)
     }
 
     func testLoadSettingsMigratesLegacySystemPromptOverride() {
@@ -64,5 +78,19 @@ final class UserDefaultsPromptSettingsRepositoryTests: XCTestCase {
         let repository = UserDefaultsPromptSettingsRepository(defaults: defaults)
 
         XCTAssertEqual(repository.loadSettings(), PromptSettings())
+    }
+
+    func testLoadSettingsFallsBackToDefaultAccentColorWhenStoredValueIsInvalid() {
+        let suiteName = "prompt-settings-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        defaults.set("not-a-color", forKey: "promptSettings.accentColor")
+
+        let repository = UserDefaultsPromptSettingsRepository(defaults: defaults)
+
+        XCTAssertEqual(repository.loadSettings().accentColor, .green)
     }
 }

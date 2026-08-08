@@ -43,6 +43,15 @@
 "composer.stop.accessibilityLabel" = "Stop generation";
 "composer.send.accessibilityLabel" = "Send message";
 "settings.navigationTitle" = "Settings";
+"settings.accentColor.title" = "Accent color";
+"settings.accentColor.footer" = "Choose a color for the app accent.";
+"settings.accentColor.orange" = "Orange";
+"settings.accentColor.blue" = "Blue";
+"settings.accentColor.indigo" = "Indigo";
+"settings.accentColor.purple" = "Purple";
+"settings.accentColor.teal" = "Teal";
+"settings.accentColor.green" = "Green";
+"settings.accentColor.red" = "Red";
 "settings.mode.title" = "Response style";
 "settings.mode.footer" = "This style adds a short instruction to the built-in system prompt.";
 "settings.mode.none" = "Default";

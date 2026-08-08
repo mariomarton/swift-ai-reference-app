@@ -1,5 +1,36 @@
 import Foundation
 
+public enum PromptAccentColor: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
+    case green
+    case blue
+    case indigo
+    case orange
+    case purple
+    case red
+    case teal
+
+    public var id: String { rawValue }
+
+    public var localizedTitle: String {
+        switch self {
+        case .green:
+            return L10n.Settings.accentColorGreen
+        case .blue:
+            return L10n.Settings.accentColorBlue
+        case .indigo:
+            return L10n.Settings.accentColorIndigo
+        case .orange:
+            return L10n.Settings.accentColorOrange
+        case .purple:
+            return L10n.Settings.accentColorPurple
+        case .red:
+            return L10n.Settings.accentColorRed
+        case .teal:
+            return L10n.Settings.accentColorTeal
+        }
+    }
+}
+
 public enum PromptTonePreset: String, Codable, CaseIterable, Identifiable, Hashable, Sendable {
     case none
     case concise
@@ -34,15 +65,18 @@ public struct PromptSettings: Codable, Equatable, Sendable {
     public var systemPrompt: String
     public var customInstructions: String
     public var tonePreset: PromptTonePreset
+    public var accentColor: PromptAccentColor
 
     public init(
         systemPrompt: String = Self.defaultSystemPrompt,
         customInstructions: String = "",
-        tonePreset: PromptTonePreset = .none
+        tonePreset: PromptTonePreset = .none,
+        accentColor: PromptAccentColor = .green
     ) {
         self.systemPrompt = systemPrompt
         self.customInstructions = customInstructions
         self.tonePreset = tonePreset
+        self.accentColor = accentColor
     }
 
     public var effectiveSystemPrompt: String {

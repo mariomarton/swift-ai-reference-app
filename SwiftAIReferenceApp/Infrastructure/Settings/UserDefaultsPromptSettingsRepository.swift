@@ -8,6 +8,7 @@ public final class UserDefaultsPromptSettingsRepository: PromptSettingsRepositor
         static let legacySystemPrompt = "promptSettings.systemPrompt"
         static let customInstructions = "promptSettings.customInstructions"
         static let tonePreset = "promptSettings.tonePreset"
+        static let accentColor = "promptSettings.accentColor"
     }
 
     public init(defaults: UserDefaults = .standard) {
@@ -36,10 +37,15 @@ public final class UserDefaultsPromptSettingsRepository: PromptSettingsRepositor
             rawValue: defaults.string(forKey: Keys.tonePreset) ?? PromptTonePreset.none.rawValue
         ) ?? .none
 
+        let accentColor = PromptAccentColor(
+            rawValue: defaults.string(forKey: Keys.accentColor) ?? PromptAccentColor.green.rawValue
+        ) ?? .green
+
         return PromptSettings(
             systemPrompt: systemPrompt,
             customInstructions: customInstructions,
-            tonePreset: tonePreset
+            tonePreset: tonePreset,
+            accentColor: accentColor
         )
     }
 
@@ -57,5 +63,6 @@ public final class UserDefaultsPromptSettingsRepository: PromptSettingsRepositor
 
         defaults.set(settings.customInstructions, forKey: Keys.customInstructions)
         defaults.set(settings.tonePreset.rawValue, forKey: Keys.tonePreset)
+        defaults.set(settings.accentColor.rawValue, forKey: Keys.accentColor)
     }
 }
