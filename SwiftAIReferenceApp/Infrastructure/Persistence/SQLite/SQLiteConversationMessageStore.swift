@@ -35,9 +35,13 @@ enum SQLiteStorageError: LocalizedError {
     }
 }
 
+/// Shared SQLite store for conversations and messages.
+///
+/// It owns schema access, migration, and recency ordering so the repository adapters stay thin.
 final class SQLiteConversationMessageStore: @unchecked Sendable {
     private enum Schema {
-        static let version: Int64 = 1
+        // Bump this when the database schema changes.
+        static let version: Int64 = 2
     }
 
     private let lock = NSRecursiveLock()
@@ -71,7 +75,14 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
         }
     }
 
-    func createConversation(id: UUID, title: String?, selectedModel: LLMModel? = nil, createdAt: Date = .now, updatedAt: Date = .now) throws {
+    func createConversation(
+        id: UUID,
+        title: String?,
+        titleOrigin: ConversationTitleOrigin = .manual,
+        selectedModel: LLMModel? = nil,
+        createdAt: Date = .now,
+        updatedAt: Date = .now
+    ) throws {
         try locked {
             try performTransaction {
                 _ = try execute(
@@ -79,6 +90,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                     INSERT OR IGNORE INTO conversations (
                         id,
                         title,
+                        title_origin,
                         selected_model_id,
                         selected_model_name,
                         selected_model_path,
@@ -87,34 +99,19 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                         message_count,
                         last_message_at,
                         last_message_preview
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL, NULL)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, NULL)
                     """,
                     bind: { statement in
                         try Self.bindUUID(id, at: 1, on: statement)
                         try Self.bindOptionalText(title, at: 2, on: statement)
-                        try Self.bindOptionalText(selectedModel?.id, at: 3, on: statement)
-                        try Self.bindOptionalText(selectedModel?.name, at: 4, on: statement)
-                        try Self.bindOptionalText(selectedModel?.path, at: 5, on: statement)
-                        try Self.bindDouble(createdAt.timeIntervalSince1970, at: 6, on: statement)
-                        try Self.bindDouble(updatedAt.timeIntervalSince1970, at: 7, on: statement)
+                        try Self.bindText(titleOrigin.rawValue, at: 3, on: statement)
+                        try Self.bindOptionalText(selectedModel?.id, at: 4, on: statement)
+                        try Self.bindOptionalText(selectedModel?.name, at: 5, on: statement)
+                        try Self.bindOptionalText(nil, at: 6, on: statement)
+                        try Self.bindDouble(createdAt.timeIntervalSince1970, at: 7, on: statement)
+                        try Self.bindDouble(updatedAt.timeIntervalSince1970, at: 8, on: statement)
                     }
                 )
-
-                if let title, try loadConversationRecord(id: id)?.title == nil {
-                    _ = try execute(
-                        """
-                        UPDATE conversations
-                        SET title = ?,
-                            updated_at = ?
-                        WHERE id = ?
-                        """,
-                        bind: { statement in
-                            try Self.bindText(title, at: 1, on: statement)
-                            try Self.bindDouble(updatedAt.timeIntervalSince1970, at: 2, on: statement)
-                            try Self.bindUUID(id, at: 3, on: statement)
-                        }
-                    )
-                }
 
                 try refreshSearchTerms(for: id, updatedAt: nil)
             }
@@ -123,11 +120,13 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
 
     func listConversations() throws -> [Conversation] {
         try locked {
+            // Sidebar recents should stay newest-first, with created-at as a tie breaker.
             try fetchConversations(
                 sql: """
                 SELECT
                     id,
                     title,
+                    title_origin,
                     selected_model_id,
                     selected_model_name,
                     selected_model_path,
@@ -147,6 +146,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                 SELECT
                     id,
                     title,
+                    title_origin,
                     selected_model_id,
                     selected_model_name,
                     selected_model_path,
@@ -170,6 +170,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                     """
                     UPDATE conversations
                     SET title = ?,
+                        title_origin = ?,
                         selected_model_id = ?,
                         selected_model_name = ?,
                         selected_model_path = ?,
@@ -178,11 +179,12 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                     """,
                     bind: { statement in
                         try Self.bindOptionalText(conversation.title, at: 1, on: statement)
-                        try Self.bindOptionalText(conversation.selectedModel?.id, at: 2, on: statement)
-                        try Self.bindOptionalText(conversation.selectedModel?.name, at: 3, on: statement)
-                        try Self.bindOptionalText(conversation.selectedModel?.path, at: 4, on: statement)
-                        try Self.bindDouble(conversation.updatedAt.timeIntervalSince1970, at: 5, on: statement)
-                        try Self.bindUUID(conversation.id, at: 6, on: statement)
+                        try Self.bindText(conversation.titleOrigin.rawValue, at: 2, on: statement)
+                        try Self.bindOptionalText(conversation.selectedModel?.id, at: 3, on: statement)
+                        try Self.bindOptionalText(conversation.selectedModel?.name, at: 4, on: statement)
+                        try Self.bindOptionalText(nil, at: 5, on: statement)
+                        try Self.bindDouble(conversation.updatedAt.timeIntervalSince1970, at: 6, on: statement)
+                        try Self.bindUUID(conversation.id, at: 7, on: statement)
                     }
                 )
 
@@ -292,6 +294,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                     SELECT
                         id,
                         title,
+                        title_origin,
                         selected_model_id,
                         selected_model_name,
                         selected_model_path,
@@ -321,6 +324,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                 SELECT
                     c.id,
                     c.title,
+                    c.title_origin,
                     c.selected_model_id,
                     c.selected_model_name,
                     c.selected_model_path,
@@ -415,6 +419,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
             INSERT OR IGNORE INTO conversations (
                 id,
                 title,
+                title_origin,
                 selected_model_id,
                 selected_model_name,
                 selected_model_path,
@@ -423,12 +428,13 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
                 message_count,
                 last_message_at,
                 last_message_preview
-            ) VALUES (?, NULL, NULL, NULL, NULL, ?, ?, 0, NULL, NULL)
+            ) VALUES (?, NULL, ?, NULL, NULL, NULL, ?, ?, 0, NULL, NULL)
             """,
             bind: { statement in
                 try Self.bindUUID(id, at: 1, on: statement)
-                try Self.bindDouble(createdAt.timeIntervalSince1970, at: 2, on: statement)
-                try Self.bindDouble(updatedAt.timeIntervalSince1970, at: 3, on: statement)
+                try Self.bindText(ConversationTitleOrigin.manual.rawValue, at: 2, on: statement)
+                try Self.bindDouble(createdAt.timeIntervalSince1970, at: 3, on: statement)
+                try Self.bindDouble(updatedAt.timeIntervalSince1970, at: 4, on: statement)
             }
         )
     }
@@ -499,6 +505,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
             SELECT
                 id,
                 title,
+                title_origin,
                 selected_model_id,
                 selected_model_name,
                 selected_model_path,
@@ -573,6 +580,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
             CREATE TABLE IF NOT EXISTS conversations (
                 id TEXT PRIMARY KEY NOT NULL,
                 title TEXT,
+                title_origin TEXT NOT NULL DEFAULT 'manual',
                 selected_model_id TEXT,
                 selected_model_name TEXT,
                 selected_model_path TEXT,
@@ -613,6 +621,8 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
         try execute("CREATE INDEX IF NOT EXISTS idx_messages_date ON messages(date)")
         try execute("CREATE INDEX IF NOT EXISTS idx_conversation_search_terms_term ON conversation_search_terms(term)")
 
+        try migrateConversationTitleOriginIfNeeded()
+
         let version = try currentSchemaVersion()
         if version < Schema.version {
             _ = try execute(
@@ -631,6 +641,30 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
     private func currentSchemaVersion() throws -> Int64 {
         let rows = try fetchInt64s(sql: "SELECT value FROM schema_info WHERE name = 'schema_version' LIMIT 1")
         return rows.first ?? 0
+    }
+
+    private func migrateConversationTitleOriginIfNeeded() throws {
+        guard try !conversationTableHasColumn(named: "title_origin") else {
+            return
+        }
+
+        try execute("ALTER TABLE conversations ADD COLUMN title_origin TEXT NOT NULL DEFAULT 'manual'")
+        _ = try execute(
+            """
+            UPDATE conversations
+            SET title_origin = 'autoGenerated'
+            WHERE title IS NOT NULL AND TRIM(title) != ''
+            """
+        )
+    }
+
+    private func conversationTableHasColumn(named column: String) throws -> Bool {
+        try fetchRows(
+            sql: "PRAGMA table_info(conversations)",
+            map: { statement in
+                Self.readOptionalText(from: statement, column: 1)
+            }
+        ).compactMap { $0 }.contains(column)
     }
 
     private func fetchConversations(sql: String, bind: ((OpaquePointer) throws -> Void)? = nil) throws -> [Conversation] {
@@ -689,6 +723,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
     private struct ConversationRecord {
         let id: UUID
         let title: String?
+        let titleOrigin: ConversationTitleOrigin
         let selectedModel: LLMModel?
         let createdAt: Date
         let updatedAt: Date
@@ -705,26 +740,29 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
     private static func readConversationRecord(from statement: OpaquePointer) throws -> ConversationRecord {
         guard
             let id = readUUID(from: statement, column: 0),
-            let createdAt = readDate(from: statement, column: 5),
-            let updatedAt = readDate(from: statement, column: 6)
+            let createdAt = readDate(from: statement, column: 6),
+            let updatedAt = readDate(from: statement, column: 7)
         else {
             throw SQLiteStorageError.invalidRow
         }
 
         let title = readOptionalText(from: statement, column: 1)
-        let selectedModelID = readOptionalText(from: statement, column: 2)
-        let selectedModelName = readOptionalText(from: statement, column: 3)
-        let selectedModelPath = readOptionalText(from: statement, column: 4)
+        let titleOriginRaw = readOptionalText(from: statement, column: 2)
+        let selectedModelID = readOptionalText(from: statement, column: 3)
+        let selectedModelName = readOptionalText(from: statement, column: 4)
         let selectedModel: LLMModel?
         if let selectedModelID, let selectedModelName {
-            selectedModel = LLMModel(id: selectedModelID, name: selectedModelName, path: selectedModelPath)
+            selectedModel = LLMModel(id: selectedModelID, name: selectedModelName)
         } else {
             selectedModel = nil
         }
 
+        let titleOrigin = ConversationTitleOrigin(rawValue: titleOriginRaw ?? ConversationTitleOrigin.manual.rawValue) ?? .manual
+
         return ConversationRecord(
             id: id,
             title: title,
+            titleOrigin: titleOrigin,
             selectedModel: selectedModel,
             createdAt: createdAt,
             updatedAt: updatedAt
@@ -750,6 +788,7 @@ final class SQLiteConversationMessageStore: @unchecked Sendable {
         Conversation(
             id: record.id,
             title: record.title,
+            titleOrigin: record.titleOrigin,
             messages: [],
             selectedModel: record.selectedModel,
             createdAt: record.createdAt,

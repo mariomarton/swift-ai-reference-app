@@ -97,7 +97,7 @@ final class LoadAndClearUseCasesTests: XCTestCase {
         try await repo.save(message: Message(role: .user, text: "x"), to: conv1)
         let clear = DefaultClearAllMessagesUseCase(repository: repo)
 
-        try await clear.clearAll()
+        try await clear.clearAllMessages()
         XCTAssertTrue(repo.stored.isEmpty)
     }
 

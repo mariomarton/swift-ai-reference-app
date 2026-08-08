@@ -47,7 +47,7 @@ Note: This environment may not have Xcode command line tools configured; if `xco
 
 # File-backed repository (Infrastructure)
 
-A sample implementation `FileBackedChatRepository` was added under `Infrastructure/Repositories`.
+A sample implementation `FileBackedChatRepository` was added under `Infrastructure/Persistence`.
 
 Key points:
 - Uses `Codable` + `JSONEncoder`/`JSONDecoder` and `FileManager` to persist messages to a JSON file.

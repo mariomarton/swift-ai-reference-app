@@ -1,26 +1,19 @@
 import Foundation
 
 public protocol MessageRepository: Sendable {
-    /// Load messages for a specific conversation.
-    /// - Parameter conversationID: the conversation to load messages from
-    /// - Returns: array of messages for that conversation, sorted by date ascending
+    /// Loads messages for a conversation in ascending date order.
     func loadMessages(for conversationID: UUID) async throws -> [Message]
-    
-    /// Save a message to a specific conversation.
-    /// - Parameters:
-    ///   - message: the `Message` to save
-    ///   - conversationID: the conversation to save the message to
+
+    /// Saves a message to a conversation.
     func save(message: Message, to conversationID: UUID) async throws
-    
-    /// Clear all messages from a specific conversation.
-    /// - Parameter conversationID: the conversation to clear
+
+    /// Clears the stored messages for one conversation.
     func clearMessages(for conversationID: UUID) async throws
-    
-    /// Clear all messages across all conversations.
+
+    /// Clears all stored messages across every conversation.
     func clearAll() async throws
 
-    /// Permanently delete all messages and storage for a specific conversation.
-    /// Unlike `clearMessages(for:)`, this removes the underlying storage entirely.
-    /// - Parameter conversationID: the conversation whose message storage should be deleted
+    /// Permanently deletes a conversation's message storage.
+    /// Unlike `clearMessages(for:)`, this removes the underlying files too.
     func deleteMessages(for conversationID: UUID) async throws
 }

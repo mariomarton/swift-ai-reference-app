@@ -4,10 +4,10 @@ import UIKit
 #endif
 
 enum MessageBubbleStyle {
-    static func bubbleColor(for role: Message.Role) -> Color {
+    static func bubbleColor(for role: Message.Role, accentColor: PromptAccentColor = .green) -> Color {
         switch role {
         case .user:
-            return Color(red: 0.89, green: 0.43, blue: 0.19)
+            return accentColor.color
         case .assistant:
             return Color(.secondarySystemBackground)
         case .system:
@@ -38,6 +38,7 @@ struct MessageBubbleInteractionPolicy {
 
 struct MessageBubbleView: View {
     let message: Message
+    let accentColor: PromptAccentColor
 
     var body: some View {
         HStack {
@@ -95,7 +96,10 @@ struct MessageBubbleView: View {
         content()
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(MessageBubbleStyle.bubbleColor(for: message.role), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(
+                MessageBubbleStyle.bubbleColor(for: message.role, accentColor: accentColor),
+                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            )
     }
 
     @ViewBuilder

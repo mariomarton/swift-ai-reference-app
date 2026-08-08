@@ -2,9 +2,21 @@ import SwiftUI
 
 struct ConversationsListView: View {
     @ObservedObject var viewModel: ConversationsListViewModel
+    let accentColor: PromptAccentColor
+    let onSettingsTapped: () -> Void
 
     var body: some View {
         List {
+            Button {
+                _ = viewModel.startConversation()
+            } label: {
+                NewConversationRowView(accentColor: accentColor)
+            }
+            .buttonStyle(.plain)
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowSeparator(.hidden)
+            .accessibilityIdentifier("createConversationButton")
+
             if viewModel.displayedConversations.isEmpty, !viewModel.isLoading {
                 if viewModel.hasActiveSearch {
                     ContentUnavailableView(
@@ -30,7 +42,8 @@ struct ConversationsListView: View {
                     } label: {
                         ConversationRowView(
                             conversation: conversation,
-                            isGenerating: viewModel.isGenerating(conversationID: conversation.id)
+                            isGenerating: viewModel.isGenerating(conversationID: conversation.id),
+                            accentColor: accentColor
                         )
                     }
                     .buttonStyle(.plain)
@@ -45,6 +58,13 @@ struct ConversationsListView: View {
                         } label: {
                             Label(L10n.ConversationsList.deleteAction, systemImage: "trash")
                         }
+
+                        Button {
+                            viewModel.beginRenaming(conversation: conversation)
+                        } label: {
+                            Label(L10n.ConversationsList.renameAction, systemImage: "pencil")
+                        }
+                        .tint(accentColor.color)
                     }
                 }
             }
@@ -57,13 +77,7 @@ struct ConversationsListView: View {
         .searchable(text: $viewModel.searchText, prompt: Text(L10n.ConversationsList.searchPrompt))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    _ = viewModel.startConversation()
-                } label: {
-                    Image(systemName: "square.and.pencil")
-                }
-                .accessibilityLabel(L10n.ConversationsList.newConversationLabel)
-                .accessibilityIdentifier("createConversationButton")
+                ConversationsListToolbarActionsView(onSettingsTapped: onSettingsTapped)
             }
         }
         .task {
@@ -76,6 +90,12 @@ struct ConversationsListView: View {
         }
         .refreshable {
             await viewModel.loadConversations()
+        }
+        .sheet(item: $viewModel.renameConversationContext) { _ in
+            NavigationStack {
+                RenameConversationSheet(viewModel: viewModel)
+            }
+            .presentationDetents([.medium])
         }
         .overlay {
             if viewModel.isLoading, viewModel.conversations.isEmpty {
@@ -103,9 +123,107 @@ struct ConversationsListView: View {
     }
 }
 
+struct ConversationsListToolbarActionsView: View {
+    let onSettingsTapped: () -> Void
+
+    var body: some View {
+        Button(action: handleSettingsTap) {
+            Image(systemName: "gearshape")
+                .font(.body.weight(.medium))
+        }
+        .foregroundStyle(.tertiary)
+        .accessibilityLabel(L10n.Settings.navigationTitle)
+        .accessibilityIdentifier("openSettingsButton")
+    }
+
+    @MainActor
+    func handleSettingsTap() {
+        onSettingsTapped()
+    }
+}
+
+private struct RenameConversationSheet: View {
+    @ObservedObject var viewModel: ConversationsListViewModel
+
+    var body: some View {
+        Form {
+            Section {
+                TextField(L10n.ConversationsList.renamePlaceholder, text: $viewModel.renameDraftTitle)
+                    .textInputAutocapitalization(.sentences)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        guard viewModel.canSubmitConversationRename else { return }
+                        Task {
+                            await viewModel.commitConversationRename()
+                        }
+                    }
+            }
+        }
+        .navigationTitle(L10n.ConversationsList.renameTitle)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(L10n.Common.cancel) {
+                    viewModel.cancelConversationRename()
+                }
+            }
+
+            ToolbarItem(placement: .confirmationAction) {
+                Button(L10n.ConversationsList.renameSaveAction) {
+                    Task {
+                        await viewModel.commitConversationRename()
+                    }
+                }
+                .disabled(!viewModel.canSubmitConversationRename)
+            }
+        }
+    }
+}
+
+private struct NewConversationRowView: View {
+    let accentColor: PromptAccentColor
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Circle()
+                .fill(Color(.tertiarySystemBackground))
+                .frame(width: 40, height: 40)
+                .overlay {
+                    Image(systemName: "plus")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(accentColor.color)
+                }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(L10n.ConversationsList.newConversationLabel)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Image(systemName: "plus")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(accentColor.color.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(accentColor.color.opacity(0.20), lineWidth: 1)
+                )
+        )
+    }
+}
+
 private struct ConversationRowView: View {
     let conversation: Conversation
     let isGenerating: Bool
+    let accentColor: PromptAccentColor
 
     var body: some View {
         HStack(spacing: 14) {
@@ -114,7 +232,7 @@ private struct ConversationRowView: View {
                 .frame(width: 44, height: 44)
                 .overlay {
                     Image(systemName: "bubble.left.and.text.bubble.right.fill")
-                        .foregroundStyle(Color(.systemOrange))
+                        .foregroundStyle(accentColor.color)
                 }
 
             VStack(alignment: .leading, spacing: 4) {

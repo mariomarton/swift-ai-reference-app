@@ -1,13 +1,8 @@
 import Foundation
 
-/// A file-backed implementation of `MessageRepository` with per-conversation message storage.
+/// File-backed `MessageRepository` with per-conversation JSON storage.
 ///
-/// - Stores messages in per-conversation subdirectories as JSON arrays.
-/// - Uses an in-memory cache per conversation.
-/// - Uses Swift `actor` to ensure safe concurrent access.
-///
-/// This implementation is intended for local/offline use and development. Swap with a database-backed
-/// implementation by replacing this concrete type without changing the domain/use-case layer.
+/// Messages are cached per conversation and rewritten atomically on each change.
 public actor FileBackedMessageRepository: MessageRepository {
     public enum StorageError: Error {
         case failedToCreateDirectory
@@ -16,14 +11,11 @@ public actor FileBackedMessageRepository: MessageRepository {
         case decodeError(Error)
     }
 
-    private let storageURL: URL  // Base directory for all messages
+    private let storageURL: URL
     nonisolated(unsafe) private let fileManager: FileManager
-    private var cache: [UUID: [Message]] = [:]  // Cache per conversation
+    private var cache: [UUID: [Message]] = [:]
 
-    /// Initialize with a specific storage URL, or default to Application Support/SwiftAIReferenceApp/messages
-    /// - Parameters:
-    ///   - storageURL: base directory for message storage; if nil, uses Application Support/SwiftAIReferenceApp/messages
-    ///   - fileManager: injected for easier tests
+    /// Uses Application Support/SwiftAIReferenceApp/messages by default.
     public init(storageURL: URL? = nil, fileManager injectedFileManager: FileManager = .default) throws {
         self.fileManager = injectedFileManager
 
@@ -36,24 +28,20 @@ public actor FileBackedMessageRepository: MessageRepository {
             self.storageURL = dir.appendingPathComponent("messages", isDirectory: true)
         }
 
-        // Ensure base messages directory exists
         try injectedFileManager.createDirectory(at: self.storageURL, withIntermediateDirectories: true)
     }
 
     public func loadMessages(for conversationID: UUID) async throws -> [Message] {
-        // Return from cache if available
         if let cached = cache[conversationID] {
             return cached
         }
 
-        // Load from disk
         let messages = try loadMessagesFromDisk(for: conversationID)
         cache[conversationID] = messages
         return messages
     }
 
     public func save(message: Message, to conversationID: UUID) async throws {
-        // Ensure cache exists for this conversation
         if cache[conversationID] == nil {
             cache[conversationID] = []
         }
@@ -89,9 +77,7 @@ public actor FileBackedMessageRepository: MessageRepository {
     public func clearAll() async throws {
         cache.removeAll()
         do {
-            // Remove entire messages directory
             try fileManager.removeItem(at: storageURL)
-            // Recreate it empty
             try fileManager.createDirectory(at: storageURL, withIntermediateDirectories: true)
         } catch {
             throw StorageError.failedToWriteData(error)

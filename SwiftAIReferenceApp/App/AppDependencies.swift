@@ -1,16 +1,10 @@
 import Foundation
 
 enum AppDependenciesError: LocalizedError {
-    case modelNotConfigured
-    case llamaInitializationFailed(underlying: Error)
     case storageInitializationFailed(underlying: Error)
 
     var errorDescription: String? {
         switch self {
-        case .modelNotConfigured:
-            return L10n.AppDependencies.modelNotConfigured
-        case .llamaInitializationFailed(let underlying):
-            return L10n.AppDependencies.llamaInitializationFailed(underlying.localizedDescription)
         case .storageInitializationFailed(let underlying):
             return "Failed to initialize storage: \(underlying.localizedDescription)"
         }
@@ -28,9 +22,11 @@ final class AppDependencies {
     let promptSettingsRepository: PromptSettingsRepository
     let searchConversationsUseCase: SearchConversationsUseCase
     let llmEngine: LLMEngine
+    let startupWarning: String?
 
     let loadConversationsUseCase: LoadConversationsUseCase
     let deleteConversationUseCase: DeleteConversationUseCase
+    let renameConversationUseCase: RenameConversationUseCase
     let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
     let sendMessageUseCase: SendMessageUseCase
     let messageGenerationCoordinator: MessageGenerationCoordinator
@@ -39,22 +35,29 @@ final class AppDependencies {
         conversationRepository: ConversationRepository,
         messageRepository: MessageRepository,
         promptSettingsRepository: PromptSettingsRepository,
-        llmEngine: LLMEngine
+        llmEngine: LLMEngine,
+        startupWarning: String? = nil
     ) {
         self.conversationRepository = conversationRepository
         self.messageRepository = messageRepository
         self.promptSettingsRepository = promptSettingsRepository
         self.searchConversationsUseCase = DefaultSearchConversationsUseCase()
         self.llmEngine = llmEngine
+        self.startupWarning = startupWarning
 
         self.loadConversationsUseCase = DefaultLoadConversationsUseCase(repository: conversationRepository)
         self.deleteConversationUseCase = DefaultDeleteConversationUseCase(
             conversationRepository: conversationRepository,
             messageRepository: messageRepository
         )
+        self.renameConversationUseCase = DefaultRenameConversationUseCase(repository: conversationRepository)
         self.loadRecentMessagesUseCase = DefaultLoadRecentMessagesUseCase(repository: messageRepository)
 
-        let titleGenerator = LlamaConversationTitleGenerator(engine: llmEngine)
+        let titlePromptProvider = LlamaConversationTitlePromptProvider()
+        let titleGenerator = LlamaConversationTitleGenerator(
+            engine: llmEngine,
+            promptProvider: titlePromptProvider
+        )
         let generateTitleUseCase = DefaultGenerateConversationTitleUseCase(generator: titleGenerator)
         self.sendMessageUseCase = DefaultSendMessageUseCase(
             repository: messageRepository,
@@ -75,40 +78,16 @@ final class AppDependencies {
     convenience init(storageBackend: StorageBackend) throws {
         let (conversationRepository, messageRepository) = try Self.makeStorageRepositories(for: storageBackend)
         let promptSettingsRepository = UserDefaultsPromptSettingsRepository()
-        let llmEngine: LLMEngine
-
-        #if targetEnvironment(simulator)
-        // llama.cpp Metal backend is not stable on iOS Simulator runtimes.
-        // Use the stub engine in Simulator; real on-device builds still use llama.
-        llmEngine = StubLLMEngine()
-        #else
-
-        // When running under XCTest (including Mac Catalyst test runs), skip the real
-        // Metal-backed engine entirely. Loading it during tests initializes the Metal
-        // device, whose C++ static destructor crashes on process exit — even after all
-        // tests pass. XCTestConfigurationFilePath is always set by the XCTest runner.
-        let isRunningTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-
-        if isRunningTests {
-            llmEngine = StubLLMEngine()
-        } else {
-            guard let modelPath = Self.resolveModelPath() else {
-                throw AppDependenciesError.modelNotConfigured
-            }
-
-            do {
-                llmEngine = try LlamaLLMEngine(modelPath: modelPath)
-            } catch {
-                throw AppDependenciesError.llamaInitializationFailed(underlying: error)
-            }
-        }
-        #endif
+        let (llmEngine, startupWarning) = Self.makeLLMEngine(
+            modelPath: Self.resolveModelPath(resourceURL: Bundle.main.resourceURL)
+        )
 
         self.init(
             conversationRepository: conversationRepository,
             messageRepository: messageRepository,
             promptSettingsRepository: promptSettingsRepository,
-            llmEngine: llmEngine
+            llmEngine: llmEngine,
+            startupWarning: startupWarning
         )
     }
 
@@ -122,13 +101,34 @@ final class AppDependencies {
         }
     }
 
+    private static func resolveStorageRootURL() -> URL? {
+        guard let rawValue = ProcessInfo.processInfo.environment["SWIFTAIREFERENCEAPP_STORAGE_ROOT"] else {
+            return nil
+        }
+
+        let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedValue.isEmpty else {
+            return nil
+        }
+
+        return URL(fileURLWithPath: trimmedValue, isDirectory: true)
+    }
+
     private static func makeStorageRepositories(for backend: StorageBackend) throws -> (ConversationRepository, MessageRepository) {
+        let storageRootURL = resolveStorageRootURL()
+
         switch backend {
         case .fileBacked:
-            return (try FileBackedConversationRepository(), try FileBackedMessageRepository())
+            let conversationsURL = storageRootURL?.appendingPathComponent("conversations.json")
+            let messagesURL = storageRootURL?.appendingPathComponent("messages", isDirectory: true)
+            return (
+                try FileBackedConversationRepository(storageURL: conversationsURL),
+                try FileBackedMessageRepository(storageURL: messagesURL)
+            )
         case .sqlite:
             do {
-                let store = try SQLiteConversationMessageStore()
+                let databaseURL = storageRootURL?.appendingPathComponent("chat.sqlite3")
+                let store = try SQLiteConversationMessageStore(storageURL: databaseURL)
                 return (SQLiteConversationRepository(store: store), SQLiteMessageRepository(store: store))
             } catch {
                 throw AppDependenciesError.storageInitializationFailed(underlying: error)
@@ -136,32 +136,54 @@ final class AppDependencies {
         }
     }
 
-    private static func resolveModelPath() -> String? {
-        let fm = FileManager.default
+    static func resolveModelPath(
+        resourceURL: URL?,
+        fileManager: FileManager = .default
+    ) -> String? {
+        guard let resourceURL else { return nil }
 
-        if let envPath = ProcessInfo.processInfo.environment["LLAMA_MODEL_PATH"],
-           !envPath.isEmpty,
-           fm.fileExists(atPath: envPath) {
-            return envPath
+        let bundledExact = resourceURL.appendingPathComponent("model.gguf")
+        if fileManager.fileExists(atPath: bundledExact.path) {
+            return bundledExact.path
         }
 
-        if let bundledExact = Bundle.main.url(forResource: "model", withExtension: "gguf")?.path,
-           fm.fileExists(atPath: bundledExact) {
-            return bundledExact
-        }
-
-        if let resourcesURL = Bundle.main.resourceURL,
-           let urls = try? fm.contentsOfDirectory(
-                at: resourcesURL,
-                includingPropertiesForKeys: nil,
-                options: [.skipsHiddenFiles]
-           ) {
-            if let anyGGUF = urls.first(where: { $0.pathExtension.lowercased() == "gguf" }) {
-                return anyGGUF.path
-            }
+        if let urls = try? fileManager.contentsOfDirectory(
+            at: resourceURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        ),
+        let anyGGUF = urls.first(where: { $0.pathExtension.lowercased() == "gguf" }) {
+            return anyGGUF.path
         }
 
         return nil
+    }
+
+    static func makeLLMEngine(
+        modelPath: String?,
+        isSimulator: Bool = {
+            #if targetEnvironment(simulator)
+            true
+            #else
+            false
+            #endif
+        }(),
+        isRunningTests: Bool = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil,
+        engineFactory: (String) throws -> LLMEngine = { try LlamaLLMEngine(modelPath: $0) }
+    ) -> (LLMEngine, String?) {
+        guard let modelPath else {
+            return (StubLLMEngine(), L10n.AppDependencies.startupWarningMissingModel)
+        }
+
+        if isSimulator || isRunningTests {
+            return (StubLLMEngine(), nil)
+        }
+
+        do {
+            return (try engineFactory(modelPath), nil)
+        } catch {
+            return (StubLLMEngine(), L10n.AppDependencies.startupWarningModelLoadFailed)
+        }
     }
 
     @MainActor
@@ -171,6 +193,7 @@ final class AppDependencies {
             loadRecentMessagesUseCase: loadRecentMessagesUseCase,
             searchConversationsUseCase: searchConversationsUseCase,
             deleteConversationUseCase: deleteConversationUseCase,
+            renameConversationUseCase: renameConversationUseCase,
             generationCoordinator: messageGenerationCoordinator
         )
     }

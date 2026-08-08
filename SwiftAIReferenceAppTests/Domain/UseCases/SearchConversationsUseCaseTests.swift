@@ -9,8 +9,8 @@ final class SearchConversationsUseCaseTests: XCTestCase {
             Conversation(title: "Two")
         ]
 
-        XCTAssertEqual(sut.execute(conversations: conversations, query: ""), conversations)
-        XCTAssertEqual(sut.execute(conversations: conversations, query: "   "), conversations)
+        XCTAssertEqual(sut.search(conversations: conversations, query: ""), conversations)
+        XCTAssertEqual(sut.search(conversations: conversations, query: "   "), conversations)
     }
 
     func testMatchesTitlesAndMessagesIgnoringCaseAndDiacritics() {
@@ -21,12 +21,12 @@ final class SearchConversationsUseCaseTests: XCTestCase {
         let conversations = [titleMatch, messageMatch, nonMatch]
 
         XCTAssertEqual(
-            sut.execute(conversations: conversations, query: "cafe"),
+            sut.search(conversations: conversations, query: "cafe"),
             [titleMatch]
         )
 
         XCTAssertEqual(
-            sut.execute(conversations: conversations, query: "PRILIS ZLUTOUCKY KUN"),
+            sut.search(conversations: conversations, query: "PRILIS ZLUTOUCKY KUN"),
             [messageMatch]
         )
     }

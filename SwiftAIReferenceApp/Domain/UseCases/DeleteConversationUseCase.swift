@@ -1,9 +1,8 @@
 import Foundation
 
 public protocol DeleteConversationUseCase {
-    /// Permanently delete a conversation and all its associated messages.
-    /// - Parameter id: the ID of the conversation to delete
-    func execute(id: UUID) async throws
+    /// Deletes a conversation and its associated messages.
+    func deleteConversation(id: UUID) async throws
 }
 
 public final class DefaultDeleteConversationUseCase: DeleteConversationUseCase {
@@ -15,9 +14,9 @@ public final class DefaultDeleteConversationUseCase: DeleteConversationUseCase {
         self.messageRepository = messageRepository
     }
 
-    public func execute(id: UUID) async throws {
+    public func deleteConversation(id: UUID) async throws {
         do {
-            // Delete messages first; if this fails the conversation entry is still intact (safer rollback)
+            // Delete messages first so a failure leaves the conversation record intact.
             try await messageRepository.deleteMessages(for: id)
             try await conversationRepository.deleteConversation(id: id)
         } catch {

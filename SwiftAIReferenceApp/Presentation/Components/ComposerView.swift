@@ -3,6 +3,7 @@ import SwiftUI
 struct ComposerView: View {
     @Binding var text: String
     let isSending: Bool
+    let accentColor: PromptAccentColor
     let onPrimaryAction: () -> Void
 
     var body: some View {
@@ -25,7 +26,10 @@ struct ComposerView: View {
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(canUsePrimaryAction ? Color(red: 0.89, green: 0.43, blue: 0.19) : Color(.systemGray3))
+                            .fill(ComposerActionButtonStyle.backgroundColor(
+                                isEnabled: canUsePrimaryAction,
+                                accentColor: accentColor
+                            ))
                     )
             }
             .disabled(!canUsePrimaryAction)
@@ -43,5 +47,11 @@ struct ComposerView: View {
         }
 
         return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
+enum ComposerActionButtonStyle {
+    static func backgroundColor(isEnabled: Bool, accentColor: PromptAccentColor) -> Color {
+        isEnabled ? accentColor.color : Color(.systemGray3)
     }
 }

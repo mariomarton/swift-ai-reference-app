@@ -11,6 +11,7 @@ final class StubLLMEngineTests: XCTestCase {
             collected += token
         }
         XCTAssertTrue(collected.contains("Jak se máš?"), "Stub should echo user message in response.")
+        XCTAssertTrue(collected.hasPrefix(L10n.StubLLMEngine.responsePrefix), "Stub should use localized copy.")
     }
 
     func testGeneratesDefaultStubbedResponseWhenNoUserMessage() async throws {
@@ -20,7 +21,7 @@ final class StubLLMEngineTests: XCTestCase {
         for try await token in engine.generateResponse(for: [sysMsg], model: nil) {
             collected += token
         }
-        XCTAssertTrue(collected.contains("ukážková odpoveď"), "Stub should return generic stubbed response.")
+        XCTAssertEqual(collected, L10n.StubLLMEngine.fallbackResponse)
     }
 
     func testStubEmitsExactlyOneTokenThenFinishes() async throws {

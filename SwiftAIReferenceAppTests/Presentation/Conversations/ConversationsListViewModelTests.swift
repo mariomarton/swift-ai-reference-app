@@ -4,10 +4,10 @@ import XCTest
 
 private final class LoadConversationsUseCaseMock: LoadConversationsUseCase {
     var result: Result<[Conversation], Error> = .success([])
-    private(set) var executeCallCount = 0
+    private(set) var loadConversationsCallCount = 0
 
-    func execute() async throws -> [Conversation] {
-        executeCallCount += 1
+    func loadConversations() async throws -> [Conversation] {
+        loadConversationsCallCount += 1
         return try result.get()
     }
 }
@@ -26,9 +26,19 @@ private final class DeleteConversationUseCaseMock: DeleteConversationUseCase {
     var shouldThrow = false
     private(set) var deletedIDs: [UUID] = []
 
-    func execute(id: UUID) async throws {
+    func deleteConversation(id: UUID) async throws {
         if shouldThrow { throw NSError(domain: "mock", code: 3) }
         deletedIDs.append(id)
+    }
+}
+
+private final class RenameConversationUseCaseMock: RenameConversationUseCase {
+    var result: Result<Conversation, Error> = .success(Conversation(title: "Updated"))
+    private(set) var calls: [(UUID, String)] = []
+
+    func renameConversation(id: UUID, title: String) async throws -> Conversation {
+        calls.append((id, title))
+        return try result.get()
     }
 }
 
@@ -83,6 +93,7 @@ private func makeViewModel(
     loadRecentMessages: LoadRecentMessagesUseCaseMock = .init(),
     search: SearchConversationsUseCase? = nil,
     delete: DeleteConversationUseCaseMock = .init(),
+    rename: RenameConversationUseCaseMock = .init(),
     coordinator: MessageGenerationCoordinatorMock? = nil
 ) -> ConversationsListViewModel {
     ConversationsListViewModel(
@@ -90,6 +101,7 @@ private func makeViewModel(
         loadRecentMessagesUseCase: loadRecentMessages,
         searchConversationsUseCase: search ?? DefaultSearchConversationsUseCase(),
         deleteConversationUseCase: delete,
+        renameConversationUseCase: rename,
         generationCoordinator: coordinator
     )
 }
@@ -105,7 +117,7 @@ final class ConversationsListViewModelTests: XCTestCase {
 
         await sut.loadConversations()
 
-        XCTAssertEqual(loadMock.executeCallCount, 1)
+        XCTAssertEqual(loadMock.loadConversationsCallCount, 1)
         XCTAssertEqual(sut.conversations, expected)
         XCTAssertNil(sut.alert)
         XCTAssertFalse(sut.isLoading)
@@ -137,7 +149,7 @@ final class ConversationsListViewModelTests: XCTestCase {
 
         await sut.loadConversations()
 
-        XCTAssertEqual(loadMock.executeCallCount, 1)
+        XCTAssertEqual(loadMock.loadConversationsCallCount, 1)
         XCTAssertTrue(sut.conversations.isEmpty)
         XCTAssertNotNil(sut.alert)
         XCTAssertEqual(sut.alert?.isRetryable, true)
@@ -162,7 +174,7 @@ final class ConversationsListViewModelTests: XCTestCase {
 
         await sut.loadConversations()
 
-        XCTAssertEqual(loadMock.executeCallCount, 2)
+        XCTAssertEqual(loadMock.loadConversationsCallCount, 2)
         XCTAssertEqual(sut.conversations.first?.title, "Vygenerovaný názov")
     }
 
@@ -186,8 +198,6 @@ final class ConversationsListViewModelTests: XCTestCase {
         XCTAssertNotEqual(first, second)
         XCTAssertEqual(sut.selectedConversationID, second)
     }
-
-    // MARK: - Delete
 
     func testDeleteConversationRemovesItFromListOptimistically() async {
         let loadMock = LoadConversationsUseCaseMock()
@@ -232,10 +242,72 @@ final class ConversationsListViewModelTests: XCTestCase {
 
         await sut.deleteConversation(id: conv.id)
 
-        // List should be restored
         XCTAssertEqual(sut.conversations, [conv])
         XCTAssertNotNil(sut.alert)
         XCTAssertEqual(sut.alert?.isRetryable, false)
+    }
+
+    func testBeginRenamingConversationSeedsDraftAndContext() async {
+        let conversation = Conversation(title: "Original")
+        let sut = makeViewModel()
+
+        sut.beginRenaming(conversation: conversation)
+
+        XCTAssertEqual(sut.renameDraftTitle, "Original")
+        XCTAssertEqual(sut.renameConversationContext?.conversationID, conversation.id)
+    }
+
+    func testCommitConversationRenameUpdatesListAndClosesSheet() async {
+        let loadMock = LoadConversationsUseCaseMock()
+        let renameMock = RenameConversationUseCaseMock()
+        let conversation = Conversation(title: "Original")
+        loadMock.result = .success([conversation])
+        let updatedConversation = Conversation(
+            id: conversation.id,
+            title: "Renamed",
+            titleOrigin: .manual,
+            messages: conversation.messages,
+            selectedModel: conversation.selectedModel,
+            createdAt: conversation.createdAt,
+            updatedAt: conversation.updatedAt
+        )
+        renameMock.result = .success(updatedConversation)
+
+        let sut = makeViewModel(load: loadMock, rename: renameMock)
+        await sut.loadConversations()
+        sut.beginRenaming(conversation: conversation)
+        sut.renameDraftTitle = "Renamed"
+
+        await sut.commitConversationRename()
+
+        XCTAssertEqual(renameMock.calls.count, 1)
+        XCTAssertEqual(renameMock.calls.first?.0, conversation.id)
+        XCTAssertEqual(renameMock.calls.first?.1, "Renamed")
+        XCTAssertEqual(sut.conversations.first?.title, "Renamed")
+        XCTAssertNil(sut.renameConversationContext)
+        XCTAssertEqual(sut.renameDraftTitle, "")
+        XCTAssertNil(sut.alert)
+    }
+
+    func testCommitConversationRenameFailureKeepsSheetOpenAndShowsAlert() async {
+        let loadMock = LoadConversationsUseCaseMock()
+        let renameMock = RenameConversationUseCaseMock()
+        renameMock.result = .failure(NSError(domain: "mock", code: 9))
+        let conversation = Conversation(title: "Original")
+        loadMock.result = .success([conversation])
+
+        let sut = makeViewModel(load: loadMock, rename: renameMock)
+        await sut.loadConversations()
+        sut.beginRenaming(conversation: conversation)
+        sut.renameDraftTitle = "Renamed"
+
+        await sut.commitConversationRename()
+
+        XCTAssertNotNil(sut.renameConversationContext)
+        XCTAssertEqual(sut.renameDraftTitle, "Renamed")
+        XCTAssertNotNil(sut.alert)
+        XCTAssertEqual(sut.alert?.isRetryable, false)
+        XCTAssertEqual(sut.conversations.first?.title, "Original")
     }
 
     func testGeneratingConversationIDsReflectCoordinatorInProgressStates() async {

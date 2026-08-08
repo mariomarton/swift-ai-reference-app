@@ -16,6 +16,20 @@ final class DomainErrorTests: XCTestCase {
         XCTAssertEqual(DomainError.invalidModel.errorDescription, L10n.Errors.invalidModel)
     }
 
+    func testInvalidConversationTitleErrorDescription() {
+        XCTAssertEqual(
+            DomainError.invalidConversationTitle.errorDescription,
+            L10n.Errors.invalidConversationTitle
+        )
+    }
+
+    func testConversationNotFoundErrorDescription() {
+        XCTAssertEqual(
+            DomainError.conversationNotFound.errorDescription,
+            L10n.Errors.conversationNotFound
+        )
+    }
+
     func testUnknownErrorDescription() {
         XCTAssertEqual(DomainError.unknown.errorDescription, L10n.Errors.unknown)
     }

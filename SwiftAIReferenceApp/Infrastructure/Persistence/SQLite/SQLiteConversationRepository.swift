@@ -1,5 +1,8 @@
 import Foundation
 
+/// Async repository adapter over `SQLiteConversationMessageStore`.
+///
+/// This stays thin so the domain layer never depends on SQLite-specific details.
 public final class SQLiteConversationRepository: ConversationRepository, @unchecked Sendable {
     private let store: SQLiteConversationMessageStore
 

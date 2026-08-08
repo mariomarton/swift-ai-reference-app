@@ -5,19 +5,29 @@ protocol ConversationGenerationStateObserving: AnyObject {
     var statesPublisher: AnyPublisher<[UUID: MessageGenerationCoordinator.ConversationState], Never> { get }
 }
 
+/// Owns sidebar conversation state, search hydration, and generation badges.
 @MainActor
 final class ConversationsListViewModel: ObservableObject, SidebarConversationsManaging {
+    struct ConversationRenameContext: Identifiable, Equatable {
+        let conversationID: UUID
+
+        var id: UUID { conversationID }
+    }
+
     @Published private(set) var conversations: [Conversation] = []
     @Published private(set) var generatingConversationIDs: Set<UUID> = []
     @Published var searchText: String = ""
     @Published var selectedConversationID: UUID?
     @Published private(set) var isLoading = false
     @Published var alert: PresentationAlert?
+    @Published var renameConversationContext: ConversationRenameContext?
+    @Published var renameDraftTitle: String = ""
     
     private let loadConversationsUseCase: LoadConversationsUseCase
     private let loadRecentMessagesUseCase: LoadRecentMessagesUseCase
     private let searchConversationsUseCase: SearchConversationsUseCase
     private let deleteConversationUseCase: DeleteConversationUseCase
+    private let renameConversationUseCase: RenameConversationUseCase
     private var generationObservationTask: Task<Void, Never>?
     private var searchableMessagesByConversationID: [UUID: [Message]] = [:]
     
@@ -26,14 +36,17 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         loadRecentMessagesUseCase: LoadRecentMessagesUseCase,
         searchConversationsUseCase: SearchConversationsUseCase,
         deleteConversationUseCase: DeleteConversationUseCase,
+        renameConversationUseCase: RenameConversationUseCase,
         generationCoordinator: (any ConversationGenerationStateObserving)? = nil
     ) {
         self.loadConversationsUseCase = loadConversationsUseCase
         self.loadRecentMessagesUseCase = loadRecentMessagesUseCase
         self.searchConversationsUseCase = searchConversationsUseCase
         self.deleteConversationUseCase = deleteConversationUseCase
+        self.renameConversationUseCase = renameConversationUseCase
 
         if let generationCoordinator {
+            // Keep the sidebar badge state in sync with active generations without polling.
             generationObservationTask = Task { [weak self] in
                 for await states in generationCoordinator.statesPublisher.values {
                     let generatingConversationIDs = Set(states.compactMap { entry in
@@ -55,6 +68,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
     }
 
     var displayedConversations: [Conversation] {
+        // Search uses cached recent messages so message text can match without reloading on every keystroke.
         let searchableConversations = conversations.map { conversation in
             var enrichedConversation = conversation
             if let messages = searchableMessagesByConversationID[conversation.id] {
@@ -64,7 +78,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         }
 
         let matchedIDs = Set(
-            searchConversationsUseCase.execute(conversations: searchableConversations, query: searchText)
+            searchConversationsUseCase.search(conversations: searchableConversations, query: searchText)
                 .map(\.id)
         )
 
@@ -82,7 +96,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         defer { isLoading = false }
         
         do {
-            let loadedConversations = try await loadConversationsUseCase.execute()
+            let loadedConversations = try await loadConversationsUseCase.loadConversations()
             searchableMessagesByConversationID = await loadSearchableMessages(for: loadedConversations)
             conversations = loadedConversations
         } catch {
@@ -107,7 +121,7 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
     }
     
     func deleteConversation(id: UUID) async {
-        // Optimistic removal: update UI immediately, roll back if the operation fails
+        // Optimistic removal keeps the list responsive; the snapshots let us roll back on failure.
         let snapshot = conversations
         let messageSnapshot = searchableMessagesByConversationID
         conversations.removeAll { $0.id == id }
@@ -117,12 +131,50 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         }
         
         do {
-            try await deleteConversationUseCase.execute(id: id)
+            try await deleteConversationUseCase.deleteConversation(id: id)
         } catch {
             conversations = snapshot
             searchableMessagesByConversationID = messageSnapshot
             alert = PresentationAlert(
                 title: L10n.ConversationsList.errorDeleteTitle,
+                message: error.localizedDescription
+            )
+        }
+    }
+
+    func beginRenaming(conversation: Conversation) {
+        alert = nil
+        renameDraftTitle = conversation.title ?? ""
+        renameConversationContext = ConversationRenameContext(conversationID: conversation.id)
+    }
+
+    func cancelConversationRename() {
+        renameConversationContext = nil
+        renameDraftTitle = ""
+    }
+
+    var canSubmitConversationRename: Bool {
+        !renameDraftTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    func commitConversationRename() async {
+        guard let context = renameConversationContext else { return }
+
+        alert = nil
+        do {
+            let updatedConversation = try await renameConversationUseCase.renameConversation(
+                id: context.conversationID,
+                title: renameDraftTitle
+            )
+
+            if let index = conversations.firstIndex(where: { $0.id == updatedConversation.id }) {
+                conversations[index] = updatedConversation
+            }
+
+            cancelConversationRename()
+        } catch {
+            alert = PresentationAlert(
+                title: L10n.ConversationsList.errorRenameTitle,
                 message: error.localizedDescription
             )
         }

@@ -384,7 +384,7 @@ public final class LlamaLLMEngine: LLMEngine {
             return fromTemplate
         }
 
-        let candidates = [model?.id, model?.name, model?.path]
+        let candidates = [model?.id, model?.name]
             .compactMap { $0?.lowercased() }
 
         if candidates.contains(where: { $0.contains("llama-3") || $0.contains("llama3") || $0.contains("meta-llama") }) {
