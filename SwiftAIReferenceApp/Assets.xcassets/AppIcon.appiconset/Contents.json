@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "icon_dark_false.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -12,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "icon_dark_true.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
