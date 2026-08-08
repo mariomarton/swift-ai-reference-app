@@ -1,6 +1,6 @@
 <table>
   <tr>
-    <td valign="middle"><img src="docs/icon/icon_dark_true_rounded.png" alt="Swift AI Reference App icon" width="47" style="margin-top:-12px;"></td>
+    <td valign="middle"><img src="docs/icon/icon_dark_true_rounded_readme.png" alt="Swift AI Reference App icon" width="52" style="margin-top:-15px;"></td>
     <td valign="middle"><h1>Swift AI Reference App</h1></td>
   </tr>
 </table>
