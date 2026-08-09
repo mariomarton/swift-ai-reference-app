@@ -83,6 +83,8 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         self.updateInterval = updateInterval
     }
 
+    nonisolated deinit {}
+
     func state(for conversationID: UUID) -> ConversationState? {
         states[conversationID]
     }

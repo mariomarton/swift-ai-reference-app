@@ -5,21 +5,21 @@ public protocol SearchConversationsUseCase {
     func search(conversations: [Conversation], query: String) -> [Conversation]
 }
 
-public final class DefaultSearchConversationsUseCase: SearchConversationsUseCase {
+public struct DefaultSearchConversationsUseCase: SearchConversationsUseCase {
     public init() {}
 
     public func search(conversations: [Conversation], query: String) -> [Conversation] {
-        let normalizedQuery = Self.normalize(query)
+        let normalizedQuery = normalize(query)
         guard !normalizedQuery.isEmpty else {
             return conversations
         }
 
         return conversations.filter { conversation in
-            Self.matches(conversation, normalizedQuery: normalizedQuery)
+            matches(conversation, normalizedQuery: normalizedQuery)
         }
     }
 
-    private static func matches(_ conversation: Conversation, normalizedQuery: String) -> Bool {
+    private func matches(_ conversation: Conversation, normalizedQuery: String) -> Bool {
         let searchableText = [
             conversation.title ?? "",
             conversation.messages.map(\.text).joined(separator: "\n")
@@ -29,7 +29,7 @@ public final class DefaultSearchConversationsUseCase: SearchConversationsUseCase
         return normalize(searchableText).contains(normalizedQuery)
     }
 
-    private static func normalize(_ value: String) -> String {
+    private func normalize(_ value: String) -> String {
         value
             .folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive], locale: .current)
             .trimmingCharacters(in: .whitespacesAndNewlines)

@@ -96,6 +96,8 @@ final class AppDependencies {
         switch rawValue {
         case "file", "filebacked":
             return .fileBacked
+        case "sqlite":
+            return .sqlite
         default:
             return .sqlite
         }

@@ -4,6 +4,8 @@ import Foundation
 public final class StubLLMEngine: LLMEngine {
     public init() {}
 
+    nonisolated deinit {}
+
     public func generateResponse(for messages: [Message], model: LLMModel?) -> AsyncThrowingStream<String, Error> {
         let userMessage = messages.last { $0.role == .user }
         let text = userMessage.map { "\(L10n.StubLLMEngine.responsePrefix) \($0.text)" } ?? L10n.StubLLMEngine.fallbackResponse
