@@ -83,7 +83,16 @@ final class MessageGenerationCoordinator: ObservableObject, MessageGenerationCoo
         self.updateInterval = updateInterval
     }
 
-    nonisolated deinit {}
+    nonisolated deinit {
+        let tasksToCancel = tasks.values.map(\.task)
+        let activeConversationIDs = activeBackgroundTaskConversationIDs
+        let taskManager = backgroundTaskManager
+
+        tasksToCancel.forEach { $0.cancel() }
+        Task { @MainActor in
+            activeConversationIDs.forEach { taskManager.endTask(for: $0) }
+        }
+    }
 
     func state(for conversationID: UUID) -> ConversationState? {
         states[conversationID]
