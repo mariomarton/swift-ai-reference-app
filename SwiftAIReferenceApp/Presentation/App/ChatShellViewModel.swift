@@ -17,6 +17,8 @@ final class ChatShellViewModel: ObservableObject {
 
     private var didBootstrap = false
 
+    nonisolated deinit {}
+
     func bootstrapIfNeeded(
         using conversationsManager: any SidebarConversationsManaging,
         isCompactLayout: Bool

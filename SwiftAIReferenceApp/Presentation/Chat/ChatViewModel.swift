@@ -47,6 +47,10 @@ final class ChatViewModel: ObservableObject {
         applyGenerationState(generationCoordinator.state(for: conversationID))
     }
 
+    nonisolated deinit {
+        cancellables.removeAll()
+    }
+
     func loadMessages(limit: Int? = nil) async {
         guard !isLoading else { return }
         isLoading = true

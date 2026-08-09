@@ -58,6 +58,10 @@ final class ConversationsListViewModel: ObservableObject, SidebarConversationsMa
         }
     }
 
+    nonisolated deinit {
+        generationObservationTask?.cancel()
+    }
+
     func stopGenerationObservation() {
         generationObservationTask?.cancel()
         generationObservationTask = nil

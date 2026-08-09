@@ -20,6 +20,8 @@ final class SettingsViewModel: ObservableObject {
         accentColor = settings.accentColor
     }
 
+    nonisolated deinit {}
+
     func save() {
         repository.saveSettings(currentSettings)
     }

@@ -143,7 +143,7 @@ public final class LlamaLLMEngine: LLMEngine {
         self.maxGeneratedTokens = 1024
     }
 
-    deinit {
+    nonisolated deinit {
         llama_free(llamaContext)
         llama_model_free(llamaModel)
         llama_backend_free()

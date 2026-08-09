@@ -1,19 +1,21 @@
-name: Swift/Xcode CI with project files check 
+name: App Build and Unit Tests
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Cache Derived Data
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/Library/Developer/Xcode/DerivedData
           key: ${{ runner.os }}-xcode-${{ hashFiles('**/project.pbxproj') }}
@@ -22,19 +24,15 @@ jobs:
                   
       - name: Build and run tests
         run: |
-          # pick first available iOS Simulator
-          DEVICE_ID=$(xcrun simctl list devices available | \
-            grep -E "iPhone 18 Pro|iPhone 18|iPhone 17|iPhone 17 Pro|iPhone 16|iPhone 16 Pro|iPhone Air|iPhone 15|iPhone 14" | \
-            grep -v "unavailable" | grep -v "Shut.*" | \
-            head -n 1 | \
-            awk -F '[()]' '{print $2}')
+          # Pick the first available iPhone simulator, regardless of model number.
+          DEVICE_ID=$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')
       
           if [ -z "$DEVICE_ID" ]; then
-            # fallback to generic device by name
-            DEST="platform=iOS Simulator,name=iPhone 16"
-          else
-            DEST="platform=iOS Simulator,id=$DEVICE_ID"
+            echo "No available iPhone simulator found."
+            exit 1
           fi
+      
+          DEST="platform=iOS Simulator,id=$DEVICE_ID"
       
           echo "Using destination: $DEST"
       
