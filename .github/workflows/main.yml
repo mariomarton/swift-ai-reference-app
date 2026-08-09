@@ -1,4 +1,4 @@
-name: Swift/Xcode CI with project files check 
+name: App Build and Unit Tests
 
 on:
   workflow_dispatch:
