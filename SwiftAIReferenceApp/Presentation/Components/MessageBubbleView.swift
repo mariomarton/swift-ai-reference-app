@@ -101,8 +101,7 @@ struct MessageBubbleView: View {
             attributedText: markdownRenderer.renderUIKitAttributedText(
                 markdown: message.text,
                 textColor: UIColor(MessageBubbleStyle.foregroundColor(for: .assistant))
-            ),
-            textColor: UIColor(MessageBubbleStyle.foregroundColor(for: .assistant))
+            )
         )
         #else
         Text(assistantMarkdownText)

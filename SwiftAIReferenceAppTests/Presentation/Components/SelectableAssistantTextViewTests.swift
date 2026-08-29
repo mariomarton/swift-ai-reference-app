@@ -37,7 +37,6 @@ final class SelectableAssistantTextViewTests: XCTestCase {
 
         SelectableAssistantTextView.applyContent(
             attributedText: attributedText,
-            textColor: .label,
             to: view
         )
 
@@ -52,7 +51,6 @@ final class SelectableAssistantTextViewTests: XCTestCase {
 
         SelectableAssistantTextView.applyContent(
             attributedText: updatedText,
-            textColor: .label,
             to: view
         )
 

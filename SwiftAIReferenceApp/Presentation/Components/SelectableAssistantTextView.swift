@@ -4,7 +4,6 @@ import UIKit
 
 struct SelectableAssistantTextView: UIViewRepresentable {
     let attributedText: NSAttributedString
-    let textColor: UIColor
 
     static func makeConfiguredTextView() -> UITextView {
         let view = UITextView()
@@ -29,18 +28,14 @@ struct SelectableAssistantTextView: UIViewRepresentable {
         Self.makeConfiguredTextView()
     }
 
-    static func applyContent(attributedText: NSAttributedString, textColor: UIColor, to view: UITextView) {
-        if !view.attributedText.isEqual(to: attributedText) {
+    static func applyContent(attributedText: NSAttributedString, to view: UITextView) {
+        if view.attributedText.string != attributedText.string {
             view.attributedText = attributedText
-        }
-
-        if view.textColor != textColor {
-            view.textColor = textColor
         }
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
-        Self.applyContent(attributedText: attributedText, textColor: textColor, to: uiView)
+        Self.applyContent(attributedText: attributedText, to: uiView)
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextView, context: Context) -> CGSize? {
