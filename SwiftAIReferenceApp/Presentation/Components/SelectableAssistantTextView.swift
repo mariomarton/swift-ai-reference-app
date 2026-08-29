@@ -3,7 +3,7 @@ import SwiftUI
 import UIKit
 
 struct SelectableAssistantTextView: UIViewRepresentable {
-    let text: String
+    let attributedText: NSAttributedString
     let textColor: UIColor
 
     static func makeConfiguredTextView() -> UITextView {
@@ -29,9 +29,9 @@ struct SelectableAssistantTextView: UIViewRepresentable {
         Self.makeConfiguredTextView()
     }
 
-    static func applyContent(text: String, textColor: UIColor, to view: UITextView) {
-        if view.text != text {
-            view.text = text
+    static func applyContent(attributedText: NSAttributedString, textColor: UIColor, to view: UITextView) {
+        if !view.attributedText.isEqual(to: attributedText) {
+            view.attributedText = attributedText
         }
 
         if view.textColor != textColor {
@@ -40,7 +40,7 @@ struct SelectableAssistantTextView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {
-        Self.applyContent(text: text, textColor: textColor, to: uiView)
+        Self.applyContent(attributedText: attributedText, textColor: textColor, to: uiView)
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextView, context: Context) -> CGSize? {
