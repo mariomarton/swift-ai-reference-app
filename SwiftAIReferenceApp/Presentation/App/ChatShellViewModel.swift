@@ -52,6 +52,13 @@ final class ChatShellViewModel: ObservableObject {
         columnVisibility = .all
     }
 
+    func shouldShowConversationsListSettingsButton(isCompactLayout: Bool) -> Bool {
+        guard !isCompactLayout else {
+            return true
+        }
+        return columnVisibility != .all
+    }
+
     func presentSettings() {
         isSettingsPresented = true
     }

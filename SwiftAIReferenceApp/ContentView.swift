@@ -30,6 +30,9 @@ struct ContentView: View {
                         ConversationsListView(
                             viewModel: conversationsViewModel,
                             accentColor: settingsViewModel.accentColor,
+                            showsSettingsButton: shellViewModel.shouldShowConversationsListSettingsButton(
+                                isCompactLayout: isCompactLayout
+                            ),
                             onSettingsTapped: {
                                 shellViewModel.presentSettings()
                             }
@@ -58,6 +61,9 @@ struct ContentView: View {
                             ConversationsListView(
                                 viewModel: conversationsViewModel,
                                 accentColor: settingsViewModel.accentColor,
+                                showsSettingsButton: shellViewModel.shouldShowConversationsListSettingsButton(
+                                    isCompactLayout: isCompactLayout
+                                ),
                                 onSettingsTapped: {
                                     shellViewModel.presentSettings()
                                 }
