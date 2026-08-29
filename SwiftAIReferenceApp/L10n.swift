@@ -92,6 +92,15 @@ enum L10n {
         static var resetAction: String { l("settings.reset.action") }
     }
 
+    enum KeyboardShortcuts {
+        static var sectionTitle: String { l("keyboardShortcuts.section.title") }
+        static var sectionFooter: String { l("keyboardShortcuts.section.footer") }
+        static var sendMessageAction: String { l("keyboardShortcuts.action.sendMessage") }
+        static var newConversationAction: String { l("keyboardShortcuts.action.newConversation") }
+        static var toggleSidebarAction: String { l("keyboardShortcuts.action.toggleSidebar") }
+        static var openSettingsAction: String { l("keyboardShortcuts.action.openSettings") }
+    }
+
     enum MessageActions {
         static var copy: String { l("message.action.copy") }
     }

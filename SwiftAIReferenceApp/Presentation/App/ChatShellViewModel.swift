@@ -17,6 +17,10 @@ final class ChatShellViewModel: ObservableObject {
 
     private var didBootstrap = false
 
+    var isSidebarVisible: Bool {
+        columnVisibility == .all
+    }
+
     nonisolated deinit {}
 
     func bootstrapIfNeeded(
@@ -46,6 +50,10 @@ final class ChatShellViewModel: ObservableObject {
 
     func showSidebar() {
         columnVisibility = .all
+    }
+
+    func toggleSidebar() {
+        columnVisibility = isSidebarVisible ? .detailOnly : .all
     }
 
     func showSearchInSidebar() {

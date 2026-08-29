@@ -64,6 +64,12 @@
 "settings.customInstructions.title" = "Další instrukce";
 "settings.customInstructions.footer" = "Tento text se připojí k vestavěnému systémovému promptu.";
 "settings.reset.action" = "Obnovit výchozí";
+"keyboardShortcuts.section.title" = "Klávesové zkratky";
+"keyboardShortcuts.section.footer" = "Při použití hardwarové klávesnice (iPad nebo Mac) tyto zkratky zrychlí běžné akce.";
+"keyboardShortcuts.action.sendMessage" = "Odeslat zprávu";
+"keyboardShortcuts.action.newConversation" = "Nová konverzace";
+"keyboardShortcuts.action.toggleSidebar" = "Přepnout postranní panel";
+"keyboardShortcuts.action.openSettings" = "Otevřít nastavení";
 "prompt.defaultSystemPrompt" = "Jsi užitečný asistent. Odpovídej jasně a stručně. Nepoužívej ve svých odpovědích formátování Markdown. Vypisuj pouze prostý text s mezerami a odstavci. Číslování a odrážky v prostém textu jsou povolené a podle potřeby doporučené.";
 "prompt.tone.concise" = "Odpovídej stručně a přímo.";
 "prompt.tone.friendly" = "Použij přátelský, vstřícný tón.";

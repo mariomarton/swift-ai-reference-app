@@ -64,6 +64,12 @@
 "settings.customInstructions.title" = "Additional instructions";
 "settings.customInstructions.footer" = "This text is appended to the built-in system prompt.";
 "settings.reset.action" = "Restore defaults";
+"keyboardShortcuts.section.title" = "Keyboard shortcuts";
+"keyboardShortcuts.section.footer" = "When using a hardware keyboard (iPad or Mac), these shortcuts speed up common actions.";
+"keyboardShortcuts.action.sendMessage" = "Send message";
+"keyboardShortcuts.action.newConversation" = "New conversation";
+"keyboardShortcuts.action.toggleSidebar" = "Toggle sidebar";
+"keyboardShortcuts.action.openSettings" = "Open settings";
 "prompt.defaultSystemPrompt" = "You are a helpful assistant. Answer clearly and concisely. Do not use Markdown formatting in your answers. Output only raw text with whitespace and newlines. Plain-text numbering and bullet points are allowed and recommended when helpful.";
 "prompt.tone.concise" = "Answer briefly and directly.";
 "prompt.tone.friendly" = "Use a warm, friendly tone.";

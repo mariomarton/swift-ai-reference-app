@@ -12,6 +12,10 @@ struct ConversationsListView: View {
             } label: {
                 NewConversationRowView(accentColor: accentColor)
             }
+            .keyboardShortcut(
+                AppKeyboardShortcuts.newConversation.keyEquivalent,
+                modifiers: AppKeyboardShortcuts.newConversation.modifiers
+            )
             .buttonStyle(.plain)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .listRowSeparator(.hidden)
@@ -131,6 +135,10 @@ struct ConversationsListToolbarActionsView: View {
             Image(systemName: "gearshape")
                 .font(.body.weight(.medium))
         }
+        .keyboardShortcut(
+            AppKeyboardShortcuts.openSettings.keyEquivalent,
+            modifiers: AppKeyboardShortcuts.openSettings.modifiers
+        )
         .foregroundStyle(.tertiary)
         .accessibilityLabel(L10n.Settings.navigationTitle)
         .accessibilityIdentifier("openSettingsButton")

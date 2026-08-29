@@ -11,6 +11,11 @@ struct ComposerView: View {
             TextField(L10n.Composer.placeholder, text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1...5)
+                .submitLabel(.send)
+                .onSubmit {
+                    guard canUsePrimaryAction else { return }
+                    onPrimaryAction()
+                }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(
