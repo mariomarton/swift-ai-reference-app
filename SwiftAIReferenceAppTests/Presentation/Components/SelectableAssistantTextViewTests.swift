@@ -30,12 +30,13 @@ final class SelectableAssistantTextViewTests: XCTestCase {
 
     func testApplyContentPreservesSelectionWhenTextIsUnchanged() {
         let view = SelectableAssistantTextView.makeConfiguredTextView()
-        view.text = "Bratislava je hlavne mesto Slovenska."
+        let attributedText = NSAttributedString(string: "Bratislava je hlavne mesto Slovenska.")
+        view.attributedText = attributedText
         view.textColor = .label
         view.selectedRange = NSRange(location: 5, length: 10)
 
         SelectableAssistantTextView.applyContent(
-            text: "Bratislava je hlavne mesto Slovenska.",
+            attributedText: attributedText,
             textColor: .label,
             to: view
         )
@@ -46,15 +47,16 @@ final class SelectableAssistantTextViewTests: XCTestCase {
 
     func testApplyContentUpdatesTextWhenDifferent() {
         let view = SelectableAssistantTextView.makeConfiguredTextView()
-        view.text = "Stary text"
+        view.attributedText = NSAttributedString(string: "Stary text")
+        let updatedText = NSAttributedString(string: "Novy text")
 
         SelectableAssistantTextView.applyContent(
-            text: "Novy text",
+            attributedText: updatedText,
             textColor: .label,
             to: view
         )
 
-        XCTAssertEqual(view.text, "Novy text")
+        XCTAssertEqual(view.attributedText.string, "Novy text")
     }
 }
 
