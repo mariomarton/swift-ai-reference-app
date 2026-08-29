@@ -80,9 +80,26 @@ flowchart TD
 
 ## Testing
 
-Unit tests cover pretty much everything (domain models and use cases, persistence, prompt settings, presentation logic, and llama.cpp formatting and engine behavior).
+Unit tests ([`SwiftAIReferenceAppTests`](SwiftAIReferenceAppTests)) cover pretty much everything (domain models and use cases, persistence, prompt settings, presentation logic, and llama.cpp formatting and engine behavior).
 
-UI tests cover the launch flow and basic end-to-end flows such as sending a message, conversation title generation, and conversation persistence.
+UI tests ([`SwiftAIReferenceAppUITests`](SwiftAIReferenceAppUITests)) cover the launch flow and basic end-to-end flows such as sending a message, conversation title generation, and conversation persistence.
+
+## CI
+
+GitHub Actions runs the `App Build and Unit Tests` macOS workflow on pull requests, pushes to `main`, and manual dispatch.
+
+It builds the app and runs `xcodebuild test` for `SwiftAIReferenceAppTests`.
+
+## Repository rules
+
+`main` is protected by the GitHub ruleset `ruleset_main`
+
+- Pull requests are required before merging.
+- `App Build and Unit Tests` must pass before merging.
+- Branches must be up to date with `main` before merge.
+- `main` cannot be force-pushed or deleted.
+
+No bypass exemptions are configured.
 
 ## Project structure
 
