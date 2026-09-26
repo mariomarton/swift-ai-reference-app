@@ -34,12 +34,48 @@ struct AssistantMarkdownRenderer: AssistantMarkdownRendering {
         rendered.addAttribute(.foregroundColor, value: textColor, range: fullRange)
 
         let bodyFont = UIFont.preferredFont(forTextStyle: .body)
-        rendered.enumerateAttribute(.font, in: fullRange) { value, range, _ in
-            guard value == nil else { return }
-            rendered.addAttribute(.font, value: bodyFont, range: range)
+        var location = 0
+
+        for run in swiftUIAttributedText.runs {
+            let runTextLength = String(swiftUIAttributedText[run.range].characters).utf16.count
+            guard runTextLength > 0 else { continue }
+
+            let runRange = NSRange(location: location, length: runTextLength)
+            rendered.addAttribute(.font, value: font(for: run, bodyFont: bodyFont), range: runRange)
+            location += runTextLength
         }
 
         return rendered
+    }
+
+    private func font(for run: AttributedString.Runs.Run, bodyFont: UIFont) -> UIFont {
+        guard let inlineIntent = run.inlinePresentationIntent else {
+            return bodyFont
+        }
+
+        if inlineIntent.contains(.code) {
+            let weight: UIFont.Weight = inlineIntent.contains(.stronglyEmphasized) ? .semibold : .regular
+            return UIFont.monospacedSystemFont(ofSize: bodyFont.pointSize, weight: weight)
+        }
+
+        var additionalTraits = UIFontDescriptor.SymbolicTraits()
+        if inlineIntent.contains(.stronglyEmphasized) {
+            additionalTraits.insert(.traitBold)
+        }
+        if inlineIntent.contains(.emphasized) {
+            additionalTraits.insert(.traitItalic)
+        }
+
+        guard !additionalTraits.isEmpty else {
+            return bodyFont
+        }
+
+        let combinedTraits = bodyFont.fontDescriptor.symbolicTraits.union(additionalTraits)
+        guard let descriptor = bodyFont.fontDescriptor.withSymbolicTraits(combinedTraits) else {
+            return bodyFont
+        }
+
+        return UIFont(descriptor: descriptor, size: bodyFont.pointSize)
     }
     #endif
 }

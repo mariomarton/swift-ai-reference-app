@@ -32,6 +32,22 @@ final class AssistantMarkdownRendererTests: XCTestCase {
         XCTAssertEqual(rendered.string, "Toto je dolezite")
     }
 
+    func testUIKitRenderingMapsStrongMarkdownToBoldFontTrait() {
+        let rendered = renderer.renderUIKitAttributedText(
+            markdown: "Toto je **dolezite**",
+            textColor: .label
+        )
+
+        let text = rendered.string as NSString
+        let boldRange = text.range(of: "dolezite")
+
+        XCTAssertNotEqual(boldRange.location, NSNotFound)
+
+        let font = rendered.attribute(.font, at: boldRange.location, effectiveRange: nil) as? UIFont
+        XCTAssertNotNil(font)
+        XCTAssertTrue(font?.fontDescriptor.symbolicTraits.contains(.traitBold) ?? false)
+    }
+
     func testUIKitRenderingAppliesRequestedTextColor() {
         let rendered = renderer.renderUIKitAttributedText(markdown: "Obsah", textColor: .systemTeal)
         let fullRange = NSRange(location: 0, length: rendered.length)
