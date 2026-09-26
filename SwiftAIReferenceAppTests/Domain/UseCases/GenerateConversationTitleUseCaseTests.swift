@@ -84,6 +84,36 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         XCTAssertEqual(result, "Dph povinnosti pre s.r.o.")
     }
 
+    func testStripsMarkdownFormattingFromGeneratedTitle() async {
+        let generator = MockConversationTitleGenerator()
+        generator.generatedTitle = "**najlepšie** mesto pre [prácu](https://example.com)"
+        let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
+
+        let result = await useCase.generateTitle(
+            existingTitle: nil,
+            titleOrigin: .manual,
+            conversationMessages: [Message(role: .user, text: "Ahoj")],
+            model: nil
+        )
+
+        XCTAssertEqual(result, "Najlepšie mesto pre prácu")
+    }
+
+    func testStripsHeadingMarkdownFromGeneratedTitle() async {
+        let generator = MockConversationTitleGenerator()
+        generator.generatedTitle = "# **Trip ideas**"
+        let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
+
+        let result = await useCase.generateTitle(
+            existingTitle: nil,
+            titleOrigin: .manual,
+            conversationMessages: [Message(role: .user, text: "Ahoj")],
+            model: nil
+        )
+
+        XCTAssertEqual(result, "Trip ideas")
+    }
+
     func testFallsBackToLatestUserSentenceWhenGeneratorThrows() async {
         let generator = MockConversationTitleGenerator()
         generator.shouldThrow = true
@@ -104,6 +134,41 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         XCTAssertEqual(generator.invocationCount, 1)
     }
 
+    func testFallbackTitleAlsoStripsMarkdownFormatting() async {
+        let generator = MockConversationTitleGenerator()
+        generator.shouldThrow = true
+        let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
+
+        let result = await useCase.generateTitle(
+            existingTitle: nil,
+            titleOrigin: .manual,
+            conversationMessages: [
+                Message(role: .user, text: "Potrebujem **rýchly** prehľad možností."),
+                Message(role: .assistant, text: "Odpoveď")
+            ],
+            model: nil
+        )
+
+        XCTAssertEqual(result, "Potrebujem rýchly prehľad možností.")
+    }
+
+    func testFallbackSentenceDetectionIgnoresPeriodsInsideMarkdownLinks() async {
+        let generator = MockConversationTitleGenerator()
+        generator.shouldThrow = true
+        let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
+
+        let result = await useCase.generateTitle(
+            existingTitle: nil,
+            titleOrigin: .manual,
+            conversationMessages: [
+                Message(role: .user, text: "Read [the docs](https://example.com/docs.v2) for details.")
+            ],
+            model: nil
+        )
+
+        XCTAssertEqual(result, "Read the docs for details.")
+    }
+
     func testFallsBackToFirstNonEmptyLineWhenNoSentenceBoundary() async {
         let generator = MockConversationTitleGenerator()
         generator.generatedTitle = "   "
@@ -121,6 +186,23 @@ final class GenerateConversationTitleUseCaseTests: XCTestCase {
         )
 
         XCTAssertEqual(result, "Rozpis odvodov pre SZCO")
+    }
+
+    func testFallbackTitleRemovesListMarkerWhenNoSentenceBoundary() async {
+        let generator = MockConversationTitleGenerator()
+        generator.generatedTitle = "   "
+        let useCase = DefaultGenerateConversationTitleUseCase(generator: generator)
+
+        let result = await useCase.generateTitle(
+            existingTitle: nil,
+            titleOrigin: .manual,
+            conversationMessages: [
+                Message(role: .user, text: "- **Bratislava**\n- Praha")
+            ],
+            model: nil
+        )
+
+        XCTAssertEqual(result, "Bratislava")
     }
 
     func testClipsToFortyFiveCharacters() async {

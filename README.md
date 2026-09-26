@@ -23,7 +23,7 @@ A Swift and SwiftUI iOS LLM-chat app built as a clean-code reference implementat
 | --- | --- |
 | Model backends | Stub model for simulator/testing. Llama.cpp GGUF inference for real usage. Designed to make adding new models or backends easy |
 | Repositories | SQLite and file-backed conversation/message repositories; swappable and easy to extend|
-| Chat | Streaming assistant replies, stop generation, and conflict handling when another chat is already generating |
+| Chat | Streaming assistant replies with Markdown formatting, stop generation, and conflict handling when another chat is already generating |
 | Conversations | Create, search, rename, delete, sorted by last activity, with continuous title generation |
 | Settings | Accent color, custom instructions, response style presets, and system prompt override |
 | Localization | Centralized L10n namespace with strings organized into per-language `.lproj` folders. Adding a language is as simple as a new folder. Currently supports English, Czech, and Slovak |
@@ -80,9 +80,26 @@ flowchart TD
 
 ## Testing
 
-Unit tests cover pretty much everything (domain models and use cases, persistence, prompt settings, presentation logic, and llama.cpp formatting and engine behavior).
+Unit tests ([`SwiftAIReferenceAppTests`](SwiftAIReferenceAppTests)) cover pretty much everything (domain models and use cases, persistence, prompt settings, presentation logic, and llama.cpp formatting and engine behavior).
 
-UI tests cover the launch flow and basic end-to-end flows such as sending a message, conversation title generation, and conversation persistence.
+UI tests ([`SwiftAIReferenceAppUITests`](SwiftAIReferenceAppUITests)) cover the launch flow and basic end-to-end flows such as sending a message, conversation title generation, and conversation persistence.
+
+## CI
+
+GitHub Actions runs the `App Build and Unit Tests` macOS workflow on pull requests, pushes to `main`, and manual dispatch.
+
+It builds the app and runs `xcodebuild test` for `SwiftAIReferenceAppTests`.
+
+## Repository rules
+
+`main` is protected by the GitHub ruleset `ruleset_main`
+
+- Pull requests are required before merging.
+- `App Build and Unit Tests` must pass before merging.
+- Branches must be up to date with `main` before merge.
+- `main` cannot be force-pushed or deleted.
+
+No bypass exemptions are configured.
 
 ## Project structure
 
