@@ -85,7 +85,7 @@ public final class DefaultGenerateConversationTitleUseCase: GenerateConversation
     private static func normalizeOutput(_ text: String?) -> String? {
         guard let text else { return nil }
 
-        var normalized = text
+        var normalized = stripMarkdownSyntax(in: text)
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "\r", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -98,6 +98,19 @@ public final class DefaultGenerateConversationTitleUseCase: GenerateConversation
         }
 
         return capitalizedInitial(clipped(normalized, maxLength: maxTitleLength))
+    }
+
+    private static func stripMarkdownSyntax(in text: String) -> String {
+        let options = AttributedString.MarkdownParsingOptions(
+            interpretedSyntax: .inlineOnlyPreservingWhitespace,
+            failurePolicy: .returnPartiallyParsedIfPossible
+        )
+
+        guard let parsed = try? AttributedString(markdown: text, options: options) else {
+            return text
+        }
+
+        return String(parsed.characters)
     }
 
     private static func fallbackTitle(from messages: [Message]) -> String? {
