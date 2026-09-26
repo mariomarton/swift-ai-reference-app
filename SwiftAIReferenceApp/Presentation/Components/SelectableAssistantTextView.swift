@@ -29,9 +29,23 @@ struct SelectableAssistantTextView: UIViewRepresentable {
     }
 
     static func applyContent(attributedText: NSAttributedString, to view: UITextView) {
-        if view.attributedText.string != attributedText.string {
-            view.attributedText = attributedText
+        guard !view.attributedText.isEqual(to: attributedText) else { return }
+
+        let preservedSelection = view.selectedRange
+        view.attributedText = attributedText
+        view.selectedRange = clampedSelection(preservedSelection, textLength: attributedText.length)
+    }
+
+    private static func clampedSelection(_ selection: NSRange, textLength: Int) -> NSRange {
+        guard selection.location != NSNotFound else {
+            return selection
         }
+
+        let clampedLocation = min(max(selection.location, 0), textLength)
+        let maxLength = max(0, textLength - clampedLocation)
+        let clampedLength = min(max(selection.length, 0), maxLength)
+
+        return NSRange(location: clampedLocation, length: clampedLength)
     }
 
     func updateUIView(_ uiView: UITextView, context: Context) {

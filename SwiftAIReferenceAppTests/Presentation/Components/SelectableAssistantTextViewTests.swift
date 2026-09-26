@@ -56,6 +56,46 @@ final class SelectableAssistantTextViewTests: XCTestCase {
 
         XCTAssertEqual(view.attributedText.string, "Novy text")
     }
+
+    func testApplyContentUpdatesAttributesWhenVisibleTextIsUnchanged() {
+        let view = SelectableAssistantTextView.makeConfiguredTextView()
+        let originalText = "Ahoj svet"
+        view.attributedText = NSAttributedString(string: originalText)
+        view.selectedRange = NSRange(location: 2, length: 4)
+
+        let updatedText = NSMutableAttributedString(string: originalText)
+        updatedText.addAttribute(
+            .font,
+            value: UIFont.boldSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .body).pointSize),
+            range: NSRange(location: 5, length: 4)
+        )
+
+        SelectableAssistantTextView.applyContent(
+            attributedText: updatedText,
+            to: view
+        )
+
+        XCTAssertEqual(view.selectedRange.location, 2)
+        XCTAssertEqual(view.selectedRange.length, 4)
+
+        let boldFont = view.attributedText.attribute(.font, at: 6, effectiveRange: nil) as? UIFont
+        XCTAssertNotNil(boldFont)
+        XCTAssertTrue(boldFont?.fontDescriptor.symbolicTraits.contains(.traitBold) ?? false)
+    }
+
+    func testApplyContentClampsSelectionWhenUpdatedTextIsShorter() {
+        let view = SelectableAssistantTextView.makeConfiguredTextView()
+        view.attributedText = NSAttributedString(string: "Dlhsi text")
+        view.selectedRange = NSRange(location: 7, length: 3)
+
+        SelectableAssistantTextView.applyContent(
+            attributedText: NSAttributedString(string: "Kratky"),
+            to: view
+        )
+
+        XCTAssertEqual(view.selectedRange.location, 6)
+        XCTAssertEqual(view.selectedRange.length, 0)
+    }
 }
 
 private extension UIFont {
