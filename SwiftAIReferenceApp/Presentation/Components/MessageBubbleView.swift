@@ -39,6 +39,17 @@ struct MessageBubbleInteractionPolicy {
 struct MessageBubbleView: View {
     let message: Message
     let accentColor: PromptAccentColor
+    private let markdownRenderer: any AssistantMarkdownRendering
+
+    init(
+        message: Message,
+        accentColor: PromptAccentColor,
+        markdownRenderer: any AssistantMarkdownRendering = AssistantMarkdownRenderer()
+    ) {
+        self.message = message
+        self.accentColor = accentColor
+        self.markdownRenderer = markdownRenderer
+    }
 
     var body: some View {
         HStack {
@@ -79,15 +90,23 @@ struct MessageBubbleView: View {
             .foregroundStyle(MessageBubbleStyle.foregroundColor(for: message.role))
     }
 
+    private var assistantMarkdownText: AttributedString {
+        markdownRenderer.renderSwiftUIAttributedText(markdown: message.text)
+    }
+
     @ViewBuilder
     private var assistantSelectableText: some View {
         #if canImport(UIKit)
         SelectableAssistantTextView(
-            text: message.text,
-            textColor: UIColor(MessageBubbleStyle.foregroundColor(for: .assistant))
+            attributedText: markdownRenderer.renderUIKitAttributedText(
+                markdown: message.text,
+                textColor: UIColor(MessageBubbleStyle.foregroundColor(for: .assistant))
+            )
         )
         #else
-        plainBubbleText
+        Text(assistantMarkdownText)
+            .font(.body)
+            .foregroundStyle(MessageBubbleStyle.foregroundColor(for: .assistant))
             .textSelection(.enabled)
         #endif
     }
