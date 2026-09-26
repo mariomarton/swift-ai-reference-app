@@ -117,7 +117,8 @@ public final class DefaultGenerateConversationTitleUseCase: GenerateConversation
         let preferredText = latestUserMessageText(in: messages) ?? messages.last?.text
         guard let preferredText else { return nil }
 
-        let sentence = firstSentence(from: preferredText) ?? firstNonEmptyLine(from: preferredText)
+        let plainText = stripMarkdownSyntax(in: preferredText)
+        let sentence = firstSentence(from: plainText) ?? firstNonEmptyLine(from: plainText)
         guard let sentence else { return nil }
 
         let normalized = normalizeOutput(sentence)
