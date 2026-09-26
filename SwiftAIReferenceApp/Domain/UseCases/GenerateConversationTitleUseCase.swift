@@ -102,15 +102,24 @@ public final class DefaultGenerateConversationTitleUseCase: GenerateConversation
 
     private static func stripMarkdownSyntax(in text: String) -> String {
         let options = AttributedString.MarkdownParsingOptions(
-            interpretedSyntax: .inlineOnlyPreservingWhitespace,
+            interpretedSyntax: .full,
             failurePolicy: .returnPartiallyParsedIfPossible
         )
 
-        guard let parsed = try? AttributedString(markdown: text, options: options) else {
-            return text
+        let lines = text.components(separatedBy: .newlines)
+        let parsedLines = lines.map { line -> String in
+            guard !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return ""
+            }
+
+            guard let parsed = try? AttributedString(markdown: line, options: options) else {
+                return line
+            }
+
+            return String(parsed.characters)
         }
 
-        return String(parsed.characters)
+        return parsedLines.joined(separator: "\n")
     }
 
     private static func fallbackTitle(from messages: [Message]) -> String? {
