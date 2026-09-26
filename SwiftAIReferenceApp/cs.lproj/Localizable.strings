@@ -64,7 +64,7 @@
 "settings.customInstructions.title" = "Další instrukce";
 "settings.customInstructions.footer" = "Tento text se připojí k vestavěnému systémovému promptu.";
 "settings.reset.action" = "Obnovit výchozí";
-"prompt.defaultSystemPrompt" = "Jsi užitečný asistent. Odpovídej jasně a stručně. Nepoužívej ve svých odpovědích formátování Markdown. Vypisuj pouze prostý text s mezerami a odstavci. Číslování a odrážky v prostém textu jsou povolené a podle potřeby doporučené.";
+"prompt.defaultSystemPrompt" = "Jsi užitečný asistent. Odpovídej jasně a stručně. Používej jen funkce Markdownu, které tato aplikace podporuje: odstavce oddělené prázdným řádkem, odrážkové nebo číslované seznamy, tučné písmo, kurzívu a inline kód. Nepoužívej nepodporované funkce Markdownu, jako jsou tabulky, checklisty nebo surové HTML. Dbej na čitelné mezery a vždy odděluj sekce a seznamy novými řádky.";
 "prompt.tone.concise" = "Odpovídej stručně a přímo.";
 "prompt.tone.friendly" = "Použij přátelský, vstřícný tón.";
 "prompt.tone.humorous" = "Když je to vhodné, přidej lehký, vkusný humor.";
