@@ -13,6 +13,17 @@ final class AssistantMarkdownRendererTests: XCTestCase {
         XCTAssertEqual(String(rendered.characters), "Ahoj svet")
     }
 
+    func testSwiftUIRenderingPreservesNewlinesAndWhitespace() {
+        let rendered = renderer.renderSwiftUIAttributedText(
+            markdown: "Top cities:\n\n- **Zurich**\n- **Prague**\n\nCulture: **Barcelona**"
+        )
+
+        XCTAssertEqual(
+            String(rendered.characters),
+            "Top cities:\n\n- Zurich\n- Prague\n\nCulture: Barcelona"
+        )
+    }
+
     func testSwiftUIRenderingPreservesLinkAttributes() {
         let rendered = renderer.renderSwiftUIAttributedText(markdown: "[GitHub](https://github.com)")
 
@@ -46,6 +57,15 @@ final class AssistantMarkdownRendererTests: XCTestCase {
         let font = rendered.attribute(.font, at: boldRange.location, effectiveRange: nil) as? UIFont
         XCTAssertNotNil(font)
         XCTAssertTrue(font?.fontDescriptor.symbolicTraits.contains(.traitBold) ?? false)
+    }
+
+    func testUIKitRenderingPreservesWhitespaceAroundFormattedText() {
+        let rendered = renderer.renderUIKitAttributedText(
+            markdown: "Cities:\n- **Zurich**\n- **Vienna**",
+            textColor: .label
+        )
+
+        XCTAssertEqual(rendered.string, "Cities:\n- Zurich\n- Vienna")
     }
 
     func testUIKitRenderingAppliesRequestedTextColor() {

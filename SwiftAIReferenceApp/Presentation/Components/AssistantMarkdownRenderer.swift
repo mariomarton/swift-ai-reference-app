@@ -14,7 +14,7 @@ protocol AssistantMarkdownRendering {
 struct AssistantMarkdownRenderer: AssistantMarkdownRendering {
     func renderSwiftUIAttributedText(markdown: String) -> AttributedString {
         let options = AttributedString.MarkdownParsingOptions(
-            interpretedSyntax: .full,
+            interpretedSyntax: .inlineOnlyPreservingWhitespace,
             failurePolicy: .returnPartiallyParsedIfPossible
         )
 
