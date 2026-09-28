@@ -64,8 +64,7 @@
 "settings.customInstructions.title" = "Additional instructions";
 "settings.customInstructions.footer" = "This text is appended to the built-in system prompt.";
 "settings.reset.action" = "Restore defaults";
-"keyboardShortcuts.section.title" = "Keyboard shortcuts";
-"keyboardShortcuts.section.footer" = "When using a hardware keyboard (iPad or Mac), these shortcuts speed up common actions.";
+"keyboardShortcuts.section.title" = "Keyboard shortcuts overview";
 "keyboardShortcuts.action.sendMessage" = "Send message";
 "keyboardShortcuts.action.newConversation" = "New conversation";
 "keyboardShortcuts.action.toggleSidebar" = "Toggle sidebar";

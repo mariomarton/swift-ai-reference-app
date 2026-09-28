@@ -83,4 +83,12 @@ enum AppKeyboardShortcuts {
             openSettings
         ]
     }
+
+    static var settingsOverviewShortcuts: [AppKeyboardShortcutDefinition] {
+        [
+            newConversation,
+            toggleSidebar,
+            openSettings
+        ]
+    }
 }

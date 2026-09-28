@@ -64,8 +64,7 @@
 "settings.customInstructions.title" = "Další instrukce";
 "settings.customInstructions.footer" = "Tento text se připojí k vestavěnému systémovému promptu.";
 "settings.reset.action" = "Obnovit výchozí";
-"keyboardShortcuts.section.title" = "Klávesové zkratky";
-"keyboardShortcuts.section.footer" = "Při použití hardwarové klávesnice (iPad nebo Mac) tyto zkratky zrychlí běžné akce.";
+"keyboardShortcuts.section.title" = "Přehled klávesových zkratek";
 "keyboardShortcuts.action.sendMessage" = "Odeslat zprávu";
 "keyboardShortcuts.action.newConversation" = "Nová konverzace";
 "keyboardShortcuts.action.toggleSidebar" = "Přepnout postranní panel";

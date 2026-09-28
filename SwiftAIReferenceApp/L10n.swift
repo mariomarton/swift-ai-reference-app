@@ -94,7 +94,6 @@ enum L10n {
 
     enum KeyboardShortcuts {
         static var sectionTitle: String { l("keyboardShortcuts.section.title") }
-        static var sectionFooter: String { l("keyboardShortcuts.section.footer") }
         static var sendMessageAction: String { l("keyboardShortcuts.action.sendMessage") }
         static var newConversationAction: String { l("keyboardShortcuts.action.newConversation") }
         static var toggleSidebarAction: String { l("keyboardShortcuts.action.toggleSidebar") }

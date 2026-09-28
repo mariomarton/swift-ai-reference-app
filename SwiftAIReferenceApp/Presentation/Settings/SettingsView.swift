@@ -73,7 +73,7 @@ struct SettingsView: View {
             }
 
             Section {
-                ForEach(AppKeyboardShortcuts.discoverableShortcuts) { shortcut in
+                ForEach(AppKeyboardShortcuts.settingsOverviewShortcuts) { shortcut in
                     HStack(spacing: 16) {
                         Text(shortcut.title)
                         Spacer()
@@ -84,8 +84,6 @@ struct SettingsView: View {
                 }
             } header: {
                 Text(L10n.KeyboardShortcuts.sectionTitle)
-            } footer: {
-                Text(L10n.KeyboardShortcuts.sectionFooter)
             }
         }
         .navigationTitle(L10n.Settings.navigationTitle)
