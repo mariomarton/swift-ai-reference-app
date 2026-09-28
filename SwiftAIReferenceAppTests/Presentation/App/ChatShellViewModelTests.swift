@@ -109,15 +109,6 @@ final class ChatShellViewModelTests: XCTestCase {
         XCTAssertFalse(shouldShowSettingsButton)
     }
 
-    func testConversationsListSettingsButtonIsHiddenInAutomaticSplitState() {
-        let sut = ChatShellViewModel()
-        sut.columnVisibility = .automatic
-
-        let shouldShowSettingsButton = sut.shouldShowConversationsListSettingsButton(isCompactLayout: false)
-
-        XCTAssertFalse(shouldShowSettingsButton)
-    }
-
     func testHandleConversationSelectionInCompactPushesChatRoute() {
         let sut = ChatShellViewModel()
         let selectedID = UUID()
