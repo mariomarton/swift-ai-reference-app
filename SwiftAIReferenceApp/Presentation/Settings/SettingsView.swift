@@ -78,7 +78,7 @@ struct SettingsView: View {
                         Text(shortcut.title)
                         Spacer()
                         Text(shortcut.displayValue)
-                            .font(.footnote.monospaced())
+                            .font(.callout.monospaced())
                             .foregroundStyle(.secondary)
                     }
                 }
