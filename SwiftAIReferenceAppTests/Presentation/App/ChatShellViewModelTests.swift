@@ -74,6 +74,41 @@ final class ChatShellViewModelTests: XCTestCase {
         XCTAssertTrue(sut.isSettingsPresented)
     }
 
+    func testConversationsListSettingsButtonIsHiddenWhenSidebarAndChatAreVisibleTogether() {
+        let sut = ChatShellViewModel()
+        sut.showSidebar()
+
+        let shouldShowSettingsButton = sut.shouldShowConversationsListSettingsButton(isCompactLayout: false)
+
+        XCTAssertFalse(shouldShowSettingsButton)
+    }
+
+    func testConversationsListSettingsButtonIsShownInCompactLayout() {
+        let sut = ChatShellViewModel()
+        sut.showSidebar()
+
+        let shouldShowSettingsButton = sut.shouldShowConversationsListSettingsButton(isCompactLayout: true)
+
+        XCTAssertTrue(shouldShowSettingsButton)
+    }
+
+    func testConversationsListSettingsButtonIsShownWhenSidebarIsNotVisible() {
+        let sut = ChatShellViewModel()
+
+        let shouldShowSettingsButton = sut.shouldShowConversationsListSettingsButton(isCompactLayout: false)
+
+        XCTAssertTrue(shouldShowSettingsButton)
+    }
+
+    func testConversationsListSettingsButtonIsHiddenInDoubleColumnSplitState() {
+        let sut = ChatShellViewModel()
+        sut.columnVisibility = .doubleColumn
+
+        let shouldShowSettingsButton = sut.shouldShowConversationsListSettingsButton(isCompactLayout: false)
+
+        XCTAssertFalse(shouldShowSettingsButton)
+    }
+
     func testHandleConversationSelectionInCompactPushesChatRoute() {
         let sut = ChatShellViewModel()
         let selectedID = UUID()
