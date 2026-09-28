@@ -29,7 +29,7 @@ final class AppKeyboardShortcutsTests: XCTestCase {
             AppKeyboardShortcuts.newConversation.displayValue,
             shouldAvoidSystemReservedMacShortcuts ? "⌘⇧N" : "⌘N"
         )
-        XCTAssertEqual(AppKeyboardShortcuts.toggleSidebar.displayValue, "⌘⌥S")
+        XCTAssertEqual(AppKeyboardShortcuts.toggleSidebar.displayValue, "⌘⇧B")
         XCTAssertEqual(
             AppKeyboardShortcuts.openSettings.displayValue,
             shouldAvoidSystemReservedMacShortcuts ? "⌘⇧," : "⌘,"

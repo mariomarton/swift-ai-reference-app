@@ -54,10 +54,10 @@ enum AppKeyboardShortcuts {
         AppKeyboardShortcutDefinition(
             id: "toggle-sidebar",
             title: L10n.KeyboardShortcuts.toggleSidebarAction,
-            keyDisplay: "S",
-            modifierDisplay: "⌘⌥",
-            keyEquivalent: "s",
-            modifiers: [.command, .option]
+            keyDisplay: "B",
+            modifierDisplay: "⌘⇧",
+            keyEquivalent: "b",
+            modifiers: [.command, .shift]
         )
     }
 
