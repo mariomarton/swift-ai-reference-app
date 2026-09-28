@@ -18,7 +18,7 @@ final class ChatShellViewModel: ObservableObject {
     private var didBootstrap = false
 
     var isSidebarVisible: Bool {
-        columnVisibility == .all
+        columnVisibility != .detailOnly
     }
 
     nonisolated deinit {}
