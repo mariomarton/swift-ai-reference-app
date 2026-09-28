@@ -56,7 +56,7 @@ final class ChatShellViewModel: ObservableObject {
         guard !isCompactLayout else {
             return true
         }
-        return columnVisibility != .all
+        return columnVisibility == .detailOnly
     }
 
     func presentSettings() {
