@@ -85,7 +85,7 @@ public final class DefaultGenerateConversationTitleUseCase: GenerateConversation
     private static func normalizeOutput(_ text: String?) -> String? {
         guard let text else { return nil }
 
-        var normalized = text
+        var normalized = stripMarkdownSyntax(in: text)
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "\r", with: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -100,11 +100,34 @@ public final class DefaultGenerateConversationTitleUseCase: GenerateConversation
         return capitalizedInitial(clipped(normalized, maxLength: maxTitleLength))
     }
 
+    private static func stripMarkdownSyntax(in text: String) -> String {
+        let options = AttributedString.MarkdownParsingOptions(
+            interpretedSyntax: .full,
+            failurePolicy: .returnPartiallyParsedIfPossible
+        )
+
+        let lines = text.components(separatedBy: .newlines)
+        let parsedLines = lines.map { line -> String in
+            guard !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return ""
+            }
+
+            guard let parsed = try? AttributedString(markdown: line, options: options) else {
+                return line
+            }
+
+            return String(parsed.characters)
+        }
+
+        return parsedLines.joined(separator: "\n")
+    }
+
     private static func fallbackTitle(from messages: [Message]) -> String? {
         let preferredText = latestUserMessageText(in: messages) ?? messages.last?.text
         guard let preferredText else { return nil }
 
-        let sentence = firstSentence(from: preferredText) ?? firstNonEmptyLine(from: preferredText)
+        let plainText = stripMarkdownSyntax(in: preferredText)
+        let sentence = firstSentence(from: plainText) ?? firstNonEmptyLine(from: plainText)
         guard let sentence else { return nil }
 
         let normalized = normalizeOutput(sentence)

@@ -70,7 +70,7 @@
 "keyboardShortcuts.action.newConversation" = "New conversation";
 "keyboardShortcuts.action.toggleSidebar" = "Toggle sidebar";
 "keyboardShortcuts.action.openSettings" = "Open settings";
-"prompt.defaultSystemPrompt" = "You are a helpful assistant. Answer clearly and concisely. Do not use Markdown formatting in your answers. Output only raw text with whitespace and newlines. Plain-text numbering and bullet points are allowed and recommended when helpful.";
+"prompt.defaultSystemPrompt" = "You are a helpful assistant. Answer clearly and concisely. Use only Markdown features supported by this app: paragraphs separated by blank lines, bullet or numbered lists, bold, italics, and inline code. Do not use unsupported Markdown features such as tables, task lists, or raw HTML. Keep whitespace readable and always separate sections and lists with new lines.";
 "prompt.tone.concise" = "Answer briefly and directly.";
 "prompt.tone.friendly" = "Use a warm, friendly tone.";
 "prompt.tone.humorous" = "Add light, tasteful humor when appropriate.";

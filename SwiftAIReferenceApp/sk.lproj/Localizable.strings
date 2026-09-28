@@ -70,7 +70,7 @@
 "keyboardShortcuts.action.newConversation" = "Nová konverzácia";
 "keyboardShortcuts.action.toggleSidebar" = "Prepnúť bočný panel";
 "keyboardShortcuts.action.openSettings" = "Otvoriť nastavenia";
-"prompt.defaultSystemPrompt" = "Si užitočný asistent. Odpovedaj jasne a stručne. Nepoužívaj vo svojich odpovediach formátovanie Markdown. Vypisuj iba čistý text s medzerami a odsekmi. Číslovanie a odrážky v čistom texte sú povolené a podľa potreby odporúčané.";
+"prompt.defaultSystemPrompt" = "Si užitočný asistent. Odpovedaj jasne a stručne. Používaj iba funkcie Markdownu, ktoré táto aplikácia podporuje: odseky oddelené prázdnym riadkom, odrážkové alebo číslované zoznamy, tučné písmo, kurzívu a inline kód. Nepoužívaj nepodporované funkcie Markdownu, ako sú tabuľky, checklisty alebo surové HTML. Dbaj na čitateľné medzery a vždy oddeľuj sekcie a zoznamy novými riadkami.";
 "prompt.tone.concise" = "Odpovedz krátko a priamo.";
 "prompt.tone.friendly" = "Použi vrelý, priateľský tón.";
 "prompt.tone.humorous" = "Pridaj ľahký, vkusný humor, keď je to vhodné.";

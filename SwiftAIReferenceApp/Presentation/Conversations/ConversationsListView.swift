@@ -3,6 +3,7 @@ import SwiftUI
 struct ConversationsListView: View {
     @ObservedObject var viewModel: ConversationsListViewModel
     let accentColor: PromptAccentColor
+    let showsSettingsButton: Bool
     let onSettingsTapped: () -> Void
 
     var body: some View {
@@ -80,8 +81,10 @@ struct ConversationsListView: View {
         .navigationTitle(L10n.ConversationsList.navigationTitle)
         .searchable(text: $viewModel.searchText, prompt: Text(L10n.ConversationsList.searchPrompt))
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                ConversationsListToolbarActionsView(onSettingsTapped: onSettingsTapped)
+            if showsSettingsButton {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ConversationsListToolbarActionsView(onSettingsTapped: onSettingsTapped)
+                }
             }
         }
         .task {
