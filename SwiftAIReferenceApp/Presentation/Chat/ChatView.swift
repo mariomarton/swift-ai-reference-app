@@ -8,17 +8,20 @@ struct ChatView: View {
     let accentColor: PromptAccentColor
     let onNewConversationTapped: () -> Void
     let onSettingsTapped: () -> Void
+    let onToggleSidebarTapped: (() -> Void)?
 
     init(
         viewModel: ChatViewModel,
         accentColor: PromptAccentColor,
         onNewConversationTapped: @escaping () -> Void,
-        onSettingsTapped: @escaping () -> Void
+        onSettingsTapped: @escaping () -> Void,
+        onToggleSidebarTapped: (() -> Void)? = nil
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.accentColor = accentColor
         self.onNewConversationTapped = onNewConversationTapped
         self.onSettingsTapped = onSettingsTapped
+        self.onToggleSidebarTapped = onToggleSidebarTapped
     }
 
     var body: some View {
@@ -70,7 +73,8 @@ struct ChatView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     ChatTopBarActionsView(
                         onNewConversationTapped: onNewConversationTapped,
-                        onSettingsTapped: onSettingsTapped
+                        onSettingsTapped: onSettingsTapped,
+                        onToggleSidebarTapped: onToggleSidebarTapped
                     )
                 }
             }
@@ -158,15 +162,32 @@ struct ChatView: View {
 private struct ChatTopBarActionsView: View {
     let onNewConversationTapped: () -> Void
     let onSettingsTapped: () -> Void
+    let onToggleSidebarTapped: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 8) {
+            if let onToggleSidebarTapped {
+                Button(action: onToggleSidebarTapped) {
+                    Image(systemName: "sidebar.leading")
+                        .font(.body.weight(.semibold))
+                }
+                .keyboardShortcut(
+                    AppKeyboardShortcuts.toggleSidebar.keyEquivalent,
+                    modifiers: AppKeyboardShortcuts.toggleSidebar.modifiers
+                )
+                .accessibilityLabel(L10n.KeyboardShortcuts.toggleSidebarAction)
+            }
+
             Button {
                 onNewConversationTapped()
             } label: {
                 Image(systemName: "plus")
                     .font(.body.weight(.semibold))
             }
+            .keyboardShortcut(
+                AppKeyboardShortcuts.newConversation.keyEquivalent,
+                modifiers: AppKeyboardShortcuts.newConversation.modifiers
+            )
             .accessibilityLabel(L10n.ConversationsList.newConversationLabel)
             .accessibilityIdentifier("createConversationButton")
 
@@ -176,6 +197,10 @@ private struct ChatTopBarActionsView: View {
                 Image(systemName: "gearshape")
                     .font(.body.weight(.semibold))
             }
+            .keyboardShortcut(
+                AppKeyboardShortcuts.openSettings.keyEquivalent,
+                modifiers: AppKeyboardShortcuts.openSettings.modifiers
+            )
             .accessibilityLabel(L10n.Settings.navigationTitle)
             .accessibilityIdentifier("openSettingsButton")
         }

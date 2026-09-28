@@ -71,6 +71,20 @@ struct SettingsView: View {
                 }
                 .foregroundStyle(.red)
             }
+
+            Section {
+                ForEach(AppKeyboardShortcuts.settingsOverviewShortcuts) { shortcut in
+                    HStack(spacing: 16) {
+                        Text(shortcut.title)
+                        Spacer()
+                        Text(shortcut.displayValue)
+                            .font(.callout.monospaced())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Text(L10n.KeyboardShortcuts.sectionTitle)
+            }
         }
         .navigationTitle(L10n.Settings.navigationTitle)
         .navigationBarTitleDisplayMode(.inline)

@@ -48,7 +48,8 @@ struct ContentView: View {
                                         },
                                         onSettingsTapped: {
                                             shellViewModel.presentSettings()
-                                        }
+                                        },
+                                        onToggleSidebarTapped: nil
                                     )
                                 case .settings:
                                     SettingsView(viewModel: settingsViewModel)
@@ -80,6 +81,9 @@ struct ContentView: View {
                                     },
                                     onSettingsTapped: {
                                         shellViewModel.presentSettings()
+                                    },
+                                    onToggleSidebarTapped: {
+                                        shellViewModel.toggleSidebar()
                                     }
                                 )
                                 .id(conversationID)

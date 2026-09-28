@@ -25,7 +25,7 @@ A Swift and SwiftUI iOS LLM-chat app built as a clean-code reference implementat
 | Repositories | SQLite and file-backed conversation/message repositories; swappable and easy to extend|
 | Chat | Streaming assistant replies with Markdown formatting, stop generation, and conflict handling when another chat is already generating |
 | Conversations | Create, search, rename, delete, sorted by last activity, with continuous title generation |
-| Settings | Accent color, custom instructions, response style presets, and system prompt override |
+| Settings | Accent color, custom instructions, response style presets, system prompt override, and an overview of keyboard shortcuts |
 | Localization | Centralized L10n namespace with strings organized into per-language `.lproj` folders. Adding a language is as simple as a new folder. Currently supports English, Czech, and Slovak |
 
 ## Architecture

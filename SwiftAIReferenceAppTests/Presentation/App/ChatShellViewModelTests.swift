@@ -66,6 +66,31 @@ final class ChatShellViewModelTests: XCTestCase {
         XCTAssertEqual(sut.columnVisibility, .all)
     }
 
+    func testToggleSidebarSwitchesBetweenDetailAndAll() {
+        let sut = ChatShellViewModel()
+
+        XCTAssertFalse(sut.isSidebarVisible)
+        sut.toggleSidebar()
+        XCTAssertTrue(sut.isSidebarVisible)
+        XCTAssertEqual(sut.columnVisibility, .all)
+
+        sut.toggleSidebar()
+        XCTAssertFalse(sut.isSidebarVisible)
+        XCTAssertEqual(sut.columnVisibility, .detailOnly)
+    }
+
+    func testToggleSidebarFromDoubleColumnHidesSidebar() {
+        let sut = ChatShellViewModel()
+        sut.columnVisibility = .doubleColumn
+
+        XCTAssertTrue(sut.isSidebarVisible)
+
+        sut.toggleSidebar()
+
+        XCTAssertEqual(sut.columnVisibility, .detailOnly)
+        XCTAssertFalse(sut.isSidebarVisible)
+    }
+
     func testPresentSettingsOpensSettingsSheet() {
         let sut = ChatShellViewModel()
 
