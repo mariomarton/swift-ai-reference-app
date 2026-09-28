@@ -37,6 +37,10 @@ struct ComposerView: View {
                             ))
                     )
             }
+            .keyboardShortcut(
+                AppKeyboardShortcuts.sendMessage.keyEquivalent,
+                modifiers: AppKeyboardShortcuts.sendMessage.modifiers
+            )
             .disabled(!canUsePrimaryAction)
             .accessibilityLabel(isSending ? L10n.Composer.stopAccessibilityLabel : L10n.Composer.sendAccessibilityLabel)
             .accessibilityIdentifier("sendMessageButton")

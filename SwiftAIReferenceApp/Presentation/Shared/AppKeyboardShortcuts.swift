@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct AppKeyboardShortcutDefinition: Identifiable, Equatable {
@@ -14,6 +15,16 @@ struct AppKeyboardShortcutDefinition: Identifiable, Equatable {
 }
 
 enum AppKeyboardShortcuts {
+    private static var shouldAvoidSystemReservedMacShortcuts: Bool {
+        #if targetEnvironment(macCatalyst)
+        true
+        #elseif os(iOS)
+        ProcessInfo.processInfo.isiOSAppOnMac
+        #else
+        false
+        #endif
+    }
+
     static var sendMessage: AppKeyboardShortcutDefinition {
         AppKeyboardShortcutDefinition(
             id: "send-message",
@@ -26,13 +37,16 @@ enum AppKeyboardShortcuts {
     }
 
     static var newConversation: AppKeyboardShortcutDefinition {
+        let modifierDisplay = shouldAvoidSystemReservedMacShortcuts ? "⌘⇧" : "⌘"
+        let modifiers: EventModifiers = shouldAvoidSystemReservedMacShortcuts ? [.command, .shift] : .command
+
         AppKeyboardShortcutDefinition(
             id: "new-conversation",
             title: L10n.KeyboardShortcuts.newConversationAction,
             keyDisplay: "N",
-            modifierDisplay: "⌘",
+            modifierDisplay: modifierDisplay,
             keyEquivalent: "n",
-            modifiers: .command
+            modifiers: modifiers
         )
     }
 
@@ -48,13 +62,16 @@ enum AppKeyboardShortcuts {
     }
 
     static var openSettings: AppKeyboardShortcutDefinition {
+        let modifierDisplay = shouldAvoidSystemReservedMacShortcuts ? "⌘⇧" : "⌘"
+        let modifiers: EventModifiers = shouldAvoidSystemReservedMacShortcuts ? [.command, .shift] : .command
+
         AppKeyboardShortcutDefinition(
             id: "open-settings",
             title: L10n.KeyboardShortcuts.openSettingsAction,
             keyDisplay: ",",
-            modifierDisplay: "⌘",
+            modifierDisplay: modifierDisplay,
             keyEquivalent: ",",
-            modifiers: .command
+            modifiers: modifiers
         )
     }
 
