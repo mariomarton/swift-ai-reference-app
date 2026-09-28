@@ -40,7 +40,7 @@ enum AppKeyboardShortcuts {
         let modifierDisplay = shouldAvoidSystemReservedMacShortcuts ? "⌘⇧" : "⌘"
         let modifiers: EventModifiers = shouldAvoidSystemReservedMacShortcuts ? [.command, .shift] : .command
 
-        AppKeyboardShortcutDefinition(
+        return AppKeyboardShortcutDefinition(
             id: "new-conversation",
             title: L10n.KeyboardShortcuts.newConversationAction,
             keyDisplay: "N",
@@ -65,7 +65,7 @@ enum AppKeyboardShortcuts {
         let modifierDisplay = shouldAvoidSystemReservedMacShortcuts ? "⌘⇧" : "⌘"
         let modifiers: EventModifiers = shouldAvoidSystemReservedMacShortcuts ? [.command, .shift] : .command
 
-        AppKeyboardShortcutDefinition(
+        return AppKeyboardShortcutDefinition(
             id: "open-settings",
             title: L10n.KeyboardShortcuts.openSettingsAction,
             keyDisplay: ",",
