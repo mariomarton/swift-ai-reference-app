@@ -101,6 +101,15 @@ It builds the app and runs `xcodebuild test` for `SwiftAIReferenceAppTests`.
 
 No bypass exemptions are configured.
 
+## Possible Future Directions
+
+- **Improvements and reliability:** Faster conversation search and loading, less delay from title generation, and more robust file-backed storage.
+- **Online and hybrid LLM support:** Remote model providers alongside on-device inference, with secure credentials and clear privacy controls.
+- **RAG:** Document attachments, retrieval of relevant passages, and answers with source citations.
+- **Richer Markdown:** Better support for headings, lists, code blocks, and tables in streaming replies.
+- **Multimodal chat:** Image input and speech interaction, depending on model capabilities.
+- **Model management:** Import, select, and manage local models without rebuilding the app.
+
 ## Project structure
 
 ```text
